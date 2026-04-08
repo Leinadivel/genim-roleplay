@@ -1,533 +1,210 @@
-'use client'
+import Link from 'next/link'
 
-import { useEffect, useMemo, useState } from 'react'
-
-type Scenario = {
-  id: string
-  slug: string
-  title: string
-  description: string | null
-  industry: string | null
-  difficulty: 'beginner' | 'intermediate' | 'advanced'
-  objective: string | null
+function AvatarPill({
+  initials,
+  className,
+}: {
+  initials: string
+  className: string
+}) {
+  return (
+    <div
+      className={`flex h-10 w-10 items-center justify-center rounded-full border border-white/60 text-sm font-semibold text-white shadow-sm ${className}`}
+    >
+      {initials}
+    </div>
+  )
 }
 
-type ChatMessage = {
-  id: string
-  speaker: 'user' | 'assistant' | 'system'
-  message_text: string
-  turn_index: number
-}
-
-type StartSessionResponse = {
-  ok?: boolean
-  error?: string
-  session?: {
-    id: string
-    status: string
-    mode: 'voice' | 'text'
-  }
-  scenarioBundle?: {
-    scenario: Scenario
-  }
-}
-
-type SaveMessageResponse = {
-  ok?: boolean
-  error?: string
-  message?: ChatMessage
-}
-
-type BuyerResponse = {
-  ok?: boolean
-  error?: string
-  message?: ChatMessage
-}
-
-type CompleteSessionResponse = {
-  ok?: boolean
-  error?: string
-  transcriptText?: string
-  session?: {
-    id: string
-    status: string
-  }
-}
-
-type EvaluationCategory = {
-  category_key: string
-  category_label: string
-  score: number
-  max_score: number
-  feedback: string
-  evidence: string[]
-}
-
-type EvaluateResponse = {
-  ok?: boolean
-  error?: string
-  evaluation?: {
-    overallScore: number
-    summary: string
-    strengths: string[]
-    improvements: string[]
-    categories: EvaluationCategory[]
-  }
+function FeedbackBar({
+  label,
+  value,
+}: {
+  label: string
+  value: number
+}) {
+  return (
+    <div className="grid grid-cols-[84px_1fr_40px] items-center gap-3 text-sm">
+      <span className="text-[#385244]">{label}</span>
+      <div className="h-1.5 rounded-full bg-[#dbe6df]">
+        <div
+          className="h-1.5 rounded-full bg-[#1f4d38]"
+          style={{ width: `${value}%` }}
+        />
+      </div>
+      <span className="text-right font-medium text-[#385244]">{value}</span>
+    </div>
+  )
 }
 
 export default function HomePage() {
-  const [scenarios, setScenarios] = useState<Scenario[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  const [startingScenarioId, setStartingScenarioId] = useState<string | null>(
-    null
-  )
-  const [sessionId, setSessionId] = useState<string | null>(null)
-  const [sessionStatus, setSessionStatus] = useState<string | null>(null)
-  const [activeScenario, setActiveScenario] = useState<Scenario | null>(null)
-
-  const [input, setInput] = useState('')
-  const [sending, setSending] = useState(false)
-  const [messages, setMessages] = useState<ChatMessage[]>([])
-
-  const [completing, setCompleting] = useState(false)
-  const [evaluating, setEvaluating] = useState(false)
-
-  const [transcriptText, setTranscriptText] = useState<string | null>(null)
-  const [evaluation, setEvaluation] = useState<EvaluateResponse['evaluation'] | null>(
-    null
-  )
-
-  useEffect(() => {
-    let cancelled = false
-
-    async function loadScenarios() {
-      try {
-        setLoading(true)
-        setError(null)
-
-        const response = await fetch('/api/scenarios', {
-          method: 'GET',
-        })
-
-        const data = (await response.json()) as {
-          error?: string
-          scenarios?: Scenario[]
-        }
-
-        if (!response.ok) {
-          throw new Error(data.error || 'Failed to load scenarios')
-        }
-
-        if (!cancelled) {
-          setScenarios(data.scenarios ?? [])
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setError(
-            err instanceof Error ? err.message : 'Unexpected error loading scenarios'
-          )
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false)
-        }
-      }
-    }
-
-    loadScenarios()
-
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
-  async function handleStartSession(scenario: Scenario) {
-    try {
-      setStartingScenarioId(scenario.id)
-      setError(null)
-      setSessionId(null)
-      setSessionStatus(null)
-      setActiveScenario(null)
-      setMessages([])
-      setInput('')
-      setTranscriptText(null)
-      setEvaluation(null)
-
-      const response = await fetch('/api/roleplay/start', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          scenarioId: scenario.id,
-          mode: 'voice',
-        }),
-      })
-
-      const data = (await response.json()) as StartSessionResponse
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to start session')
-      }
-
-      if (!data.session?.id) {
-        throw new Error('Session started but no session id was returned')
-      }
-
-      setSessionId(data.session.id)
-      setSessionStatus(data.session.status)
-      setActiveScenario(data.scenarioBundle?.scenario ?? scenario)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unexpected error starting session')
-    } finally {
-      setStartingScenarioId(null)
-    }
-  }
-
-  async function handleSendMessage() {
-    if (!sessionId) {
-      setError('Start a session first')
-      return
-    }
-
-    const messageText = input.trim()
-
-    if (!messageText) {
-      return
-    }
-
-    try {
-      setSending(true)
-      setError(null)
-
-      const saveResponse = await fetch('/api/roleplay/message', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          sessionId,
-          messageText,
-        }),
-      })
-
-      const saveData = (await saveResponse.json()) as SaveMessageResponse
-
-      if (!saveResponse.ok) {
-        throw new Error(saveData.error || 'Failed to save learner message')
-      }
-
-      const savedMessage = saveData.message
-
-      if (!savedMessage) {
-        throw new Error('Learner message was not returned')
-      }
-
-      setMessages((prev) => [...prev, savedMessage])
-      setInput('')
-
-      const respondResponse = await fetch('/api/roleplay/respond', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          sessionId,
-        }),
-      })
-
-      const respondData = (await respondResponse.json()) as BuyerResponse
-
-      if (!respondResponse.ok) {
-        throw new Error(respondData.error || 'Failed to generate buyer reply')
-      }
-
-      const buyerMessage = respondData.message
-
-      if (!buyerMessage) {
-        throw new Error('Buyer reply was not returned')
-      }
-
-      setMessages((prev) => [...prev, buyerMessage])
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unexpected error sending message')
-    } finally {
-      setSending(false)
-    }
-  }
-
-  async function handleCompleteSession() {
-    if (!sessionId) {
-      setError('No active session')
-      return
-    }
-
-    try {
-      setCompleting(true)
-      setError(null)
-
-      const response = await fetch('/api/roleplay/complete', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          sessionId,
-        }),
-      })
-
-      const data = (await response.json()) as CompleteSessionResponse
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to complete session')
-      }
-
-      setSessionStatus(data.session?.status ?? 'completed')
-      setTranscriptText(data.transcriptText ?? null)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unexpected error completing session')
-    } finally {
-      setCompleting(false)
-    }
-  }
-
-  async function handleEvaluateSession() {
-    if (!sessionId) {
-      setError('No active session')
-      return
-    }
-
-    try {
-      setEvaluating(true)
-      setError(null)
-
-      const response = await fetch('/api/roleplay/evaluate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          sessionId,
-        }),
-      })
-
-      const data = (await response.json()) as EvaluateResponse
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to evaluate session')
-      }
-
-      setEvaluation(data.evaluation ?? null)
-      setSessionStatus('evaluated')
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unexpected error evaluating session')
-    } finally {
-      setEvaluating(false)
-    }
-  }
-
-  const sessionStarted = useMemo(() => Boolean(sessionId), [sessionId])
-  const canSend = sessionStatus === 'live'
-  const canComplete = sessionStatus === 'live'
-  const canEvaluate = sessionStatus === 'completed' || sessionStatus === 'evaluated'
-
   return (
-    <main className="p-6">
-      <h1 className="text-2xl font-semibold">Genim Voice Roleplay</h1>
-      <p className="mt-2 text-sm text-gray-600">
-        Structure-first build. UI polish later.
-      </p>
+    <main className="min-h-screen bg-[#f7f3ee] text-[#1f1f1c]">
+      <header className="border-b border-[#e4ddd4]">
+        <div className="mx-auto flex max-w-[1400px] items-center justify-between px-6 py-5 md:px-10">
+          <Link href="/" className="text-[28px] font-semibold tracking-tight">
+            <span className="text-[#1d1d1b]">Gen</span>
+            <span className="italic text-[#d6612d]">im</span>
+          </Link>
 
-      {error ? (
-        <div className="mt-4 rounded border border-red-300 bg-red-50 p-3 text-sm text-red-700">
-          {error}
+          <nav className="hidden items-center gap-10 text-[17px] text-[#3f433f] md:flex">
+            <a href="#how-it-works" className="transition hover:text-black">
+              How it works
+            </a>
+            <a href="#features" className="transition hover:text-black">
+              Features
+            </a>
+            <a href="#pricing" className="transition hover:text-black">
+              Pricing
+            </a>
+            <a href="#teams" className="transition hover:text-black">
+              For teams
+            </a>
+          </nav>
+
+          <div className="flex items-center gap-3">
+            <Link
+              href="/login"
+              className="hidden rounded-full px-5 py-3 text-sm font-medium text-[#3f433f] transition hover:text-black md:inline-flex"
+            >
+              Log in
+            </Link>
+
+            <Link
+              href="/register"
+              className="inline-flex rounded-full bg-[#d6612d] px-7 py-3 text-base font-semibold text-white shadow-sm transition hover:opacity-95"
+            >
+              Start free
+            </Link>
+          </div>
         </div>
-      ) : null}
+      </header>
 
-      {sessionStarted ? (
-        <div className="mt-4 rounded border border-green-300 bg-green-50 p-3 text-sm text-green-700">
-          Session: <span className="font-medium">{sessionId}</span>
-          <span className="ml-4">Status: {sessionStatus}</span>
-        </div>
-      ) : null}
+      <section className="relative overflow-hidden">
+        <div className="absolute right-0 top-0 h-[540px] w-[42%] bg-[radial-gradient(circle_at_top_left,_rgba(223,122,72,0.18),_transparent_60%)]" />
 
-      {!sessionStarted ? (
-        <div className="mt-6">
-          {loading ? (
-            <div className="rounded border p-4 text-sm text-gray-600">
-              Loading scenarios...
+        <div className="mx-auto grid max-w-[1400px] gap-16 px-6 py-16 md:px-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center lg:py-20">
+          <div className="max-w-[760px]">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#efc7b7] bg-[#f7ede6] px-4 py-2 text-sm font-medium text-[#d6612d]">
+              <span className="h-2.5 w-2.5 rounded-full bg-[#e1805c]" />
+              AI-powered sales training
             </div>
-          ) : scenarios.length === 0 ? (
-            <div className="rounded border p-4 text-sm text-gray-600">
-              No scenarios found.
+
+            <h1 className="mt-8 text-[64px] font-semibold leading-[0.96] tracking-[-0.04em] text-[#131311] md:text-[88px] lg:text-[96px]">
+              <span className="block">Practice selling.</span>
+              <span className="block italic text-[#d6612d]">Close more</span>
+              <span className="block text-[#1f4d38]">in real life.</span>
+            </h1>
+
+            <p className="mt-8 max-w-[760px] text-[22px] leading-[1.7] text-[#454744]">
+              Genim puts you in realistic sales conversations with an AI buyer
+              who pushes back, objects, and challenges you — so when the real
+              deal comes, you&apos;re ready.
+            </p>
+
+            <div className="mt-10 flex flex-wrap items-center gap-4">
+              <Link
+                href="/register"
+                className="inline-flex items-center gap-3 rounded-full bg-[#d6612d] px-8 py-5 text-xl font-semibold text-white shadow-sm transition hover:opacity-95"
+              >
+                Start roleplaying free
+                <span aria-hidden="true">→</span>
+              </Link>
+
+              <button
+                type="button"
+                className="inline-flex items-center rounded-full border border-[#d8d1c8] bg-[#f7f3ee] px-9 py-5 text-xl font-semibold text-[#20211f] transition hover:bg-white"
+              >
+                Watch a demo
+              </button>
             </div>
-          ) : (
-            <div className="space-y-4">
-              {scenarios.map((scenario) => (
-                <div key={scenario.id} className="rounded border p-4">
-                  <h2 className="text-lg font-medium">{scenario.title}</h2>
-                  <p className="mt-1 text-sm text-gray-600">
-                    {scenario.description ?? 'No description'}
+
+            <div className="mt-14 flex flex-wrap items-center gap-4">
+              <div className="flex items-center">
+                <div className="flex -space-x-2">
+                  <AvatarPill initials="AK" className="bg-[#d6612d]" />
+                  <AvatarPill initials="MS" className="bg-[#1f4d38]" />
+                  <AvatarPill initials="JR" className="bg-[#5f79c9]" />
+                  <AvatarPill initials="LP" className="bg-[#8a6ccf]" />
+                </div>
+              </div>
+
+              <p className="text-[28px] font-semibold text-[#232320]">
+                2,400+ reps{' '}
+                <span className="font-normal text-[#666864]">
+                  already training on Genim
+                </span>
+              </p>
+            </div>
+          </div>
+
+          <div className="flex justify-center lg:justify-end">
+            <div className="w-full max-w-[640px] rounded-[30px] border border-[#ece4da] bg-white shadow-[0_24px_80px_rgba(31,31,28,0.08)]">
+              <div className="flex items-center justify-between rounded-t-[30px] border-b border-[#ece7df] px-6 py-5">
+                <div className="flex items-center gap-2.5">
+                  <span className="h-3.5 w-3.5 rounded-full bg-[#f06d5f]" />
+                  <span className="h-3.5 w-3.5 rounded-full bg-[#f2c14f]" />
+                  <span className="h-3.5 w-3.5 rounded-full bg-[#79c26d]" />
+                </div>
+
+                <span className="text-lg font-medium text-[#74716d]">
+                  Genim Roleplay Session
+                </span>
+              </div>
+
+              <div className="p-6 md:p-8">
+                <p className="text-[18px] font-semibold uppercase tracking-[0.14em] text-[#7b7e79]">
+                  Scenario: SaaS — Cold Outreach Call
+                </p>
+
+                <div className="mt-6 space-y-4">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#1f4d38] text-sm font-semibold text-white">
+                      AI
+                    </div>
+                    <div className="max-w-[88%] rounded-[18px] bg-[#f1eee9] px-5 py-4 text-[18px] leading-[1.45] text-[#232320]">
+                      Look, I appreciate the call, but we already use
+                      Salesforce. I don&apos;t see why we&apos;d switch.
+                    </div>
+                  </div>
+
+                  <div className="flex items-start justify-end gap-3">
+                    <div className="max-w-[88%] rounded-[18px] bg-[#d6612d] px-5 py-4 text-[18px] leading-[1.45] text-white">
+                      That&apos;s totally fair — most of our customers came from
+                      Salesforce. Can I ask what you wish it did better?
+                    </div>
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#d6612d] text-sm font-semibold text-white">
+                      You
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#1f4d38] text-sm font-semibold text-white">
+                      AI
+                    </div>
+                    <div className="max-w-[88%] rounded-[18px] bg-[#f1eee9] px-5 py-4 text-[18px] leading-[1.45] text-[#232320]">
+                      Honestly? The reporting is a nightmare. It takes my team
+                      hours to pull basic pipeline data.
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-6 rounded-[18px] border border-[#cfe0d5] bg-[#eef5f0] p-5">
+                  <p className="text-[18px] font-semibold uppercase tracking-[0.14em] text-[#385244]">
+                    AI Coach Feedback
                   </p>
 
-                  <div className="mt-2 text-xs text-gray-500">
-                    <span>Industry: {scenario.industry ?? 'N/A'}</span>
-                    <span className="ml-4">Difficulty: {scenario.difficulty}</span>
-                  </div>
-
-                  <div className="mt-3">
-                    <button
-                      type="button"
-                      onClick={() => handleStartSession(scenario)}
-                      disabled={startingScenarioId === scenario.id}
-                      className="rounded border px-3 py-2 text-sm disabled:opacity-50"
-                    >
-                      {startingScenarioId === scenario.id
-                        ? 'Starting session...'
-                        : 'Start voice session'}
-                    </button>
+                  <div className="mt-4 space-y-3">
+                    <FeedbackBar label="Objection handling" value={88} />
+                    <FeedbackBar label="Discovery" value={74} />
+                    <FeedbackBar label="Tone" value={91} />
                   </div>
                 </div>
-              ))}
+              </div>
             </div>
-          )}
+          </div>
         </div>
-      ) : (
-        <div className="mt-6 space-y-4">
-          <div className="rounded border p-4">
-            <h2 className="text-lg font-medium">
-              {activeScenario?.title ?? 'Active session'}
-            </h2>
-            <p className="mt-1 text-sm text-gray-600">
-              {activeScenario?.description ?? 'Roleplay in progress'}
-            </p>
-          </div>
-
-          <div className="rounded border p-4">
-            <h3 className="text-sm font-medium">Conversation</h3>
-
-            <div className="mt-3 space-y-3">
-              {messages.length === 0 ? (
-                <div className="text-sm text-gray-500">
-                  No messages yet. Send the first learner message.
-                </div>
-              ) : (
-                messages.map((message) => (
-                  <div key={message.id} className="rounded border p-3">
-                    <div className="text-xs font-medium uppercase text-gray-500">
-                      {message.speaker === 'user'
-                        ? 'Learner'
-                        : message.speaker === 'assistant'
-                        ? 'Buyer'
-                        : 'System'}
-                    </div>
-                    <div className="mt-1 text-sm">{message.message_text}</div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          <div className="rounded border p-4">
-            <label className="block text-sm font-medium">
-              Learner message
-            </label>
-            <textarea
-              className="mt-2 min-h-[120px] w-full rounded border px-3 py-2 text-sm"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Type what the learner would say..."
-              disabled={sending || !canSend}
-            />
-
-            <div className="mt-3 flex flex-wrap gap-3">
-              <button
-                type="button"
-                onClick={handleSendMessage}
-                disabled={sending || !input.trim() || !canSend}
-                className="rounded border px-4 py-2 text-sm disabled:opacity-50"
-              >
-                {sending ? 'Sending...' : 'Send message'}
-              </button>
-
-              <button
-                type="button"
-                onClick={handleCompleteSession}
-                disabled={completing || !canComplete}
-                className="rounded border px-4 py-2 text-sm disabled:opacity-50"
-              >
-                {completing ? 'Completing...' : 'Complete session'}
-              </button>
-
-              <button
-                type="button"
-                onClick={handleEvaluateSession}
-                disabled={evaluating || !canEvaluate}
-                className="rounded border px-4 py-2 text-sm disabled:opacity-50"
-              >
-                {evaluating ? 'Evaluating...' : 'Evaluate session'}
-              </button>
-            </div>
-          </div>
-
-          {transcriptText ? (
-            <div className="rounded border p-4">
-              <h3 className="text-sm font-medium">Transcript</h3>
-              <pre className="mt-3 whitespace-pre-wrap text-sm">
-                {transcriptText}
-              </pre>
-            </div>
-          ) : null}
-
-          {evaluation ? (
-            <div className="rounded border p-4 space-y-4">
-              <div>
-                <h3 className="text-sm font-medium">Evaluation</h3>
-                <p className="mt-2 text-sm">
-                  Overall score: <span className="font-semibold">{evaluation.overallScore}</span>
-                </p>
-                <p className="mt-2 text-sm text-gray-700">{evaluation.summary}</p>
-              </div>
-
-              <div>
-                <h4 className="text-sm font-medium">Strengths</h4>
-                <ul className="mt-2 list-disc pl-5 text-sm">
-                  {evaluation.strengths.map((item, index) => (
-                    <li key={`${item}-${index}`}>{item}</li>
-                  ))}
-                </ul>
-              </div>
-
-              <div>
-                <h4 className="text-sm font-medium">Improvements</h4>
-                <ul className="mt-2 list-disc pl-5 text-sm">
-                  {evaluation.improvements.map((item, index) => (
-                    <li key={`${item}-${index}`}>{item}</li>
-                  ))}
-                </ul>
-              </div>
-
-              <div>
-                <h4 className="text-sm font-medium">Category breakdown</h4>
-                <div className="mt-3 space-y-3">
-                  {evaluation.categories.map((category) => (
-                    <div key={category.category_key} className="rounded border p-3">
-                      <div className="text-sm font-medium">
-                        {category.category_label} — {category.score}/{category.max_score}
-                      </div>
-                      <div className="mt-1 text-sm text-gray-700">
-                        {category.feedback}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          ) : null}
-        </div>
-      )}
+      </section>
     </main>
   )
 }
