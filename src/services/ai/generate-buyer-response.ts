@@ -1,5 +1,6 @@
 import { getOpenAIClient } from '@/lib/openai/client'
 import type { SessionMessage, ScenarioBundle } from '@/types/roleplay'
+import type { ChatCompletionMessageParam } from 'openai/resources/chat'
 
 function buildSystemPrompt(bundle: ScenarioBundle): string {
   const persona = bundle.buyerPersona
@@ -44,19 +45,32 @@ ${(persona?.constraints ?? []).join(', ')}
 
 You are NOT an assistant.
 You are a buyer being spoken to by a sales rep.
-`
+`.trim()
 }
 
-function mapMessages(messages: SessionMessage[]) {
-  return messages.map((m) => ({
-    role:
-      m.speaker === 'user'
-        ? 'user'
-        : m.speaker === 'assistant'
-        ? 'assistant'
-        : 'system',
-    content: m.message_text,
-  }))
+function mapMessages(
+  messages: SessionMessage[]
+): ChatCompletionMessageParam[] {
+  return messages.map((message): ChatCompletionMessageParam => {
+    if (message.speaker === 'user') {
+      return {
+        role: 'user',
+        content: message.message_text,
+      }
+    }
+
+    if (message.speaker === 'assistant') {
+      return {
+        role: 'assistant',
+        content: message.message_text,
+      }
+    }
+
+    return {
+      role: 'system',
+      content: message.message_text,
+    }
+  })
 }
 
 export async function generateBuyerResponse(params: {
@@ -67,13 +81,18 @@ export async function generateBuyerResponse(params: {
 
   const systemPrompt = buildSystemPrompt(params.scenarioBundle)
 
+  const messages: ChatCompletionMessageParam[] = [
+    {
+      role: 'system',
+      content: systemPrompt,
+    },
+    ...mapMessages(params.messages),
+  ]
+
   const response = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
     temperature: 0.7,
-    messages: [
-      { role: 'system', content: systemPrompt },
-      ...mapMessages(params.messages),
-    ],
+    messages,
   })
 
   const content = response.choices[0]?.message?.content
