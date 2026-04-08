@@ -44,6 +44,37 @@ type BuyerResponse = {
   message?: ChatMessage
 }
 
+type CompleteSessionResponse = {
+  ok?: boolean
+  error?: string
+  transcriptText?: string
+  session?: {
+    id: string
+    status: string
+  }
+}
+
+type EvaluationCategory = {
+  category_key: string
+  category_label: string
+  score: number
+  max_score: number
+  feedback: string
+  evidence: string[]
+}
+
+type EvaluateResponse = {
+  ok?: boolean
+  error?: string
+  evaluation?: {
+    overallScore: number
+    summary: string
+    strengths: string[]
+    improvements: string[]
+    categories: EvaluationCategory[]
+  }
+}
+
 export default function HomePage() {
   const [scenarios, setScenarios] = useState<Scenario[]>([])
   const [loading, setLoading] = useState(true)
@@ -53,11 +84,20 @@ export default function HomePage() {
     null
   )
   const [sessionId, setSessionId] = useState<string | null>(null)
+  const [sessionStatus, setSessionStatus] = useState<string | null>(null)
   const [activeScenario, setActiveScenario] = useState<Scenario | null>(null)
 
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
   const [messages, setMessages] = useState<ChatMessage[]>([])
+
+  const [completing, setCompleting] = useState(false)
+  const [evaluating, setEvaluating] = useState(false)
+
+  const [transcriptText, setTranscriptText] = useState<string | null>(null)
+  const [evaluation, setEvaluation] = useState<EvaluateResponse['evaluation'] | null>(
+    null
+  )
 
   useEffect(() => {
     let cancelled = false
@@ -108,9 +148,12 @@ export default function HomePage() {
       setStartingScenarioId(scenario.id)
       setError(null)
       setSessionId(null)
+      setSessionStatus(null)
       setActiveScenario(null)
       setMessages([])
       setInput('')
+      setTranscriptText(null)
+      setEvaluation(null)
 
       const response = await fetch('/api/roleplay/start', {
         method: 'POST',
@@ -134,6 +177,7 @@ export default function HomePage() {
       }
 
       setSessionId(data.session.id)
+      setSessionStatus(data.session.status)
       setActiveScenario(data.scenarioBundle?.scenario ?? scenario)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unexpected error starting session')
@@ -214,7 +258,80 @@ export default function HomePage() {
     }
   }
 
+  async function handleCompleteSession() {
+    if (!sessionId) {
+      setError('No active session')
+      return
+    }
+
+    try {
+      setCompleting(true)
+      setError(null)
+
+      const response = await fetch('/api/roleplay/complete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sessionId,
+        }),
+      })
+
+      const data = (await response.json()) as CompleteSessionResponse
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to complete session')
+      }
+
+      setSessionStatus(data.session?.status ?? 'completed')
+      setTranscriptText(data.transcriptText ?? null)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unexpected error completing session')
+    } finally {
+      setCompleting(false)
+    }
+  }
+
+  async function handleEvaluateSession() {
+    if (!sessionId) {
+      setError('No active session')
+      return
+    }
+
+    try {
+      setEvaluating(true)
+      setError(null)
+
+      const response = await fetch('/api/roleplay/evaluate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sessionId,
+        }),
+      })
+
+      const data = (await response.json()) as EvaluateResponse
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to evaluate session')
+      }
+
+      setEvaluation(data.evaluation ?? null)
+      setSessionStatus('evaluated')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unexpected error evaluating session')
+    } finally {
+      setEvaluating(false)
+    }
+  }
+
   const sessionStarted = useMemo(() => Boolean(sessionId), [sessionId])
+  const canSend = sessionStatus === 'live'
+  const canComplete = sessionStatus === 'live'
+  const canEvaluate = sessionStatus === 'completed' || sessionStatus === 'evaluated'
 
   return (
     <main className="p-6">
@@ -231,7 +348,8 @@ export default function HomePage() {
 
       {sessionStarted ? (
         <div className="mt-4 rounded border border-green-300 bg-green-50 p-3 text-sm text-green-700">
-          Session started successfully: <span className="font-medium">{sessionId}</span>
+          Session: <span className="font-medium">{sessionId}</span>
+          <span className="ml-4">Status: {sessionStatus}</span>
         </div>
       ) : null}
 
@@ -321,20 +439,93 @@ export default function HomePage() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Type what the learner would say..."
-              disabled={sending}
+              disabled={sending || !canSend}
             />
 
-            <div className="mt-3">
+            <div className="mt-3 flex flex-wrap gap-3">
               <button
                 type="button"
                 onClick={handleSendMessage}
-                disabled={sending || !input.trim()}
+                disabled={sending || !input.trim() || !canSend}
                 className="rounded border px-4 py-2 text-sm disabled:opacity-50"
               >
                 {sending ? 'Sending...' : 'Send message'}
               </button>
+
+              <button
+                type="button"
+                onClick={handleCompleteSession}
+                disabled={completing || !canComplete}
+                className="rounded border px-4 py-2 text-sm disabled:opacity-50"
+              >
+                {completing ? 'Completing...' : 'Complete session'}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleEvaluateSession}
+                disabled={evaluating || !canEvaluate}
+                className="rounded border px-4 py-2 text-sm disabled:opacity-50"
+              >
+                {evaluating ? 'Evaluating...' : 'Evaluate session'}
+              </button>
             </div>
           </div>
+
+          {transcriptText ? (
+            <div className="rounded border p-4">
+              <h3 className="text-sm font-medium">Transcript</h3>
+              <pre className="mt-3 whitespace-pre-wrap text-sm">
+                {transcriptText}
+              </pre>
+            </div>
+          ) : null}
+
+          {evaluation ? (
+            <div className="rounded border p-4 space-y-4">
+              <div>
+                <h3 className="text-sm font-medium">Evaluation</h3>
+                <p className="mt-2 text-sm">
+                  Overall score: <span className="font-semibold">{evaluation.overallScore}</span>
+                </p>
+                <p className="mt-2 text-sm text-gray-700">{evaluation.summary}</p>
+              </div>
+
+              <div>
+                <h4 className="text-sm font-medium">Strengths</h4>
+                <ul className="mt-2 list-disc pl-5 text-sm">
+                  {evaluation.strengths.map((item, index) => (
+                    <li key={`${item}-${index}`}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="text-sm font-medium">Improvements</h4>
+                <ul className="mt-2 list-disc pl-5 text-sm">
+                  {evaluation.improvements.map((item, index) => (
+                    <li key={`${item}-${index}`}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="text-sm font-medium">Category breakdown</h4>
+                <div className="mt-3 space-y-3">
+                  {evaluation.categories.map((category) => (
+                    <div key={category.category_key} className="rounded border p-3">
+                      <div className="text-sm font-medium">
+                        {category.category_label} — {category.score}/{category.max_score}
+                      </div>
+                      <div className="mt-1 text-sm text-gray-700">
+                        {category.feedback}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : null}
         </div>
       )}
     </main>
