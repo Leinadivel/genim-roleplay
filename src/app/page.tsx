@@ -175,11 +175,13 @@ export default function HomePage() {
         throw new Error(saveData.error || 'Failed to save learner message')
       }
 
-      if (!saveData.message) {
+      const savedMessage = saveData.message
+
+      if (!savedMessage) {
         throw new Error('Learner message was not returned')
       }
 
-      setMessages((prev) => [...prev, saveData.message])
+      setMessages((prev) => [...prev, savedMessage])
       setInput('')
 
       const respondResponse = await fetch('/api/roleplay/respond', {
@@ -198,11 +200,13 @@ export default function HomePage() {
         throw new Error(respondData.error || 'Failed to generate buyer reply')
       }
 
-      if (!respondData.message) {
+      const buyerMessage = respondData.message
+
+      if (!buyerMessage) {
         throw new Error('Buyer reply was not returned')
       }
 
-      setMessages((prev) => [...prev, respondData.message])
+      setMessages((prev) => [...prev, buyerMessage])
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unexpected error sending message')
     } finally {
