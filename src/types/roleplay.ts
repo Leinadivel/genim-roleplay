@@ -11,6 +11,35 @@ export type SessionStatus =
 
 export type MessageSpeaker = 'user' | 'assistant' | 'system'
 
+export type BuyerMood = 'nice' | 'less_rude' | 'rude'
+
+export type IndustryOption =
+  | 'SaaS'
+  | 'Pharma'
+  | 'Recruitment'
+  | 'Healthcare'
+  | 'Insurance'
+  | 'Manufacturing'
+  | 'FMCG'
+  | 'Financial Services'
+  | 'Real Estate'
+  | 'Logistics'
+  | 'EdTech'
+  | 'Telecom'
+
+export type RoleplayTypeOption =
+  | 'Cold Call'
+  | 'Warm Call'
+  | 'Discovery Call'
+  | 'Demo Call'
+  | 'Upsell Call'
+  | 'Cross-sell Call'
+  | 'Renewal Call'
+  | 'Pricing Negotiation Call'
+  | 'Objection Handling Call'
+  | 'Closing Call'
+  | 'Manager Coaching Call'
+
 export type RubricCategoryKey =
   | 'opening_rapport'
   | 'discovery_questions'
@@ -19,6 +48,57 @@ export type RubricCategoryKey =
   | 'objection_handling'
   | 'confidence_clarity'
   | 'closing_next_step'
+
+export const INDUSTRY_OPTIONS: IndustryOption[] = [
+  'SaaS',
+  'Pharma',
+  'Recruitment',
+  'Healthcare',
+  'Insurance',
+  'Manufacturing',
+  'FMCG',
+  'Financial Services',
+  'Real Estate',
+  'Logistics',
+  'EdTech',
+  'Telecom',
+]
+
+export const ROLEPLAY_TYPE_OPTIONS: RoleplayTypeOption[] = [
+  'Cold Call',
+  'Warm Call',
+  'Discovery Call',
+  'Demo Call',
+  'Upsell Call',
+  'Cross-sell Call',
+  'Renewal Call',
+  'Pricing Negotiation Call',
+  'Objection Handling Call',
+  'Closing Call',
+  'Manager Coaching Call',
+]
+
+export const BUYER_MOOD_OPTIONS: Array<{
+  value: BuyerMood
+  label: string
+  description: string
+}> = [
+  {
+    value: 'nice',
+    label: 'Nice',
+    description: 'Friendly, open, and easier to engage.',
+  },
+  {
+    value: 'less_rude',
+    label: 'Less rude',
+    description: 'A bit guarded, less patient, and mildly difficult.',
+  },
+  {
+    value: 'rude',
+    label: 'Rude',
+    description: 'Sharp, dismissive, and harder to win over.',
+  },
+]
 
 export type ScenarioListItem = {
   id: string
@@ -105,6 +185,9 @@ export type RoleplaySession = {
   overall_score: number | null
   strengths: string[]
   improvements: string[]
+  selected_industry: string | null
+  selected_roleplay_type: string | null
+  selected_buyer_mood: BuyerMood | null
   created_at: string
   updated_at: string
 }
@@ -112,6 +195,9 @@ export type RoleplaySession = {
 export type StartSessionInput = {
   scenarioId: string
   mode?: SessionMode
+  selectedIndustry?: string | null
+  selectedRoleplayType?: string | null
+  selectedBuyerMood?: BuyerMood | null
 }
 
 export type StartSessionResult = {

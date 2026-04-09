@@ -44,6 +44,11 @@ export async function POST(request: Request) {
     const buyerReply = await generateBuyerResponse({
       scenarioBundle,
       messages,
+      sessionContext: {
+        selectedIndustry: session.selected_industry,
+        selectedRoleplayType: session.selected_roleplay_type,
+        selectedBuyerMood: session.selected_buyer_mood,
+      },
     })
 
     const savedMessage = await appendSessionMessage({
@@ -53,6 +58,9 @@ export async function POST(request: Request) {
       turnIndex: nextTurnIndex,
       metadata: {
         source: 'openai',
+        selectedIndustry: session.selected_industry,
+        selectedRoleplayType: session.selected_roleplay_type,
+        selectedBuyerMood: session.selected_buyer_mood,
       },
     })
 

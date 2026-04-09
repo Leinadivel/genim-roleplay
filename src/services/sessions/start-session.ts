@@ -1,5 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
-import { getScenarioBundleById } from '@/services/scenarios/get-scenario-bundle'
+import {
+  getScenarioBundleById,
+  getScenarioBundleBySlug,
+} from '@/services/scenarios/get-scenario-bundle'
 import type { Database } from '@/types/database'
 import type {
   RoleplaySession,
@@ -32,9 +35,18 @@ function mapRoleplaySession(row: RoleplaySessionRow): RoleplaySession {
           (item): item is string => typeof item === 'string'
         )
       : [],
+    selected_industry: row.selected_industry,
+    selected_roleplay_type: row.selected_roleplay_type,
+    selected_buyer_mood: row.selected_buyer_mood,
     created_at: row.created_at,
     updated_at: row.updated_at,
   }
+}
+
+function isUuid(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    value
+  )
 }
 
 export async function startSession(
@@ -55,7 +67,9 @@ export async function startSession(
     throw new Error('You must be signed in to start a session')
   }
 
-  const scenarioBundle = await getScenarioBundleById(input.scenarioId)
+  const scenarioBundle = isUuid(input.scenarioId)
+    ? await getScenarioBundleById(input.scenarioId)
+    : await getScenarioBundleBySlug(input.scenarioId)
 
   const { data: session, error: sessionError } = await supabase
     .from('roleplay_sessions')
@@ -67,6 +81,9 @@ export async function startSession(
       mode: input.mode ?? 'voice',
       status: 'live',
       started_at: new Date().toISOString(),
+      selected_industry: input.selectedIndustry ?? null,
+      selected_roleplay_type: input.selectedRoleplayType ?? null,
+      selected_buyer_mood: input.selectedBuyerMood ?? null,
     })
     .select('*')
     .single()

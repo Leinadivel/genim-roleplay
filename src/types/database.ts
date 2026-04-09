@@ -247,6 +247,9 @@ export type Database = {
           overall_score: number | null
           strengths: Json
           improvements: Json
+          selected_industry: string | null
+          selected_roleplay_type: string | null
+          selected_buyer_mood: 'nice' | 'less_rude' | 'rude' | null
           created_at: string
           updated_at: string
         }
@@ -266,6 +269,9 @@ export type Database = {
           overall_score?: number | null
           strengths?: Json
           improvements?: Json
+          selected_industry?: string | null
+          selected_roleplay_type?: string | null
+          selected_buyer_mood?: 'nice' | 'less_rude' | 'rude' | null
           created_at?: string
           updated_at?: string
         }
@@ -285,6 +291,9 @@ export type Database = {
           overall_score?: number | null
           strengths?: Json
           improvements?: Json
+          selected_industry?: string | null
+          selected_roleplay_type?: string | null
+          selected_buyer_mood?: 'nice' | 'less_rude' | 'rude' | null
           created_at?: string
           updated_at?: string
         }

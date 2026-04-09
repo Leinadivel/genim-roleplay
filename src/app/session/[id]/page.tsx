@@ -28,6 +28,12 @@ export default function SessionPage() {
   const [sending, setSending] = useState(false)
   const [aiTyping, setAiTyping] = useState(false)
 
+  const [sessionMeta, setSessionMeta] = useState<{
+    selected_industry: string | null
+    selected_roleplay_type: string | null
+    selected_buyer_mood: string | null
+  } | null>(null)
+
   const bottomRef = useRef<HTMLDivElement | null>(null)
 
   // Auto scroll
@@ -35,22 +41,44 @@ export default function SessionPage() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, aiTyping])
 
-  // Load messages
+  // Load messages + session meta
   useEffect(() => {
-    async function loadMessages() {
+    async function loadData() {
       try {
-        const res = await fetch(`/api/roleplay/messages?sessionId=${sessionId}`)
-        const data = await res.json()
+        setLoading(true)
 
-        if (res.ok) {
-          setMessages(data.messages || [])
+        // messages
+        const msgRes = await fetch(
+          `/api/roleplay/messages?sessionId=${sessionId}`
+        )
+        const msgData = await msgRes.json()
+
+        if (msgRes.ok) {
+          setMessages(msgData.messages || [])
+        }
+
+        // session meta
+        const sessionRes = await fetch(
+          `/api/roleplay/session?sessionId=${sessionId}`
+        )
+        const sessionData = await sessionRes.json()
+
+        if (sessionRes.ok) {
+          setSessionMeta({
+            selected_industry:
+              sessionData.session?.selected_industry ?? null,
+            selected_roleplay_type:
+              sessionData.session?.selected_roleplay_type ?? null,
+            selected_buyer_mood:
+              sessionData.session?.selected_buyer_mood ?? null,
+          })
         }
       } finally {
         setLoading(false)
       }
     }
 
-    loadMessages()
+    loadData()
   }, [sessionId])
 
   async function handleSend() {
@@ -59,6 +87,7 @@ export default function SessionPage() {
     try {
       setSending(true)
 
+      // save user message
       const saveRes = await fetch('/api/roleplay/message', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -74,6 +103,7 @@ export default function SessionPage() {
 
       setAiTyping(true)
 
+      // AI response
       const aiRes = await fetch('/api/roleplay/respond', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -103,7 +133,7 @@ export default function SessionPage() {
   }
 
   function handleExit() {
-    if (confirm('Are you sure you want to exit this session?')) {
+    if (confirm('Exit this session?')) {
       router.push('/scenarios')
     }
   }
@@ -115,18 +145,18 @@ export default function SessionPage() {
         <div className="mx-auto flex max-w-[900px] items-center justify-between px-6 py-5">
           <Link
             href="/scenarios"
-            className="flex items-center gap-2 text-sm font-medium text-[#333]"
+            className="flex items-center gap-2 text-sm font-medium"
           >
             <ArrowLeft className="h-4 w-4" />
-            Back to scenarios
+            Back
           </Link>
 
           <button
             onClick={handleExit}
-            className="flex items-center gap-2 rounded-full border px-4 py-2 text-sm text-[#333] hover:bg-white"
+            className="flex items-center gap-2 rounded-full border px-4 py-2 text-sm hover:bg-white"
           >
             <X className="h-4 w-4" />
-            Cancel Scenario
+            Exit
           </button>
         </div>
       </header>
@@ -138,10 +168,39 @@ export default function SessionPage() {
           <h1 className="text-2xl font-semibold">
             AI Sales Roleplay
           </h1>
-          <p className="text-[#666] text-sm">
-            Speak naturally. The buyer will respond in real time.
+          <p className="text-sm text-[#666]">
+            Speak naturally. The buyer will respond.
           </p>
         </div>
+
+        {/* SESSION CONTEXT */}
+        {sessionMeta && (
+          <div className="mb-6 grid gap-3 md:grid-cols-3">
+            <div className="rounded-xl border bg-white px-4 py-3">
+              <div className="text-xs text-[#777]">Industry</div>
+              <div className="text-sm font-semibold">
+                {sessionMeta.selected_industry || '—'}
+              </div>
+            </div>
+
+            <div className="rounded-xl border bg-white px-4 py-3">
+              <div className="text-xs text-[#777]">Call Type</div>
+              <div className="text-sm font-semibold">
+                {sessionMeta.selected_roleplay_type || '—'}
+              </div>
+            </div>
+
+            <div className="rounded-xl border bg-white px-4 py-3">
+              <div className="text-xs text-[#777]">Buyer Mood</div>
+              <div className="text-sm font-semibold capitalize">
+                {(sessionMeta.selected_buyer_mood || '—').replace(
+                  '_',
+                  ' '
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* CHAT */}
         <div className="rounded-[20px] border bg-white p-5 space-y-4 min-h-[420px] max-h-[520px] overflow-y-auto">
@@ -196,13 +255,13 @@ export default function SessionPage() {
             onKeyDown={handleKeyDown}
             placeholder="Type what you would say..."
             disabled={sending || aiTyping}
-            className="flex-1 rounded-full border border-[#d6cdc2] bg-white px-5 py-3 text-sm text-[#1f1f1c] shadow-sm focus:border-[#d6612d] focus:outline-none"
+            className="flex-1 rounded-full border border-[#d6cdc2] bg-white px-5 py-3 text-sm shadow-sm focus:border-[#d6612d] focus:outline-none"
           />
 
           <button
             onClick={handleSend}
             disabled={sending || aiTyping}
-            className="flex items-center justify-center rounded-full bg-[#d6612d] px-4 py-3 text-white shadow-md hover:opacity-95 disabled:opacity-50"
+            className="flex items-center justify-center rounded-full bg-[#d6612d] px-4 py-3 text-white shadow-md"
           >
             {sending ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -211,7 +270,7 @@ export default function SessionPage() {
             )}
           </button>
 
-          <button className="flex items-center justify-center rounded-full border border-[#d6cdc2] bg-white px-4 py-3 shadow-sm hover:bg-[#faf7f3]">
+          <button className="flex items-center justify-center rounded-full border border-[#d6cdc2] bg-white px-4 py-3 shadow-sm">
             <Mic className="h-4 w-4 text-[#333]" />
           </button>
         </div>
