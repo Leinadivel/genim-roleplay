@@ -2,12 +2,8 @@ import { createClient } from '@/lib/supabase/server'
 import type { Database } from '@/types/database'
 import type { RoleplaySession } from '@/types/roleplay'
 
-type RoleplaySessionRow = Database['public']['Tables']['roleplay_sessions']['Row']
-
-function toStringArray(value: unknown): string[] {
-  if (!Array.isArray(value)) return []
-  return value.filter((item): item is string => typeof item === 'string')
-}
+type RoleplaySessionRow =
+  Database['public']['Tables']['roleplay_sessions']['Row']
 
 function mapRoleplaySession(row: RoleplaySessionRow): RoleplaySession {
   return {
@@ -24,8 +20,17 @@ function mapRoleplaySession(row: RoleplaySessionRow): RoleplaySession {
     transcript_text: row.transcript_text,
     summary: row.summary,
     overall_score: row.overall_score,
-    strengths: toStringArray(row.strengths),
-    improvements: toStringArray(row.improvements),
+    strengths: Array.isArray(row.strengths)
+      ? row.strengths.filter((item): item is string => typeof item === 'string')
+      : [],
+    improvements: Array.isArray(row.improvements)
+      ? row.improvements.filter(
+          (item): item is string => typeof item === 'string'
+        )
+      : [],
+    selected_industry: row.selected_industry,
+    selected_roleplay_type: row.selected_roleplay_type,
+    selected_buyer_mood: row.selected_buyer_mood,
     created_at: row.created_at,
     updated_at: row.updated_at,
   }
