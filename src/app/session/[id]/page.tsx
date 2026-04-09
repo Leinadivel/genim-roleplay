@@ -3,14 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import {
-  ArrowLeft,
-  Loader2,
-  Mic,
-  Send,
-  Square,
-  X,
-} from 'lucide-react'
+import { ArrowLeft, Loader2, Mic, Send, Square, X } from 'lucide-react'
 
 type ChatMessage = {
   id: string
@@ -44,6 +37,19 @@ type CompleteRouteResponse = {
   error?: string
 }
 
+async function safeJson<T>(response: Response): Promise<T> {
+  const contentType = response.headers.get('content-type') || ''
+  const text = await response.text()
+
+  if (!contentType.includes('application/json')) {
+    throw new Error(
+      `Expected JSON but received ${contentType || 'unknown content type'}`
+    )
+  }
+
+  return JSON.parse(text) as T
+}
+
 export default function SessionPage() {
   const params = useParams()
   const router = useRouter()
@@ -59,11 +65,19 @@ export default function SessionPage() {
 
   const [sessionMeta, setSessionMeta] = useState<SessionMeta | null>(null)
 
+  const [isListening, setIsListening] = useState(false)
+  const recognitionRef = useRef<SpeechRecognition | null>(null)
   const bottomRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, aiTyping])
+
+  useEffect(() => {
+    return () => {
+      recognitionRef.current?.stop()
+    }
+  }, [])
 
   useEffect(() => {
     async function loadData() {
@@ -72,12 +86,16 @@ export default function SessionPage() {
         setError(null)
 
         const [msgRes, sessionRes] = await Promise.all([
-          fetch(`/api/roleplay/messages?sessionId=${sessionId}`),
-          fetch(`/api/roleplay/session?sessionId=${sessionId}`),
+          fetch(`/api/roleplay/messages?sessionId=${sessionId}`, {
+            cache: 'no-store',
+          }),
+          fetch(`/api/roleplay/session?sessionId=${sessionId}`, {
+            cache: 'no-store',
+          }),
         ])
 
-        const msgData = (await msgRes.json()) as MessagesRouteResponse
-        const sessionData = (await sessionRes.json()) as SessionRouteResponse
+        const msgData = await safeJson<MessagesRouteResponse>(msgRes)
+        const sessionData = await safeJson<SessionRouteResponse>(sessionRes)
 
         if (!msgRes.ok) {
           throw new Error(msgData.error || 'Failed to load messages')
@@ -113,9 +131,9 @@ export default function SessionPage() {
         body: JSON.stringify({ sessionId, messageText }),
       })
 
-      const saveData = (await saveRes.json()) as MessageRouteResponse
+      const saveData = await safeJson<MessageRouteResponse>(saveRes)
 
-      if (!saveRes.ok || !saveData.message) {
+      if (!saveRes.ok) {
         throw new Error(saveData.error || 'Failed to save message')
       }
 
@@ -135,9 +153,9 @@ export default function SessionPage() {
         body: JSON.stringify({ sessionId }),
       })
 
-      const aiData = (await aiRes.json()) as MessageRouteResponse
+      const aiData = await safeJson<MessageRouteResponse>(aiRes)
 
-      if (!aiRes.ok || !aiData.message) {
+      if (!aiRes.ok) {
         throw new Error(aiData.error || 'Failed to get buyer response')
       }
 
@@ -167,7 +185,7 @@ export default function SessionPage() {
         body: JSON.stringify({ sessionId }),
       })
 
-      const data = (await res.json()) as CompleteRouteResponse
+      const data = await safeJson<CompleteRouteResponse>(res)
 
       if (!res.ok) {
         throw new Error(data.error || 'Failed to complete session')
@@ -191,12 +209,76 @@ export default function SessionPage() {
   }
 
   function handleCancelRoleplay() {
+    recognitionRef.current?.stop()
     const confirmed = window.confirm(
       'Cancel this roleplay and go back to scenarios?'
     )
     if (confirmed) {
       router.push('/scenarios')
     }
+  }
+
+  function handleMicClick() {
+    if (isListening) {
+      recognitionRef.current?.stop()
+      setIsListening(false)
+      return
+    }
+
+    const SpeechRecognitionAPI =
+      window.SpeechRecognition || window.webkitSpeechRecognition
+
+    if (!SpeechRecognitionAPI) {
+      setError('Voice recognition is not supported in this browser.')
+      return
+    }
+
+    const recognition = new SpeechRecognitionAPI()
+
+    recognition.lang = 'en-US'
+    recognition.continuous = false
+    recognition.interimResults = true
+    ;(recognition as SpeechRecognition & { maxAlternatives?: number }).maxAlternatives = 1
+
+    recognition.onstart = () => {
+      setIsListening(true)
+      setError(null)
+    }
+
+    recognition.onend = () => {
+      setIsListening(false)
+    }
+
+    recognition.onerror = (event) => {
+      console.error('Speech recognition error:', event.error, event.message)
+
+      if (event.error === 'not-allowed') {
+        setError(
+          'Microphone permission was denied. Please allow microphone access in your browser settings.'
+        )
+      } else if (event.error === 'no-speech') {
+        setError('No speech was detected. Please try again and speak clearly.')
+      } else if (event.error === 'audio-capture') {
+        setError('No microphone was found. Please check your audio input device.')
+      } else {
+        setError(`Voice recognition failed: ${event.error}`)
+      }
+
+      setIsListening(false)
+    }
+
+    recognition.onresult = (event) => {
+      let transcript = ''
+
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        transcript += event.results[i][0].transcript
+      }
+
+      setInput((prev) => (prev ? `${prev} ${transcript}` : transcript))
+    }
+
+    recognitionRef.current = recognition
+    recognition.start()
   }
 
   const moodLabel = useMemo(() => {
@@ -367,9 +449,18 @@ export default function SessionPage() {
 
             <button
               type="button"
-              className="inline-flex items-center justify-center rounded-full border border-[#d6cdc2] bg-white px-4 py-3 text-[#2b2c2a] shadow-sm hover:bg-[#faf7f3]"
+              onClick={handleMicClick}
+              className={`inline-flex items-center justify-center rounded-full border px-4 py-3 shadow-sm transition ${
+                isListening
+                  ? 'border-red-500 bg-red-500 text-white'
+                  : 'border-[#d6cdc2] bg-white text-[#2b2c2a] hover:bg-[#faf7f3]'
+              }`}
             >
-              <Mic className="h-4 w-4" />
+              {isListening ? (
+                <span className="text-xs font-semibold">Stop</span>
+              ) : (
+                <Mic className="h-4 w-4" />
+              )}
             </button>
 
             <button
