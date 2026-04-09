@@ -27,6 +27,9 @@ function mapRoleplaySession(row: RoleplaySessionRow): RoleplaySession {
           (item): item is string => typeof item === 'string'
         )
       : [],
+    selected_industry: row.selected_industry,
+    selected_roleplay_type: row.selected_roleplay_type,
+    selected_buyer_mood: row.selected_buyer_mood,
     created_at: row.created_at,
     updated_at: row.updated_at,
   }
