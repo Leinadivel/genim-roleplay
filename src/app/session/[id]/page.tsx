@@ -66,6 +66,9 @@ export default function SessionPage() {
   const [sessionMeta, setSessionMeta] = useState<SessionMeta | null>(null)
 
   const [isListening, setIsListening] = useState(false)
+  const [speechBaseText, setSpeechBaseText] = useState('')
+  const [speechTranscript, setSpeechTranscript] = useState('')
+
   const recognitionRef = useRef<SpeechRecognition | null>(null)
   const bottomRef = useRef<HTMLDivElement | null>(null)
 
@@ -145,6 +148,8 @@ export default function SessionPage() {
 
       setMessages((prev) => [...prev, savedMessage])
       setInput('')
+      setSpeechBaseText('')
+      setSpeechTranscript('')
       setAiTyping(true)
 
       const aiRes = await fetch('/api/roleplay/respond', {
@@ -243,6 +248,8 @@ export default function SessionPage() {
     recognition.onstart = () => {
       setIsListening(true)
       setError(null)
+      setSpeechBaseText(input.trim())
+      setSpeechTranscript('')
     }
 
     recognition.onend = () => {
@@ -268,13 +275,28 @@ export default function SessionPage() {
     }
 
     recognition.onresult = (event) => {
-      let transcript = ''
+      let finalTranscript = ''
+      let interimTranscript = ''
 
       for (let i = event.resultIndex; i < event.results.length; i++) {
-        transcript += event.results[i][0].transcript
+        const chunk = event.results[i][0].transcript
+
+        if (event.results[i].isFinal) {
+          finalTranscript += chunk
+        } else {
+          interimTranscript += chunk
+        }
       }
 
-      setInput((prev) => (prev ? `${prev} ${transcript}` : transcript))
+      const committedTranscript = `${speechTranscript}${finalTranscript}`.trim()
+      const visibleTranscript = `${committedTranscript} ${interimTranscript}`.trim()
+      const nextValue = [speechBaseText, visibleTranscript]
+        .filter(Boolean)
+        .join(' ')
+        .trim()
+
+      setSpeechTranscript(committedTranscript)
+      setInput(nextValue)
     }
 
     recognitionRef.current = recognition
