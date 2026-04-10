@@ -69,11 +69,14 @@ export default function SessionPage() {
   const [isListening, setIsListening] = useState(false)
   const [speechBaseText, setSpeechBaseText] = useState('')
   const [speechTranscript, setSpeechTranscript] = useState('')
-  const [autoSendAfterSpeech, setAutoSendAfterSpeech] = useState(false)
 
   const recognitionRef = useRef<SpeechRecognition | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const bottomRef = useRef<HTMLDivElement | null>(null)
+
+  const speechBaseTextRef = useRef('')
+  const speechTranscriptRef = useRef('')
+  const autoSendAfterSpeechRef = useRef(false)
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -209,6 +212,9 @@ export default function SessionPage() {
       setInput('')
       setSpeechBaseText('')
       setSpeechTranscript('')
+      speechBaseTextRef.current = ''
+      speechTranscriptRef.current = ''
+      autoSendAfterSpeechRef.current = false
       setAiTyping(true)
 
       const aiRes = await fetch('/api/roleplay/respond', {
@@ -318,26 +324,38 @@ export default function SessionPage() {
     ;(recognition as SpeechRecognition & { maxAlternatives?: number }).maxAlternatives = 1
 
     recognition.onstart = () => {
+      const base = input.trim()
       setIsListening(true)
       setError(null)
-      setSpeechBaseText(input.trim())
+      setSpeechBaseText(base)
       setSpeechTranscript('')
-      setAutoSendAfterSpeech(true)
+      speechBaseTextRef.current = base
+      speechTranscriptRef.current = ''
+      autoSendAfterSpeechRef.current = true
     }
 
     recognition.onend = () => {
       setIsListening(false)
 
-      const finalInput = [speechBaseText, speechTranscript]
+      const finalInput = [
+        speechBaseTextRef.current,
+        speechTranscriptRef.current,
+      ]
         .filter(Boolean)
         .join(' ')
         .trim()
 
-      if (autoSendAfterSpeech && finalInput && !sending && !aiTyping && !aiSpeaking) {
-        setAutoSendAfterSpeech(false)
+      if (
+        autoSendAfterSpeechRef.current &&
+        finalInput &&
+        !sending &&
+        !aiTyping &&
+        !aiSpeaking
+      ) {
+        autoSendAfterSpeechRef.current = false
         void sendCurrentInput(finalInput)
       } else {
-        setAutoSendAfterSpeech(false)
+        autoSendAfterSpeechRef.current = false
       }
     }
 
@@ -356,7 +374,7 @@ export default function SessionPage() {
         setError(`Voice recognition failed: ${event.error}`)
       }
 
-      setAutoSendAfterSpeech(false)
+      autoSendAfterSpeechRef.current = false
       setIsListening(false)
     }
 
@@ -374,13 +392,14 @@ export default function SessionPage() {
         }
       }
 
-      const committedTranscript = `${speechTranscript}${finalTranscript}`.trim()
+      const committedTranscript = `${speechTranscriptRef.current}${finalTranscript}`.trim()
       const visibleTranscript = `${committedTranscript} ${interimTranscript}`.trim()
-      const nextValue = [speechBaseText, visibleTranscript]
+      const nextValue = [speechBaseTextRef.current, visibleTranscript]
         .filter(Boolean)
         .join(' ')
         .trim()
 
+      speechTranscriptRef.current = committedTranscript
       setSpeechTranscript(committedTranscript)
       setInput(nextValue)
     }
