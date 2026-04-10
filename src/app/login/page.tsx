@@ -31,7 +31,7 @@ export default function LoginPage() {
       }
 
       setMessage('Signed in successfully.')
-      window.location.href = '/scenarios'
+      window.location.href = '/post-login'
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to sign in')
     } finally {
