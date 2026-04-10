@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Loader2, Mic, Send, Square, X } from 'lucide-react'
+import { ArrowLeft, Loader2, Mic, Send, Square, Volume2, X } from 'lucide-react'
 
 type ChatMessage = {
   id: string
@@ -61,6 +61,7 @@ export default function SessionPage() {
   const [sending, setSending] = useState(false)
   const [completing, setCompleting] = useState(false)
   const [aiTyping, setAiTyping] = useState(false)
+  const [aiSpeaking, setAiSpeaking] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const [sessionMeta, setSessionMeta] = useState<SessionMeta | null>(null)
@@ -68,17 +69,23 @@ export default function SessionPage() {
   const [isListening, setIsListening] = useState(false)
   const [speechBaseText, setSpeechBaseText] = useState('')
   const [speechTranscript, setSpeechTranscript] = useState('')
+  const [autoSendAfterSpeech, setAutoSendAfterSpeech] = useState(false)
 
   const recognitionRef = useRef<SpeechRecognition | null>(null)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
   const bottomRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages, aiTyping])
+  }, [messages, aiTyping, aiSpeaking])
 
   useEffect(() => {
     return () => {
       recognitionRef.current?.stop()
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current.src = ''
+      }
     }
   }, [])
 
@@ -120,9 +127,61 @@ export default function SessionPage() {
     loadData()
   }, [sessionId])
 
-  async function handleSend() {
-    const messageText = input.trim()
-    if (!messageText || sending || aiTyping) return
+  async function speakBuyerText(text: string) {
+    try {
+      setAiSpeaking(true)
+
+      const response = await fetch('/api/voice/speak', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text }),
+      })
+
+      if (!response.ok) {
+        const contentType = response.headers.get('content-type') || ''
+
+        if (contentType.includes('application/json')) {
+          const data = await safeJson<{ error?: string }>(response)
+          throw new Error(data.error || 'Failed to generate buyer audio')
+        }
+
+        throw new Error('Failed to generate buyer audio')
+      }
+
+      const blob = await response.blob()
+      const audioUrl = URL.createObjectURL(blob)
+
+      if (audioRef.current) {
+        audioRef.current.pause()
+        if (audioRef.current.src) {
+          URL.revokeObjectURL(audioRef.current.src)
+        }
+      }
+
+      const audio = new Audio(audioUrl)
+      audioRef.current = audio
+
+      await new Promise<void>((resolve, reject) => {
+        audio.onended = () => {
+          URL.revokeObjectURL(audioUrl)
+          resolve()
+        }
+
+        audio.onerror = () => {
+          URL.revokeObjectURL(audioUrl)
+          reject(new Error('Audio playback failed'))
+        }
+
+        audio.play().catch(reject)
+      })
+    } finally {
+      setAiSpeaking(false)
+    }
+  }
+
+  async function sendCurrentInput(textOverride?: string) {
+    const messageText = (textOverride ?? input).trim()
+    if (!messageText || sending || aiTyping || aiSpeaking) return
 
     try {
       setSending(true)
@@ -171,12 +230,19 @@ export default function SessionPage() {
       }
 
       setMessages((prev) => [...prev, buyerMessage])
+      setAiTyping(false)
+
+      await speakBuyerText(buyerMessage.message_text)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to send message')
     } finally {
       setAiTyping(false)
       setSending(false)
     }
+  }
+
+  async function handleSend() {
+    await sendCurrentInput()
   }
 
   async function handleCompleteSession() {
@@ -209,12 +275,16 @@ export default function SessionPage() {
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
-      handleSend()
+      void handleSend()
     }
   }
 
   function handleCancelRoleplay() {
     recognitionRef.current?.stop()
+    if (audioRef.current) {
+      audioRef.current.pause()
+    }
+
     const confirmed = window.confirm(
       'Cancel this roleplay and go back to scenarios?'
     )
@@ -229,6 +299,8 @@ export default function SessionPage() {
       setIsListening(false)
       return
     }
+
+    if (aiTyping || aiSpeaking || sending) return
 
     const SpeechRecognitionAPI =
       window.SpeechRecognition || window.webkitSpeechRecognition
@@ -250,10 +322,23 @@ export default function SessionPage() {
       setError(null)
       setSpeechBaseText(input.trim())
       setSpeechTranscript('')
+      setAutoSendAfterSpeech(true)
     }
 
     recognition.onend = () => {
       setIsListening(false)
+
+      const finalInput = [speechBaseText, speechTranscript]
+        .filter(Boolean)
+        .join(' ')
+        .trim()
+
+      if (autoSendAfterSpeech && finalInput && !sending && !aiTyping && !aiSpeaking) {
+        setAutoSendAfterSpeech(false)
+        void sendCurrentInput(finalInput)
+      } else {
+        setAutoSendAfterSpeech(false)
+      }
     }
 
     recognition.onerror = (event) => {
@@ -271,6 +356,7 @@ export default function SessionPage() {
         setError(`Voice recognition failed: ${event.error}`)
       }
 
+      setAutoSendAfterSpeech(false)
       setIsListening(false)
     }
 
@@ -307,6 +393,9 @@ export default function SessionPage() {
     if (!sessionMeta?.selected_buyer_mood) return '—'
     return sessionMeta.selected_buyer_mood.replace('_', ' ')
   }, [sessionMeta])
+
+  const micDisabled = sending || aiTyping || aiSpeaking
+  const sendDisabled = sending || aiTyping || aiSpeaking || !input.trim()
 
   return (
     <main className="min-h-screen bg-[#f7f3ee] text-[#1f1f1c]">
@@ -408,8 +497,24 @@ export default function SessionPage() {
               </p>
             </div>
 
-            <div className="rounded-full bg-[#f7f3ee] px-3 py-1 text-xs font-medium text-[#5f625d]">
-              {messages.length} messages
+            <div className="flex items-center gap-2">
+              {aiSpeaking ? (
+                <div className="inline-flex items-center gap-2 rounded-full bg-[#eef5f0] px-3 py-1 text-xs font-medium text-[#1f4d38]">
+                  <Volume2 className="h-3.5 w-3.5" />
+                  Buyer speaking
+                </div>
+              ) : null}
+
+              {isListening ? (
+                <div className="inline-flex items-center gap-2 rounded-full bg-red-50 px-3 py-1 text-xs font-medium text-red-600">
+                  <Mic className="h-3.5 w-3.5" />
+                  Listening
+                </div>
+              ) : null}
+
+              <div className="rounded-full bg-[#f7f3ee] px-3 py-1 text-xs font-medium text-[#5f625d]">
+                {messages.length} messages
+              </div>
             </div>
           </div>
 
@@ -464,15 +569,16 @@ export default function SessionPage() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Type what the seller would say..."
-              disabled={sending || aiTyping}
+              placeholder="Type or speak what the seller would say..."
+              disabled={sending || aiTyping || aiSpeaking}
               className="flex-1 rounded-full border border-[#d6cdc2] bg-white px-5 py-3 text-sm text-[#1f1f1c] shadow-sm placeholder:text-[#8d908a] focus:border-[#d6612d] focus:outline-none"
             />
 
             <button
               type="button"
               onClick={handleMicClick}
-              className={`inline-flex items-center justify-center rounded-full border px-4 py-3 shadow-sm transition ${
+              disabled={micDisabled && !isListening}
+              className={`inline-flex items-center justify-center rounded-full border px-4 py-3 shadow-sm transition disabled:opacity-50 ${
                 isListening
                   ? 'border-red-500 bg-red-500 text-white'
                   : 'border-[#d6cdc2] bg-white text-[#2b2c2a] hover:bg-[#faf7f3]'
@@ -488,7 +594,7 @@ export default function SessionPage() {
             <button
               type="button"
               onClick={handleSend}
-              disabled={sending || aiTyping || !input.trim()}
+              disabled={sendDisabled}
               className="inline-flex items-center justify-center rounded-full bg-[#d6612d] px-4 py-3 text-white shadow-md hover:opacity-95 disabled:opacity-50"
             >
               {sending ? (
