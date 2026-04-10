@@ -1,68 +1,88 @@
 import { NextResponse } from 'next/server'
+import { getOpenAIClient } from '@/lib/openai/client'
+import { getSessionMessages } from '@/services/sessions/get-session-messages'
+import { createClient } from '@/lib/supabase/server'
 
-import { evaluateSession } from '@/services/ai/evaluate-session'
-import { saveSessionEvaluation } from '@/services/evaluation/save-session-evaluation'
-import { getScenarioBundleById } from '@/services/scenarios/get-scenario-bundle'
-import { getSessionById } from '@/services/sessions/get-session-by-id'
-
-type EvaluateRequestBody = {
-  sessionId?: string
-}
-
-export async function POST(request: Request) {
+export async function POST(req: Request) {
   try {
-    const body = (await request.json()) as EvaluateRequestBody
-    const sessionId = body.sessionId?.trim()
+    const { sessionId } = (await req.json()) as { sessionId?: string }
 
     if (!sessionId) {
-      return NextResponse.json(
-        { error: 'sessionId is required' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'sessionId required' }, { status: 400 })
     }
 
-    const session = await getSessionById(sessionId)
+    const messages = await getSessionMessages(sessionId)
 
-    if (session.status !== 'completed' && session.status !== 'evaluated') {
-      return NextResponse.json(
-        { error: 'Only a completed session can be evaluated' },
-        { status: 400 }
-      )
+    const transcript =
+      messages.map((m) => `${m.speaker}: ${m.message_text}`).join('\n') || ''
+
+    const openai = getOpenAIClient()
+
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: `You are a sales coach.
+
+Return JSON ONLY in this format:
+{
+  "score": number,
+  "strengths": ["string"],
+  "improvements": ["string"],
+  "feedback": "string"
+}`,
+        },
+        {
+          role: 'user',
+          content: transcript,
+        },
+      ],
+      temperature: 0.7,
+    })
+
+    const raw = completion.choices[0]?.message?.content || '{}'
+
+    let parsed: {
+      score: number
+      strengths: string[]
+      improvements: string[]
+      feedback: string
     }
 
-    if (!session.transcript_text?.trim()) {
-      return NextResponse.json(
-        { error: 'Session transcript is empty' },
-        { status: 400 }
-      )
+    try {
+      parsed = JSON.parse(raw) as {
+        score: number
+        strengths: string[]
+        improvements: string[]
+        feedback: string
+      }
+    } catch {
+      throw new Error('Failed to parse evaluation response')
     }
 
-    const scenarioBundle = await getScenarioBundleById(session.scenario_id)
+    const supabase = await createClient()
 
-    const evaluation = await evaluateSession({
-      transcript: session.transcript_text,
-      rubricItems: scenarioBundle.rubricItems,
-    })
+    const { error: updateError } = await supabase
+      .from('roleplay_sessions')
+      .update({
+        overall_score: parsed.score,
+        strengths: parsed.strengths,
+        improvements: parsed.improvements,
+        summary: parsed.feedback,
+        status: 'evaluated',
+      })
+      .eq('id', sessionId)
 
-    await saveSessionEvaluation({
-      sessionId,
-      evaluation,
-      rubricItems: scenarioBundle.rubricItems.map((item) => ({
-        id: item.id,
-        category_key: item.category_key,
-        category_label: item.category_label,
-        max_score: item.max_score,
-      })),
-    })
+    if (updateError) {
+      throw new Error(updateError.message)
+    }
 
-    return NextResponse.json({
-      ok: true,
-      evaluation,
-    })
-  } catch (error) {
-    const message =
-      error instanceof Error ? error.message : 'Unexpected server error'
-
-    return NextResponse.json({ error: message }, { status: 500 })
+    return NextResponse.json({ evaluation: parsed })
+  } catch (err) {
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : 'Evaluation failed' },
+      { status: 500 }
+    )
   }
 }

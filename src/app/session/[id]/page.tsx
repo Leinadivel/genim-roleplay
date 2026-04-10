@@ -268,7 +268,7 @@ export default function SessionPage() {
         throw new Error(data.error || 'Failed to complete session')
       }
 
-      router.push('/scenarios')
+      router.push(`/session/${sessionId}/report`)
     } catch (err) {
       setError(
         err instanceof Error ? err.message : 'Failed to complete session'
