@@ -23,7 +23,7 @@ export async function POST(request: Request) {
       model: 'gpt-4o-mini-tts',
       voice: 'alloy',
       input: text,
-      format: 'mp3',
+      response_format: 'mp3',
     })
 
     const audioBuffer = Buffer.from(await response.arrayBuffer())
