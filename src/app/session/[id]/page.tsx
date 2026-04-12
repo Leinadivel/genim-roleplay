@@ -16,6 +16,10 @@ type SessionMeta = {
   selected_roleplay_type: string | null
   selected_buyer_mood: string | null
   selected_buyer_role: string | null
+  selected_deal_size: string | null
+  selected_pain_level: string | null
+  selected_company_stage: string | null
+  selected_time_pressure: string | null
 }
 
 type SessionRouteResponse = {
@@ -49,6 +53,32 @@ async function safeJson<T>(response: Response): Promise<T> {
   }
 
   return JSON.parse(text) as T
+}
+
+function formatPainLevel(value: string | null) {
+  if (!value) return '—'
+  if (value === 'low') return 'Low pain'
+  if (value === 'moderate') return 'Moderate pain'
+  if (value === 'high') return 'High pain'
+  return value
+}
+
+function formatTimePressure(value: string | null) {
+  if (!value) return '—'
+  switch (value) {
+    case 'none':
+      return 'No time limit'
+    case '5_min':
+      return '5-minute quick call'
+    case '15_min':
+      return '15-minute structured call'
+    case '30_min':
+      return '30-minute structured call'
+    case 'rush':
+      return 'Prospect in a rush'
+    default:
+      return value
+  }
 }
 
 export default function SessionPage() {
@@ -504,6 +534,42 @@ export default function SessionPage() {
               </div>
               <div className="mt-2 text-base font-semibold capitalize text-[#1b1b18]">
                 {moodLabel}
+              </div>
+            </div>
+
+            <div className="rounded-[20px] border border-[#e8ded3] bg-white px-5 py-4 shadow-[0_8px_24px_rgba(25,25,20,0.04)]">
+              <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
+                Deal size
+              </div>
+              <div className="mt-2 text-base font-semibold text-[#1b1b18]">
+                {sessionMeta.selected_deal_size || '—'}
+              </div>
+            </div>
+
+            <div className="rounded-[20px] border border-[#e8ded3] bg-white px-5 py-4 shadow-[0_8px_24px_rgba(25,25,20,0.04)]">
+              <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
+                Pain level
+              </div>
+              <div className="mt-2 text-base font-semibold text-[#1b1b18]">
+                {formatPainLevel(sessionMeta.selected_pain_level)}
+              </div>
+            </div>
+
+            <div className="rounded-[20px] border border-[#e8ded3] bg-white px-5 py-4 shadow-[0_8px_24px_rgba(25,25,20,0.04)]">
+              <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
+                Company stage
+              </div>
+              <div className="mt-2 text-base font-semibold text-[#1b1b18]">
+                {sessionMeta.selected_company_stage || '—'}
+              </div>
+            </div>
+
+            <div className="rounded-[20px] border border-[#e8ded3] bg-white px-5 py-4 shadow-[0_8px_24px_rgba(25,25,20,0.04)]">
+              <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
+                Time pressure
+              </div>
+              <div className="mt-2 text-base font-semibold text-[#1b1b18]">
+                {formatTimePressure(sessionMeta.selected_time_pressure)}
               </div>
             </div>
           </div>

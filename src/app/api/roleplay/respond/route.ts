@@ -49,6 +49,10 @@ export async function POST(request: Request) {
         selectedRoleplayType: session.selected_roleplay_type,
         selectedBuyerMood: session.selected_buyer_mood,
         selectedBuyerRole: session.selected_buyer_role,
+        selectedDealSize: session.selected_deal_size,
+        selectedPainLevel: session.selected_pain_level,
+        selectedCompanyStage: session.selected_company_stage,
+        selectedTimePressure: session.selected_time_pressure,
       },
     })
 
@@ -63,6 +67,10 @@ export async function POST(request: Request) {
         selectedRoleplayType: session.selected_roleplay_type,
         selectedBuyerMood: session.selected_buyer_mood,
         selectedBuyerRole: session.selected_buyer_role,
+        selectedDealSize: session.selected_deal_size,
+        selectedPainLevel: session.selected_pain_level,
+        selectedCompanyStage: session.selected_company_stage,
+        selectedTimePressure: session.selected_time_pressure,
       },
     })
 

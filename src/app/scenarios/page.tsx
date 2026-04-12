@@ -12,11 +12,20 @@ import {
   ShieldCheck,
   Target,
   UserRound,
+  DollarSign,
+  AlertTriangle,
+  Building2,
+  Clock3,
 } from 'lucide-react'
 import {
   BUYER_MOOD_OPTIONS,
   INDUSTRY_OPTIONS,
   ROLEPLAY_TYPE_OPTIONS,
+  BUYER_ROLE_OPTIONS,
+  DEAL_SIZE_OPTIONS,
+  PAIN_LEVEL_OPTIONS,
+  COMPANY_STAGE_OPTIONS,
+  TIME_PRESSURE_OPTIONS,
   type BuyerMood,
 } from '@/types/roleplay'
 
@@ -78,18 +87,6 @@ const SCENARIOS: Scenario[] = [
   },
 ]
 
-const BUYER_ROLES = [
-  'CEO / Founder',
-  'Head of Sales',
-  'VP of Sales',
-  'Sales Manager',
-  'Head of Marketing',
-  'CTO',
-  'Head of Product',
-  'COO',
-  'Finance Lead',
-] as const
-
 function ScenarioIcon({ slug }: { slug: string }) {
   if (slug.includes('cold')) return <Mic className="h-5 w-5" />
   if (slug.includes('discovery')) return <Brain className="h-5 w-5" />
@@ -126,6 +123,13 @@ export default function ScenariosPage() {
     useState<BuyerMood>('nice')
   const [selectedBuyerRole, setSelectedBuyerRole] =
     useState<string>('Head of Sales')
+  const [selectedDealSize, setSelectedDealSize] = useState<string>('$10k')
+  const [selectedPainLevel, setSelectedPainLevel] =
+    useState<string>('moderate')
+  const [selectedCompanyStage, setSelectedCompanyStage] =
+    useState<string>('Series A & B')
+  const [selectedTimePressure, setSelectedTimePressure] =
+    useState<string>('15_min')
   const [starting, setStarting] = useState(false)
 
   const selectedScenario = useMemo(
@@ -134,6 +138,14 @@ export default function ScenariosPage() {
       SCENARIOS[0],
     [selectedScenarioId]
   )
+
+  const selectedPainLevelLabel =
+    PAIN_LEVEL_OPTIONS.find((item) => item.value === selectedPainLevel)?.label ??
+    selectedPainLevel
+
+  const selectedTimePressureLabel =
+    TIME_PRESSURE_OPTIONS.find((item) => item.value === selectedTimePressure)
+      ?.label ?? selectedTimePressure
 
   async function handleStartSession() {
     try {
@@ -147,7 +159,15 @@ export default function ScenariosPage() {
         selectedRoleplayType
       )}&selectedBuyerMood=${encodeURIComponent(
         selectedBuyerMood
-      )}&selectedBuyerRole=${encodeURIComponent(selectedBuyerRole)}`
+      )}&selectedBuyerRole=${encodeURIComponent(
+        selectedBuyerRole
+      )}&selectedDealSize=${encodeURIComponent(
+        selectedDealSize
+      )}&selectedPainLevel=${encodeURIComponent(
+        selectedPainLevel
+      )}&selectedCompanyStage=${encodeURIComponent(
+        selectedCompanyStage
+      )}&selectedTimePressure=${encodeURIComponent(selectedTimePressure)}`
 
       window.location.href = url
     } finally {
@@ -190,7 +210,7 @@ export default function ScenariosPage() {
       <section className="border-b border-[#e8ded3] bg-[#f3ece4]">
         <div className="mx-auto max-w-[1440px] px-6 py-8 md:px-8">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-[840px]">
+            <div className="max-w-[920px]">
               <div className="inline-flex items-center gap-2 rounded-full border border-[#efc7b7] bg-[#f7ede6] px-4 py-2 text-sm font-medium text-[#d6612d]">
                 <span className="h-2.5 w-2.5 rounded-full bg-[#e1805c]" />
                 Roleplay setup
@@ -203,10 +223,10 @@ export default function ScenariosPage() {
                 </span>
               </h1>
 
-              <p className="mt-4 max-w-[820px] text-base leading-8 text-[#5c5f5a] md:text-lg">
-                Choose the market, buyer attitude, buyer role, call type, and
-                scenario in one compact layout. Every choice updates the live
-                summary instantly.
+              <p className="mt-4 max-w-[860px] text-base leading-8 text-[#5c5f5a] md:text-lg">
+                Choose the market, buyer attitude, buyer role, deal pressure,
+                company context, call type, and scenario in one compact layout.
+                Every choice updates the live summary instantly.
               </p>
             </div>
 
@@ -258,7 +278,7 @@ export default function ScenariosPage() {
                 title="Buyer mood"
                 subtitle="Control how friendly or difficult the buyer is"
               />
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-3 xl:grid-cols-3">
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
                 {BUYER_MOOD_OPTIONS.map((mood) => {
                   const active = mood.value === selectedBuyerMood
 
@@ -290,8 +310,8 @@ export default function ScenariosPage() {
                 title="Buyer role"
                 subtitle="Choose who you are selling to"
               />
-              <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-3">
-                {BUYER_ROLES.map((role) => {
+              <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+                {BUYER_ROLE_OPTIONS.map((role) => {
                   const active = role === selectedBuyerRole
 
                   return (
@@ -312,6 +332,134 @@ export default function ScenariosPage() {
                     </button>
                   )
                 })}
+              </div>
+            </div>
+
+            <div className="grid gap-6 lg:grid-cols-2">
+              <div className="rounded-[24px] border border-[#e8ded3] bg-white p-5 shadow-[0_10px_30px_rgba(25,25,20,0.04)]">
+                <SectionHeader
+                  title="Deal size"
+                  subtitle="Control commercial weight"
+                />
+                <div className="grid grid-cols-2 gap-3">
+                  {DEAL_SIZE_OPTIONS.map((dealSize) => {
+                    const active = dealSize === selectedDealSize
+
+                    return (
+                      <button
+                        key={dealSize}
+                        type="button"
+                        onClick={() => setSelectedDealSize(dealSize)}
+                        className={`rounded-[16px] border px-3 py-3 text-left text-sm font-medium transition ${
+                          active
+                            ? 'border-[#d6612d] bg-[#fcf3ee] text-[#a84922]'
+                            : 'border-[#e9e0d6] bg-[#faf8f5] text-[#4d4f4a] hover:bg-white'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <DollarSign className="h-4 w-4" />
+                          <span>{dealSize}</span>
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              <div className="rounded-[24px] border border-[#e8ded3] bg-white p-5 shadow-[0_10px_30px_rgba(25,25,20,0.04)]">
+                <SectionHeader
+                  title="Pain level"
+                  subtitle="Control urgency and buyer pressure"
+                />
+                <div className="grid grid-cols-1 gap-3">
+                  {PAIN_LEVEL_OPTIONS.map((pain) => {
+                    const active = pain.value === selectedPainLevel
+
+                    return (
+                      <button
+                        key={pain.value}
+                        type="button"
+                        onClick={() => setSelectedPainLevel(pain.value)}
+                        className={`rounded-[16px] border p-4 text-left transition ${
+                          active
+                            ? 'border-[#d6612d] bg-[#fcf3ee]'
+                            : 'border-[#e9e0d6] bg-[#faf8f5] hover:bg-white'
+                        }`}
+                      >
+                        <div className="flex items-start gap-2">
+                          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                          <span className="text-sm font-medium text-[#1a1a17]">
+                            {pain.label}
+                          </span>
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+
+            <div className="grid gap-6 lg:grid-cols-2">
+              <div className="rounded-[24px] border border-[#e8ded3] bg-white p-5 shadow-[0_10px_30px_rgba(25,25,20,0.04)]">
+                <SectionHeader
+                  title="Company stage"
+                  subtitle="Add company maturity context"
+                />
+                <div className="grid grid-cols-2 gap-3">
+                  {COMPANY_STAGE_OPTIONS.map((stage) => {
+                    const active = stage === selectedCompanyStage
+
+                    return (
+                      <button
+                        key={stage}
+                        type="button"
+                        onClick={() => setSelectedCompanyStage(stage)}
+                        className={`rounded-[16px] border px-3 py-3 text-left text-sm font-medium transition ${
+                          active
+                            ? 'border-[#1f4d38] bg-[#eef5f0] text-[#1f4d38]'
+                            : 'border-[#e9e0d6] bg-[#faf8f5] text-[#4d4f4a] hover:bg-white'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <Building2 className="h-4 w-4" />
+                          <span>{stage}</span>
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              <div className="rounded-[24px] border border-[#e8ded3] bg-white p-5 shadow-[0_10px_30px_rgba(25,25,20,0.04)]">
+                <SectionHeader
+                  title="Time pressure"
+                  subtitle="Add realism and call pressure"
+                />
+                <div className="grid grid-cols-1 gap-3">
+                  {TIME_PRESSURE_OPTIONS.map((time) => {
+                    const active = time.value === selectedTimePressure
+
+                    return (
+                      <button
+                        key={time.value}
+                        type="button"
+                        onClick={() => setSelectedTimePressure(time.value)}
+                        className={`rounded-[16px] border p-4 text-left transition ${
+                          active
+                            ? 'border-[#1f4d38] bg-[#eef5f0]'
+                            : 'border-[#e9e0d6] bg-[#faf8f5] hover:bg-white'
+                        }`}
+                      >
+                        <div className="flex items-start gap-2">
+                          <Clock3 className="mt-0.5 h-4 w-4 shrink-0" />
+                          <span className="text-sm font-medium text-[#1a1a17]">
+                            {time.label}
+                          </span>
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
             </div>
 
@@ -390,7 +538,7 @@ export default function ScenariosPage() {
           </div>
 
           <div className="xl:col-span-4">
-            <div className="sticky top-6 rounded-[28px] border border-[#e6ddd2] bg-white p-6 shadow-[0_18px_50px_rgba(28,28,20,0.05)]">
+            <div className="sticky top-6 rounded-[28px] border border-[#e6ddd2] bg-white p-5 shadow-[0_18px_50px_rgba(28,28,20,0.05)]">
               <p className="text-sm font-semibold uppercase tracking-[0.12em] text-[#7b7e79]">
                 Session summary
               </p>
@@ -412,12 +560,12 @@ export default function ScenariosPage() {
                 </div>
               </div>
 
-              <div className="mt-5 grid gap-3">
-                <div className="rounded-[18px] border border-[#ece4da] bg-white px-4 py-4">
+              <div className="mt-5 grid grid-cols-2 gap-3">
+                <div className="rounded-[18px] border border-[#ece4da] bg-white px-4 py-3">
                   <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
                     Industry
                   </div>
-                  <div className="mt-2 text-base font-semibold text-[#1b1b18]">
+                  <div className="mt-1.5 text-sm font-semibold text-[#1b1b18]">
                     {selectedIndustry}
                   </div>
                 </div>
@@ -426,7 +574,7 @@ export default function ScenariosPage() {
                   <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
                     Buyer mood
                   </div>
-                  <div className="mt-2 text-base font-semibold capitalize text-[#1b1b18]">
+                  <div className="mt-1.5 text-sm font-semibold capitalize text-[#1b1b18]">
                     {selectedBuyerMood.replace('_', ' ')}
                   </div>
                 </div>
@@ -435,7 +583,7 @@ export default function ScenariosPage() {
                   <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
                     Buyer role
                   </div>
-                  <div className="mt-2 text-base font-semibold text-[#1b1b18]">
+                  <div className="mt-1.5 text-sm font-semibold text-[#1b1b18]">
                     {selectedBuyerRole}
                   </div>
                 </div>
@@ -444,17 +592,53 @@ export default function ScenariosPage() {
                   <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
                     Roleplay type
                   </div>
-                  <div className="mt-2 text-base font-semibold text-[#1b1b18]">
+                  <div className="mt-1.5 text-sm font-semibold text-[#1b1b18]">
                     {selectedRoleplayType}
+                  </div>
+                </div>
+
+                <div className="rounded-[18px] border border-[#ece4da] bg-white px-4 py-4">
+                  <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
+                    Deal size
+                  </div>
+                  <div className="mt-1.5 text-sm font-semibold text-[#1b1b18]">
+                    {selectedDealSize}
+                  </div>
+                </div>
+
+                <div className="rounded-[18px] border border-[#ece4da] bg-white px-4 py-4">
+                  <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
+                    Pain level
+                  </div>
+                  <div className="mt-1.5 text-sm font-semibold text-[#1b1b18]">
+                    {selectedPainLevelLabel}
+                  </div>
+                </div>
+
+                <div className="rounded-[18px] border border-[#ece4da] bg-white px-4 py-4">
+                  <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
+                    Company stage
+                  </div>
+                  <div className="mt-1.5 text-sm font-semibold text-[#1b1b18]">
+                    {selectedCompanyStage}
+                  </div>
+                </div>
+
+                <div className="rounded-[18px] border border-[#ece4da] bg-white px-4 py-4">
+                  <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
+                    Time pressure
+                  </div>
+                  <div className="mt-1.5 text-sm font-semibold text-[#1b1b18]">
+                    {selectedTimePressureLabel}
                   </div>
                 </div>
               </div>
 
-              <div className="mt-5 rounded-[18px] border border-[#cfe0d5] bg-[#eef5f0] p-4">
+              <div className="mt-4 rounded-[16px] border border-[#cfe0d5] bg-[#eef5f0] p-3">
                 <div className="text-sm font-semibold text-[#385244]">
                   Training objective
                 </div>
-                <div className="mt-2 text-sm leading-7 text-[#4f6155]">
+                <div className="mt-1.5 text-sm leading-6 text-[#4f6155]">
                   {selectedScenario.objective}
                 </div>
               </div>
@@ -463,9 +647,9 @@ export default function ScenariosPage() {
                 type="button"
                 onClick={handleStartSession}
                 disabled={starting}
-                className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#d6612d] px-6 py-4 text-sm font-semibold text-white transition hover:opacity-95 disabled:opacity-50"
+                className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#d6612d] px-6 py-4 text-sm font-semibold text-white transition hover:opacity-95 disabled:opacity-50"
               >
-                {starting ? 'Starting session...' : 'Start voice roleplay'}
+                {starting ? 'Starting session...' : 'Start roleplay'}
                 {!starting ? <ArrowRight className="h-4 w-4" /> : null}
               </button>
 

@@ -22,7 +22,11 @@ export async function GET(request: Request) {
       selected_industry,
       selected_roleplay_type,
       selected_buyer_mood,
-      selected_buyer_role
+      selected_buyer_role,
+      selected_deal_size,
+      selected_pain_level,
+      selected_company_stage,
+      selected_time_pressure
       `
     )
     .eq('id', sessionId)

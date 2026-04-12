@@ -42,14 +42,20 @@ export type RoleplayTypeOption =
 
 export type BuyerRoleOption =
   | 'CEO / Founder'
+  | 'Head of Company'
+  | 'VP of Strategy / VP of Business'
+  | 'Director of Business Operations'
+  | 'Business Operations Manager'
+  | 'Chief Sales Officer'
   | 'Head of Sales'
   | 'VP of Sales'
+  | 'Director of Sales'
   | 'Sales Manager'
-  | 'Head of Marketing'
-  | 'CTO'
-  | 'Head of Product'
-  | 'COO'
-  | 'Finance Lead'
+  | 'Chief Technology Officer'
+  | 'Head of Engineering'
+  | 'VP of Engineering'
+  | 'Director of Engineering'
+  | 'Engineering Manager'
 
 export type RubricCategoryKey =
   | 'opening_rapport'
@@ -59,6 +65,63 @@ export type RubricCategoryKey =
   | 'objection_handling'
   | 'confidence_clarity'
   | 'closing_next_step'
+
+  export type DealSizeOption =
+  | '$3k'
+  | '$10k'
+  | '$50k'
+  | '$100k'
+  | '$250k'
+
+  export type PainLevelOption =
+  | 'low'
+  | 'moderate'
+  | 'high'
+
+
+export type CompanyStageOption =
+  | 'Seed'
+  | 'Series A & B'
+  | 'Series C & D'
+  | 'Series E & F'
+  | 'IPO'
+
+  export type TimePressureOption =
+  | 'none'
+  | '5_min'
+  | '15_min'
+  | '30_min'
+  | 'rush'
+
+  export const DEAL_SIZE_OPTIONS: DealSizeOption[] = [
+  '$3k',
+  '$10k',
+  '$50k',
+  '$100k',
+  '$250k',
+]
+
+export const TIME_PRESSURE_OPTIONS = [
+  { value: 'none', label: 'No time limit' },
+  { value: '5_min', label: '5-minute quick call' },
+  { value: '15_min', label: '15-minute structured call' },
+  { value: '30_min', label: '30-minute structured call' },
+  { value: 'rush', label: 'Prospect in a rush' },
+]
+
+export const PAIN_LEVEL_OPTIONS = [
+  { value: 'low', label: 'Low Pain (just exploring)' },
+  { value: 'moderate', label: 'Moderate Pain (actively looking)' },
+  { value: 'high', label: 'High Pain (needs solution now)' },
+]
+
+export const COMPANY_STAGE_OPTIONS: CompanyStageOption[] = [
+  'Seed',
+  'Series A & B',
+  'Series C & D',
+  'Series E & F',
+  'IPO',
+]
 
 export const INDUSTRY_OPTIONS: IndustryOption[] = [
   'SaaS',
@@ -94,12 +157,10 @@ export const BUYER_ROLE_OPTIONS: BuyerRoleOption[] = [
   'Head of Sales',
   'VP of Sales',
   'Sales Manager',
-  'Head of Marketing',
-  'CTO',
-  'Head of Product',
-  'COO',
-  'Finance Lead',
+  'Chief Technology Officer',
+  'Engineering Manager',
 ]
+
 
 export const BUYER_MOOD_OPTIONS: Array<{
   value: BuyerMood
@@ -212,6 +273,10 @@ export type RoleplaySession = {
   selected_roleplay_type: string | null
   selected_buyer_mood: BuyerMood | null
   selected_buyer_role: string | null
+  selected_deal_size: string | null
+  selected_pain_level: string | null
+  selected_company_stage: string | null
+  selected_time_pressure: string | null
   created_at: string
   updated_at: string
 }
@@ -219,10 +284,16 @@ export type RoleplaySession = {
 export type StartSessionInput = {
   scenarioId: string
   mode?: SessionMode
+
   selectedIndustry?: string | null
   selectedRoleplayType?: string | null
   selectedBuyerMood?: BuyerMood | null
+
   selectedBuyerRole?: string | null
+  selectedDealSize?: string | null
+  selectedPainLevel?: string | null
+  selectedCompanyStage?: string | null
+  selectedTimePressure?: string | null
 }
 
 export type StartSessionResult = {

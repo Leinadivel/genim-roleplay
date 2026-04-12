@@ -31,6 +31,10 @@ type Evaluation = {
   selectedRoleplayType?: string | null
   selectedBuyerMood?: string | null
   selectedBuyerRole?: string | null
+  selectedDealSize?: string | null
+  selectedPainLevel?: string | null
+  selectedCompanyStage?: string | null
+  selectedTimePressure?: string | null
   transcript?: TranscriptMessage[]
 }
 
@@ -38,6 +42,32 @@ type ReportState = {
   loading: boolean
   error: string | null
   evaluation: Evaluation | null
+}
+
+function formatPainLevel(value?: string | null) {
+  if (!value) return '—'
+  if (value === 'low') return 'Low pain'
+  if (value === 'moderate') return 'Moderate pain'
+  if (value === 'high') return 'High pain'
+  return value
+}
+
+function formatTimePressure(value?: string | null) {
+  if (!value) return '—'
+  switch (value) {
+    case 'none':
+      return 'No time limit'
+    case '5_min':
+      return '5-minute quick call'
+    case '15_min':
+      return '15-minute structured call'
+    case '30_min':
+      return '30-minute structured call'
+    case 'rush':
+      return 'Prospect in a rush'
+    default:
+      return value
+  }
 }
 
 function ScoreRing({ score }: { score: number }) {
@@ -307,6 +337,15 @@ export default function ReportPage() {
 
                 <div>
                   <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8a8d87]">
+                    Buyer role
+                  </div>
+                  <div className="mt-1 text-sm font-medium text-[#2b2c2a]">
+                    {state.evaluation?.selectedBuyerRole || '—'}
+                  </div>
+                </div>
+
+                <div>
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8a8d87]">
                     Type
                   </div>
                   <div className="mt-1 text-sm font-medium text-[#2b2c2a]">
@@ -324,12 +363,39 @@ export default function ReportPage() {
                   </div>
                 </div>
 
-                <div className="sm:col-span-2">
+                <div>
                   <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8a8d87]">
-                    Buyer role
+                    Deal size
                   </div>
                   <div className="mt-1 text-sm font-medium text-[#2b2c2a]">
-                    {state.evaluation?.selectedBuyerRole || '—'}
+                    {state.evaluation?.selectedDealSize || '—'}
+                  </div>
+                </div>
+
+                <div>
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8a8d87]">
+                    Pain level
+                  </div>
+                  <div className="mt-1 text-sm font-medium text-[#2b2c2a]">
+                    {formatPainLevel(state.evaluation?.selectedPainLevel)}
+                  </div>
+                </div>
+
+                <div>
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8a8d87]">
+                    Company stage
+                  </div>
+                  <div className="mt-1 text-sm font-medium text-[#2b2c2a]">
+                    {state.evaluation?.selectedCompanyStage || '—'}
+                  </div>
+                </div>
+
+                <div className="sm:col-span-2">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8a8d87]">
+                    Time pressure
+                  </div>
+                  <div className="mt-1 text-sm font-medium text-[#2b2c2a]">
+                    {formatTimePressure(state.evaluation?.selectedTimePressure)}
                   </div>
                 </div>
               </div>
