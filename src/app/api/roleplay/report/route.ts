@@ -30,6 +30,7 @@ export async function GET(request: Request) {
           selected_industry,
           selected_roleplay_type,
           selected_buyer_mood,
+          selected_buyer_role,
           scenarios (
             title
           )
@@ -62,6 +63,7 @@ export async function GET(request: Request) {
         selectedIndustry: data.selected_industry ?? null,
         selectedRoleplayType: data.selected_roleplay_type ?? null,
         selectedBuyerMood: data.selected_buyer_mood ?? null,
+        selectedBuyerRole: data.selected_buyer_role ?? null,
         transcript: messages.map((message) => ({
           id: message.id,
           speaker: message.speaker,

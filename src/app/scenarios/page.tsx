@@ -6,12 +6,12 @@ import {
   ArrowRight,
   AudioWaveform,
   Brain,
-  ChevronLeft,
   Headphones,
   LogOut,
   Mic,
   ShieldCheck,
   Target,
+  UserRound,
 } from 'lucide-react'
 import {
   BUYER_MOOD_OPTIONS,
@@ -78,6 +78,18 @@ const SCENARIOS: Scenario[] = [
   },
 ]
 
+const BUYER_ROLES = [
+  'CEO / Founder',
+  'Head of Sales',
+  'VP of Sales',
+  'Sales Manager',
+  'Head of Marketing',
+  'CTO',
+  'Head of Product',
+  'COO',
+  'Finance Lead',
+] as const
+
 function ScenarioIcon({ slug }: { slug: string }) {
   if (slug.includes('cold')) return <Mic className="h-5 w-5" />
   if (slug.includes('discovery')) return <Brain className="h-5 w-5" />
@@ -112,6 +124,8 @@ export default function ScenariosPage() {
     useState<string>('Cold Call')
   const [selectedBuyerMood, setSelectedBuyerMood] =
     useState<BuyerMood>('nice')
+  const [selectedBuyerRole, setSelectedBuyerRole] =
+    useState<string>('Head of Sales')
   const [starting, setStarting] = useState(false)
 
   const selectedScenario = useMemo(
@@ -131,7 +145,9 @@ export default function ScenariosPage() {
         selectedIndustry
       )}&selectedRoleplayType=${encodeURIComponent(
         selectedRoleplayType
-      )}&selectedBuyerMood=${encodeURIComponent(selectedBuyerMood)}`
+      )}&selectedBuyerMood=${encodeURIComponent(
+        selectedBuyerMood
+      )}&selectedBuyerRole=${encodeURIComponent(selectedBuyerRole)}`
 
       window.location.href = url
     } finally {
@@ -188,9 +204,9 @@ export default function ScenariosPage() {
               </h1>
 
               <p className="mt-4 max-w-[820px] text-base leading-8 text-[#5c5f5a] md:text-lg">
-                Choose the market, buyer attitude, call type, and scenario in
-                one compact layout. Every choice updates the live summary
-                instantly.
+                Choose the market, buyer attitude, buyer role, call type, and
+                scenario in one compact layout. Every choice updates the live
+                summary instantly.
               </p>
             </div>
 
@@ -262,6 +278,36 @@ export default function ScenariosPage() {
                       </div>
                       <div className="mt-1 text-sm leading-6 text-[#5f625d]">
                         {mood.description}
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            <div className="rounded-[24px] border border-[#e8ded3] bg-white p-5 shadow-[0_10px_30px_rgba(25,25,20,0.04)]">
+              <SectionHeader
+                title="Buyer role"
+                subtitle="Choose who you are selling to"
+              />
+              <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-3">
+                {BUYER_ROLES.map((role) => {
+                  const active = role === selectedBuyerRole
+
+                  return (
+                    <button
+                      key={role}
+                      type="button"
+                      onClick={() => setSelectedBuyerRole(role)}
+                      className={`rounded-[16px] border px-3 py-3 text-left text-sm font-medium transition ${
+                        active
+                          ? 'border-[#1f4d38] bg-[#eef5f0] text-[#1f4d38]'
+                          : 'border-[#e9e0d6] bg-[#faf8f5] text-[#4d4f4a] hover:bg-white'
+                      }`}
+                    >
+                      <div className="flex items-start gap-2">
+                        <UserRound className="mt-0.5 h-4 w-4 shrink-0" />
+                        <span>{role}</span>
                       </div>
                     </button>
                   )
@@ -382,6 +428,15 @@ export default function ScenariosPage() {
                   </div>
                   <div className="mt-2 text-base font-semibold capitalize text-[#1b1b18]">
                     {selectedBuyerMood.replace('_', ' ')}
+                  </div>
+                </div>
+
+                <div className="rounded-[18px] border border-[#ece4da] bg-white px-4 py-4">
+                  <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
+                    Buyer role
+                  </div>
+                  <div className="mt-2 text-base font-semibold text-[#1b1b18]">
+                    {selectedBuyerRole}
                   </div>
                 </div>
 

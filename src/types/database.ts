@@ -15,7 +15,8 @@ export type Database = {
           full_name: string | null
           email: string | null
           avatar_url: string | null
-          role: 'learner' | 'admin'
+          role: 'learner' | 'admin' | 'owner' | 'manager' | 'rep'
+          account_type: 'individual' | 'team' | null
           created_at: string
           updated_at: string
         }
@@ -24,7 +25,8 @@ export type Database = {
           full_name?: string | null
           email?: string | null
           avatar_url?: string | null
-          role?: 'learner' | 'admin'
+          role?: 'learner' | 'admin' | 'owner' | 'manager' | 'rep'
+          account_type?: 'individual' | 'team' | null
           created_at?: string
           updated_at?: string
         }
@@ -33,7 +35,8 @@ export type Database = {
           full_name?: string | null
           email?: string | null
           avatar_url?: string | null
-          role?: 'learner' | 'admin'
+          role?: 'learner' | 'admin' | 'owner' | 'manager' | 'rep'
+          account_type?: 'individual' | 'team' | null
           created_at?: string
           updated_at?: string
         }
@@ -250,6 +253,7 @@ export type Database = {
           selected_industry: string | null
           selected_roleplay_type: string | null
           selected_buyer_mood: 'nice' | 'less_rude' | 'rude' | null
+          selected_buyer_role: string | null
           created_at: string
           updated_at: string
         }
@@ -272,6 +276,7 @@ export type Database = {
           selected_industry?: string | null
           selected_roleplay_type?: string | null
           selected_buyer_mood?: 'nice' | 'less_rude' | 'rude' | null
+          selected_buyer_role?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -294,6 +299,7 @@ export type Database = {
           selected_industry?: string | null
           selected_roleplay_type?: string | null
           selected_buyer_mood?: 'nice' | 'less_rude' | 'rude' | null
+          selected_buyer_role?: string | null
           created_at?: string
           updated_at?: string
         }

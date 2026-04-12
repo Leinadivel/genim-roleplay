@@ -30,6 +30,7 @@ type Evaluation = {
   selectedIndustry?: string | null
   selectedRoleplayType?: string | null
   selectedBuyerMood?: string | null
+  selectedBuyerRole?: string | null
   transcript?: TranscriptMessage[]
 }
 
@@ -176,7 +177,9 @@ export default function ReportPage() {
     return data.evaluation
   }
 
-  async function loadReport({ forceRefresh = false }: { forceRefresh?: boolean } = {}) {
+  async function loadReport({
+    forceRefresh = false,
+  }: { forceRefresh?: boolean } = {}) {
     try {
       setState({
         loading: true,
@@ -316,7 +319,17 @@ export default function ReportPage() {
                     Buyer mood
                   </div>
                   <div className="mt-1 text-sm font-medium capitalize text-[#2b2c2a]">
-                    {state.evaluation?.selectedBuyerMood?.replace('_', ' ') || '—'}
+                    {state.evaluation?.selectedBuyerMood?.replace('_', ' ') ||
+                      '—'}
+                  </div>
+                </div>
+
+                <div className="sm:col-span-2">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8a8d87]">
+                    Buyer role
+                  </div>
+                  <div className="mt-1 text-sm font-medium text-[#2b2c2a]">
+                    {state.evaluation?.selectedBuyerRole || '—'}
                   </div>
                 </div>
               </div>
@@ -380,8 +393,9 @@ export default function ReportPage() {
                         </div>
 
                         <p className="mt-4 text-base leading-8 text-[#555854]">
-                          This score reflects how well the seller handled the roleplay
-                          overall based on the generated coaching review.
+                          This score reflects how well the seller handled the
+                          roleplay overall based on the generated coaching
+                          review.
                         </p>
 
                         <div className="mt-6 grid gap-4 md:grid-cols-2">
@@ -475,8 +489,8 @@ export default function ReportPage() {
                           Review this session and practise again
                         </div>
                         <div className="mt-1 text-sm leading-7 text-[#5f625d]">
-                          Run a second session with the same setup to improve weak
-                          moments and reinforce stronger habits.
+                          Run a second session with the same setup to improve
+                          weak moments and reinforce stronger habits.
                         </div>
                       </div>
 
@@ -518,7 +532,8 @@ export default function ReportPage() {
                 subtitle="Review the full roleplay conversation"
               >
                 <div className="space-y-4">
-                  {state.evaluation.transcript && state.evaluation.transcript.length > 0 ? (
+                  {state.evaluation.transcript &&
+                  state.evaluation.transcript.length > 0 ? (
                     state.evaluation.transcript.map((message) => (
                       <div
                         key={message.id}

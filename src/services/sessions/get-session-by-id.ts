@@ -31,6 +31,7 @@ function mapRoleplaySession(row: RoleplaySessionRow): RoleplaySession {
     selected_industry: row.selected_industry,
     selected_roleplay_type: row.selected_roleplay_type,
     selected_buyer_mood: row.selected_buyer_mood,
+    selected_buyer_role: row.selected_buyer_role,
     created_at: row.created_at,
     updated_at: row.updated_at,
   }

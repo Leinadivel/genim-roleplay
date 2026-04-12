@@ -40,6 +40,17 @@ export type RoleplayTypeOption =
   | 'Closing Call'
   | 'Manager Coaching Call'
 
+export type BuyerRoleOption =
+  | 'CEO / Founder'
+  | 'Head of Sales'
+  | 'VP of Sales'
+  | 'Sales Manager'
+  | 'Head of Marketing'
+  | 'CTO'
+  | 'Head of Product'
+  | 'COO'
+  | 'Finance Lead'
+
 export type RubricCategoryKey =
   | 'opening_rapport'
   | 'discovery_questions'
@@ -76,6 +87,18 @@ export const ROLEPLAY_TYPE_OPTIONS: RoleplayTypeOption[] = [
   'Objection Handling Call',
   'Closing Call',
   'Manager Coaching Call',
+]
+
+export const BUYER_ROLE_OPTIONS: BuyerRoleOption[] = [
+  'CEO / Founder',
+  'Head of Sales',
+  'VP of Sales',
+  'Sales Manager',
+  'Head of Marketing',
+  'CTO',
+  'Head of Product',
+  'COO',
+  'Finance Lead',
 ]
 
 export const BUYER_MOOD_OPTIONS: Array<{
@@ -188,6 +211,7 @@ export type RoleplaySession = {
   selected_industry: string | null
   selected_roleplay_type: string | null
   selected_buyer_mood: BuyerMood | null
+  selected_buyer_role: string | null
   created_at: string
   updated_at: string
 }
@@ -198,6 +222,7 @@ export type StartSessionInput = {
   selectedIndustry?: string | null
   selectedRoleplayType?: string | null
   selectedBuyerMood?: BuyerMood | null
+  selectedBuyerRole?: string | null
 }
 
 export type StartSessionResult = {

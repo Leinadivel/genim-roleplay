@@ -10,6 +10,7 @@ type SessionNewPageProps = {
     selectedIndustry?: string
     selectedRoleplayType?: string
     selectedBuyerMood?: BuyerMood
+    selectedBuyerRole?: string
   }>
 }
 
@@ -21,10 +22,10 @@ export default async function SessionNewPage({
   const scenarioId = params.scenarioId?.trim()
   const mode = params.mode === 'text' ? 'text' : 'voice'
 
-  const selectedIndustry = params.selectedIndustry ?? null
-  const selectedRoleplayType = params.selectedRoleplayType ?? null
+  const selectedIndustry = params.selectedIndustry?.trim() || null
+  const selectedRoleplayType = params.selectedRoleplayType?.trim() || null
+  const selectedBuyerRole = params.selectedBuyerRole?.trim() || null
 
-  // ensure valid mood
   const validMoods: BuyerMood[] = ['nice', 'less_rude', 'rude']
   const selectedBuyerMood = validMoods.includes(
     params.selectedBuyerMood as BuyerMood
@@ -49,11 +50,10 @@ export default async function SessionNewPage({
   const result = await startSession({
     scenarioId,
     mode,
-
-    // 🔥 PASSING USER SELECTIONS
     selectedIndustry,
     selectedRoleplayType,
     selectedBuyerMood,
+    selectedBuyerRole,
   })
 
   redirect(`/session/${result.session.id}`)

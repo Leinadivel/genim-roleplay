@@ -6,6 +6,7 @@ type SessionContext = {
   selectedIndustry: string | null
   selectedRoleplayType: string | null
   selectedBuyerMood: string | null
+  selectedBuyerRole: string | null
 }
 
 function getMoodInstruction(mood: string | null): string {
@@ -50,6 +51,31 @@ function getRoleplayTypeInstruction(roleplayType: string | null): string {
   }
 }
 
+function getBuyerRoleInstruction(buyerRole: string | null): string {
+  switch (buyerRole) {
+    case 'CEO / Founder':
+      return 'Think strategically. Care about growth, risk, speed, ROI, and whether this is worth leadership attention. You are time-conscious and impatient with fluff.'
+    case 'Head of Sales':
+      return 'Care about pipeline, conversion, rep productivity, forecast confidence, and whether this will help the sales team perform better.'
+    case 'VP of Sales':
+      return 'Be commercially sharp and skeptical. Care about revenue impact, adoption, ramp time, and execution across the team.'
+    case 'Sales Manager':
+      return 'Care about coaching reps, team performance, day-to-day usability, and whether the solution is practical for frontline sales execution.'
+    case 'Head of Marketing':
+      return 'Care about demand generation, campaign performance, attribution, messaging, and cross-functional alignment.'
+    case 'CTO':
+      return 'Be technical, detail-oriented, and risk-aware. Care about integration, security, implementation complexity, scalability, and technical fit.'
+    case 'Head of Product':
+      return 'Care about roadmap fit, user value, prioritization, product outcomes, and whether this solves a meaningful problem.'
+    case 'COO':
+      return 'Care about operational efficiency, implementation risk, process impact, and measurable business improvement.'
+    case 'Finance Lead':
+      return 'Care about budget, ROI, cost control, justification, commercial terms, and whether the spend is defensible.'
+    default:
+      return 'Behave like a realistic decision-maker with seniority, priorities, and practical concerns tied to your role.'
+  }
+}
+
 function buildSystemPrompt(
   bundle: ScenarioBundle,
   context: SessionContext
@@ -65,6 +91,7 @@ Stay in character at all times.
 Industry: ${context.selectedIndustry ?? 'General'}
 Roleplay Type: ${context.selectedRoleplayType ?? 'General Sales Conversation'}
 Buyer Mood: ${context.selectedBuyerMood ?? 'moderately_resistant'}
+Buyer Role: ${context.selectedBuyerRole ?? persona?.title ?? 'Business Decision-Maker'}
 
 === SCENARIO ===
 Scenario Title: ${bundle.scenario.title}
@@ -73,7 +100,7 @@ Scenario Description: ${bundle.scenario.description ?? ''}
 
 === BUYER PROFILE ===
 Name: ${persona?.name ?? 'Unknown'}
-Role: ${persona?.title ?? ''}
+Role: ${context.selectedBuyerRole ?? persona?.title ?? ''}
 Company: ${persona?.company_name ?? ''}
 Company Size: ${persona?.company_size ?? ''}
 
@@ -101,6 +128,11 @@ ${getRoleplayTypeInstruction(context.selectedRoleplayType)}
 === MOOD BEHAVIOUR ===
 ${getMoodInstruction(context.selectedBuyerMood)}
 
+=== BUYER-ROLE BEHAVIOUR ===
+${getBuyerRoleInstruction(context.selectedBuyerRole)}
+Your authority level, priorities, objections, and language should match this buyer role.
+Do not announce your buyer role unnaturally. Just behave like that person.
+
 === INDUSTRY BEHAVIOUR ===
 Tailor your language, concerns, priorities, and examples to the selected industry when possible.
 Do not mention that you are tailoring to an industry.
@@ -117,6 +149,7 @@ Make the conversation feel natural for ${context.selectedIndustry ?? 'the chosen
 - If the seller is vague, generic, or weak, react accordingly
 - If the seller handles the conversation well, become slightly more open over time
 - Keep the flow realistic for the selected roleplay type
+- Let the chosen buyer role influence your tone, objections, and decision-making style
 
 You are NOT an assistant.
 You are the buyer.

@@ -15,6 +15,7 @@ type SessionMeta = {
   selected_industry: string | null
   selected_roleplay_type: string | null
   selected_buyer_mood: string | null
+  selected_buyer_role: string | null
 }
 
 type SessionRouteResponse = {
@@ -469,13 +470,22 @@ export default function SessionPage() {
         </div>
 
         {sessionMeta ? (
-          <div className="mb-6 grid gap-4 md:grid-cols-3">
+          <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <div className="rounded-[20px] border border-[#e8ded3] bg-white px-5 py-4 shadow-[0_8px_24px_rgba(25,25,20,0.04)]">
               <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
                 Industry
               </div>
               <div className="mt-2 text-base font-semibold text-[#1b1b18]">
                 {sessionMeta.selected_industry || '—'}
+              </div>
+            </div>
+
+            <div className="rounded-[20px] border border-[#e8ded3] bg-white px-5 py-4 shadow-[0_8px_24px_rgba(25,25,20,0.04)]">
+              <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
+                Buyer role
+              </div>
+              <div className="mt-2 text-base font-semibold text-[#1b1b18]">
+                {sessionMeta.selected_buyer_role || '—'}
               </div>
             </div>
 

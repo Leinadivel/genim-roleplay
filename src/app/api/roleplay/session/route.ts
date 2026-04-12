@@ -21,7 +21,8 @@ export async function GET(request: Request) {
       id,
       selected_industry,
       selected_roleplay_type,
-      selected_buyer_mood
+      selected_buyer_mood,
+      selected_buyer_role
       `
     )
     .eq('id', sessionId)

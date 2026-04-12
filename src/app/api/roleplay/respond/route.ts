@@ -48,6 +48,7 @@ export async function POST(request: Request) {
         selectedIndustry: session.selected_industry,
         selectedRoleplayType: session.selected_roleplay_type,
         selectedBuyerMood: session.selected_buyer_mood,
+        selectedBuyerRole: session.selected_buyer_role,
       },
     })
 
@@ -61,6 +62,7 @@ export async function POST(request: Request) {
         selectedIndustry: session.selected_industry,
         selectedRoleplayType: session.selected_roleplay_type,
         selectedBuyerMood: session.selected_buyer_mood,
+        selectedBuyerRole: session.selected_buyer_role,
       },
     })
 
