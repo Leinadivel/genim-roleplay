@@ -286,66 +286,135 @@ export default function HomePage() {
           </div>
 
           <div className="flex justify-center lg:justify-end">
-            <div className="w-full max-w-[640px] rounded-[30px] border border-[#ece4da] bg-white shadow-[0_24px_80px_rgba(31,31,28,0.08)]">
-              <div className="flex items-center justify-between rounded-t-[30px] border-b border-[#ece7df] px-6 py-5">
-                <div className="flex items-center gap-2.5">
-                  <span className="h-3.5 w-3.5 rounded-full bg-[#f06d5f]" />
-                  <span className="h-3.5 w-3.5 rounded-full bg-[#f2c14f]" />
-                  <span className="h-3.5 w-3.5 rounded-full bg-[#79c26d]" />
-                </div>
+            <div className="relative w-full max-w-[560px] overflow-hidden rounded-[34px] border border-[#ece4da] bg-white shadow-[0_30px_100px_rgba(31,31,28,0.10)]">
+              <div className="absolute inset-x-0 top-0 h-32 bg-[linear-gradient(135deg,rgba(31,77,56,0.08),rgba(214,97,45,0.10),transparent)]" />
+              <div className="absolute right-[-40px] top-[-30px] h-40 w-40 rounded-full bg-[#d6612d]/10 blur-3xl" />
+              <div className="absolute bottom-[-30px] left-[-20px] h-32 w-32 rounded-full bg-[#1f4d38]/10 blur-3xl" />
 
-                <span className="text-lg font-medium text-[#74716d]">
-                  Genim Roleplay Session
-                </span>
+              <div className="relative border-b border-[#eee6dc] px-6 py-5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <span className="h-3.5 w-3.5 rounded-full bg-[#f06d5f]" />
+                    <span className="h-3.5 w-3.5 rounded-full bg-[#f2c14f]" />
+                    <span className="h-3.5 w-3.5 rounded-full bg-[#79c26d]" />
+                  </div>
+
+                  <div className="inline-flex items-center gap-2 rounded-full border border-[#d9e6de] bg-[#f7fbf8] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1f4d38]">
+                    <span className="h-2 w-2 rounded-full bg-[#79c26d]" />
+                    Live Buyer Persona
+                  </div>
+                </div>
               </div>
 
-              <div className="p-6 md:p-8">
-                <p className="text-[18px] font-semibold uppercase tracking-[0.14em] text-[#7b7e79]">
-                  Scenario: SaaS — Cold Outreach Call
-                </p>
+              <div className="relative p-7 md:p-8">
+                <div className="rounded-[28px] border border-[#ece4da] bg-[#fcfaf8] p-6 shadow-[0_12px_40px_rgba(31,31,28,0.04)]">
+                  <div className="flex items-start gap-5">
+                    <div className="relative shrink-0">
+                      <div className="rounded-full bg-white p-1.5 shadow-[0_12px_30px_rgba(31,77,56,0.14)]">
+                        <img
+                          src="https://randomuser.me/api/portraits/men/32.jpg"
+                          alt="David Emmanuel"
+                          className="h-24 w-24 rounded-full object-cover"
+                        />
+                      </div>
 
-                <div className="mt-6 space-y-4">
-                  <div className="flex items-start gap-3">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#1f4d38] text-sm font-semibold text-white">
-                      AI
+                      <div className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full border-4 border-[#fcfaf8] bg-[#1f4d38] text-[10px] font-bold text-white">
+                        AI
+                      </div>
                     </div>
-                    <div className="max-w-[88%] rounded-[18px] bg-[#f1eee9] px-5 py-4 text-[18px] leading-[1.45] text-[#232320]">
-                      Look, I appreciate the call, but we already use Salesforce.
-                      I don&apos;t see why we&apos;d switch.
+
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8a8d87]">
+                        Featured buyer
+                      </p>
+
+                      <h3 className="mt-2 text-[30px] font-semibold leading-none tracking-[-0.04em] text-[#181815]">
+                        David Cole
+                      </h3>
+
+                      <p className="mt-3 text-[16px] font-semibold text-[#1f4d38]">
+                        Head of Sales
+                      </p>
+
+                      <p className="mt-1 text-[15px] text-[#666864]">
+                        Northstar Revenue Systems
+                      </p>
+
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        <span className="rounded-full border border-[#e8ddd2] bg-white px-3 py-1.5 text-xs font-medium text-[#4d4f4a]">
+                          SaaS
+                        </span>
+                        <span className="rounded-full border border-[#e8ddd2] bg-white px-3 py-1.5 text-xs font-medium text-[#4d4f4a]">
+                          Mid-market
+                        </span>
+                        <span className="rounded-full border border-[#e8ddd2] bg-white px-3 py-1.5 text-xs font-medium text-[#4d4f4a]">
+                          Skeptical
+                        </span>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="flex items-start justify-end gap-3">
-                    <div className="max-w-[88%] rounded-[18px] bg-[#d6612d] px-5 py-4 text-[18px] leading-[1.45] text-white">
-                      That&apos;s totally fair — most of our customers came from
-                      Salesforce. Can I ask what you wish it did better?
+                  {/* <div className="mt-6 rounded-[22px] border border-[#e7ddd3] bg-white p-5">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8a8d87]">
+                      How it feels
+                    </p>
+
+                    <p className="mt-3 text-[17px] leading-[1.7] text-[#2a2a27]">
+                      “Hi David Emmanuel — I know you probably get a lot of these calls,
+                      so I’ll be brief. We help sales leaders cut reporting delays and
+                      improve rep execution without changing their full workflow.”
+                    </p>
+                  </div> */}
+
+                  <div className="mt-6 grid grid-cols-3 gap-3">
+                    <div className="rounded-[18px] border border-[#eadfd4] bg-white px-4 py-3">
+                      <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8a8d87]">
+                        Priority
+                      </div>
+                      <div className="mt-1 text-sm font-semibold text-[#1b1b18]">
+                        Revenue
+                      </div>
                     </div>
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#d6612d] text-sm font-semibold text-white">
-                      You
+
+                    <div className="rounded-[18px] border border-[#eadfd4] bg-white px-4 py-3">
+                      <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8a8d87]">
+                        Persona style
+                      </div>
+                      <div className="mt-1 text-sm font-semibold text-[#1b1b18]">
+                        Direct
+                      </div>
+                    </div>
+
+                    <div className="rounded-[18px] border border-[#eadfd4] bg-white px-4 py-3">
+                      <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8a8d87]">
+                        Call type
+                      </div>
+                      <div className="mt-1 text-sm font-semibold text-[#1b1b18]">
+                        Cold outreach
+                      </div>
                     </div>
                   </div>
 
-                  <div className="flex items-start gap-3">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#1f4d38] text-sm font-semibold text-white">
-                      AI
-                    </div>
-                    <div className="max-w-[88%] rounded-[18px] bg-[#f1eee9] px-5 py-4 text-[18px] leading-[1.45] text-[#232320]">
-                      Honestly? The reporting is a nightmare. It takes my team
-                      hours to pull basic pipeline data.
-                    </div>
-                  </div>
-                </div>
+                  <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+                    <Link
+                      href="/register"
+                      className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-[#d6612d] px-6 py-4 text-base font-semibold text-white shadow-[0_10px_24px_rgba(214,97,45,0.22)] transition hover:opacity-95"
+                    >
+                      Start Roleplay
+                      <ArrowRight className="h-4 w-4" />
+                    </Link>
 
-                <div className="mt-6 rounded-[18px] border border-[#cfe0d5] bg-[#eef5f0] p-5">
-                  <p className="text-[18px] font-semibold uppercase tracking-[0.14em] text-[#385244]">
-                    AI Coach Feedback
+                    <Link
+                      href="/login"
+                      className="inline-flex items-center justify-center rounded-full border border-[#d8d1c8] bg-white px-6 py-4 text-base font-semibold text-[#232320] transition hover:bg-[#faf8f5]"
+                    >
+                      Log in
+                    </Link>
+                  </div>
+
+                  <p className="mt-4 text-center text-xs text-[#7b7e79]">
+                    Meet realistic AI buyers with names, roles, objections, and pressure.
                   </p>
-
-                  <div className="mt-4 space-y-3">
-                    <FeedbackBar label="Objection" value={88} />
-                    <FeedbackBar label="Discovery" value={74} />
-                    <FeedbackBar label="Tone" value={91} />
-                  </div>
                 </div>
               </div>
             </div>
