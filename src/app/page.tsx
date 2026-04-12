@@ -151,7 +151,7 @@ function PricingCard({
         <h3 className="text-2xl font-semibold text-[#181815]">{title}</h3>
         {highlight ? (
           <span className="rounded-full bg-[#f7ede6] px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-[#d6612d]">
-            Most popular
+            Popular
           </span>
         ) : null}
       </div>
@@ -161,7 +161,7 @@ function PricingCard({
       <div className="mt-6 text-5xl font-semibold tracking-[-0.04em] text-[#181815]">
         {price}
       </div>
-      <div className="mt-1 text-sm text-[#666864]">per month</div>
+      <div className="mt-1 text-sm text-[#666864]">per month / bill annually</div>
 
       <div className="mt-8 space-y-4">
         {features.map((feature) => (
@@ -598,10 +598,10 @@ export default function HomePage() {
             description="Start with individual practice, then expand into team training once your reps and managers want more structure, reporting, and custom scenarios."
           />
 
-          <div className="mt-14 grid gap-6 lg:grid-cols-3">
+          <div className="mt-14 grid gap-6 lg:grid-cols-4">
             <PricingCard
               title="Starter"
-              price="₦0"
+              price="$0"
               description="For first-time users who want to experience the roleplay workflow and coaching format."
               features={[
                 'Access to selected practice scenarios',
@@ -612,13 +612,24 @@ export default function HomePage() {
             />
             <PricingCard
               title="Pro"
-              price="₦7,000"
+              price="$8"
               description="For individual reps who want consistent practice, better objection handling, and stronger sales confidence."
               features={[
                 'Full scenario access',
                 'Structured AI feedback',
                 'Transcript-based session review',
                 'Designed for solo reps and job seekers',
+              ]}
+            />
+            <PricingCard
+              title="Advanced"
+              price="$24"
+              description="For experienced reps who want to master complex deals, handle high-stakes objections, and close with ease."
+              features={[
+                'Full advanced scenario library',
+                'Deep AI performance analytics',
+                'Detailed transcript + coaching breakdown',
+                'Built for high-performing reps and closers',
               ]}
               highlight
             />
