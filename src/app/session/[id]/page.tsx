@@ -3,7 +3,16 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Loader2, Mic, Send, Square, Volume2, X } from 'lucide-react'
+import {
+  ArrowLeft,
+  Loader2,
+  Mic,
+  PhoneCall,
+  Send,
+  Square,
+  Volume2,
+  X,
+} from 'lucide-react'
 
 type ChatMessage = {
   id: string
@@ -11,7 +20,17 @@ type ChatMessage = {
   message_text: string
 }
 
+type BuyerPersonaMeta = {
+  id: string
+  name: string
+  title: string | null
+  company_name: string | null
+  company_size: string | null
+  avatar_url: string | null
+}
+
 type SessionMeta = {
+  id: string
   selected_industry: string | null
   selected_roleplay_type: string | null
   selected_buyer_mood: string | null
@@ -20,6 +39,8 @@ type SessionMeta = {
   selected_pain_level: string | null
   selected_company_stage: string | null
   selected_time_pressure: string | null
+  should_ring_first: boolean
+  buyer_persona: BuyerPersonaMeta | null
 }
 
 type SessionRouteResponse = {
@@ -81,6 +102,12 @@ function formatTimePressure(value: string | null) {
   }
 }
 
+function getInitials(name: string | null | undefined) {
+  if (!name) return 'AI'
+  const parts = name.trim().split(/\s+/).slice(0, 2)
+  return parts.map((part) => part[0]?.toUpperCase() ?? '').join('') || 'AI'
+}
+
 export default function SessionPage() {
   const params = useParams()
   const router = useRouter()
@@ -96,6 +123,8 @@ export default function SessionPage() {
   const [error, setError] = useState<string | null>(null)
 
   const [sessionMeta, setSessionMeta] = useState<SessionMeta | null>(null)
+  const [callReady, setCallReady] = useState(false)
+  const [isRinging, setIsRinging] = useState(false)
 
   const [isListening, setIsListening] = useState(false)
   const [speechBaseText, setSpeechBaseText] = useState('')
@@ -103,6 +132,8 @@ export default function SessionPage() {
 
   const recognitionRef = useRef<SpeechRecognition | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const ringAudioRef = useRef<HTMLAudioElement | null>(null)
+  const ringStartedRef = useRef(false)
   const bottomRef = useRef<HTMLDivElement | null>(null)
 
   const speechBaseTextRef = useRef('')
@@ -116,9 +147,15 @@ export default function SessionPage() {
   useEffect(() => {
     return () => {
       recognitionRef.current?.stop()
+
       if (audioRef.current) {
         audioRef.current.pause()
         audioRef.current.src = ''
+      }
+
+      if (ringAudioRef.current) {
+        ringAudioRef.current.pause()
+        ringAudioRef.current.src = ''
       }
     }
   }, [])
@@ -158,8 +195,44 @@ export default function SessionPage() {
       }
     }
 
-    loadData()
+    void loadData()
   }, [sessionId])
+
+  useEffect(() => {
+    async function startCallFlow() {
+      if (!sessionMeta) return
+      if (ringStartedRef.current) return
+
+      ringStartedRef.current = true
+
+      if (!sessionMeta.should_ring_first) {
+        setCallReady(true)
+        return
+      }
+
+      try {
+        setIsRinging(true)
+
+        const ringAudio = new Audio('/sounds/phone-ring.mp3')
+        ringAudioRef.current = ringAudio
+        ringAudio.volume = 0.85
+
+        await ringAudio.play()
+
+        window.setTimeout(() => {
+          ringAudio.pause()
+          ringAudio.currentTime = 0
+          setIsRinging(false)
+          setCallReady(true)
+        }, 3200)
+      } catch {
+        setIsRinging(false)
+        setCallReady(true)
+      }
+    }
+
+    void startCallFlow()
+  }, [sessionMeta])
 
   async function speakBuyerText(text: string) {
     try {
@@ -215,7 +288,7 @@ export default function SessionPage() {
 
   async function sendCurrentInput(textOverride?: string) {
     const messageText = (textOverride ?? input).trim()
-    if (!messageText || sending || aiTyping || aiSpeaking) return
+    if (!messageText || sending || aiTyping || aiSpeaking || !callReady) return
 
     try {
       setSending(true)
@@ -318,13 +391,19 @@ export default function SessionPage() {
 
   function handleCancelRoleplay() {
     recognitionRef.current?.stop()
+
     if (audioRef.current) {
       audioRef.current.pause()
+    }
+
+    if (ringAudioRef.current) {
+      ringAudioRef.current.pause()
     }
 
     const confirmed = window.confirm(
       'Cancel this roleplay and go back to scenarios?'
     )
+
     if (confirmed) {
       router.push('/scenarios')
     }
@@ -337,7 +416,7 @@ export default function SessionPage() {
       return
     }
 
-    if (aiTyping || aiSpeaking || sending) return
+    if (aiTyping || aiSpeaking || sending || !callReady) return
 
     const SpeechRecognitionAPI =
       window.SpeechRecognition || window.webkitSpeechRecognition
@@ -352,7 +431,9 @@ export default function SessionPage() {
     recognition.lang = 'en-US'
     recognition.continuous = false
     recognition.interimResults = true
-    ;(recognition as SpeechRecognition & { maxAlternatives?: number }).maxAlternatives = 1
+    ;(
+      recognition as SpeechRecognition & { maxAlternatives?: number }
+    ).maxAlternatives = 1
 
     recognition.onstart = () => {
       const base = input.trim()
@@ -400,7 +481,9 @@ export default function SessionPage() {
       } else if (event.error === 'no-speech') {
         setError('No speech was detected. Please try again and speak clearly.')
       } else if (event.error === 'audio-capture') {
-        setError('No microphone was found. Please check your audio input device.')
+        setError(
+          'No microphone was found. Please check your audio input device.'
+        )
       } else {
         setError(`Voice recognition failed: ${event.error}`)
       }
@@ -444,145 +527,227 @@ export default function SessionPage() {
     return sessionMeta.selected_buyer_mood.replace('_', ' ')
   }, [sessionMeta])
 
-  const micDisabled = sending || aiTyping || aiSpeaking
-  const sendDisabled = sending || aiTyping || aiSpeaking || !input.trim()
+  const micDisabled = sending || aiTyping || aiSpeaking || !callReady
+  const sendDisabled =
+    sending || aiTyping || aiSpeaking || !input.trim() || !callReady
+
+  const personaInitials = useMemo(
+    () => getInitials(sessionMeta?.buyer_persona?.name),
+    [sessionMeta]
+  )
 
   return (
-    <main className="min-h-screen bg-[#f7f3ee] text-[#1f1f1c]">
-      <header className="border-b border-[#e6ddd2] bg-[#f7f3ee]">
-        <div className="mx-auto flex max-w-[980px] items-center justify-between px-6 py-5">
-          <Link
-            href="/scenarios"
+  <main className="min-h-screen bg-[#f7f3ee] text-[#1f1f1c]">
+    <header className="border-b border-[#e6ddd2] bg-[#f7f3ee]">
+      <div className="mx-auto flex max-w-[1440px] items-center justify-between px-6 py-5 md:px-8">
+        <Link
+          href="/scenarios"
+          className="inline-flex items-center gap-2 rounded-full border border-[#d8d1c8] bg-white px-4 py-2 text-sm font-medium text-[#2b2c2a] shadow-sm hover:bg-[#faf7f3]"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to scenarios
+        </Link>
+
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={handleCancelRoleplay}
             className="inline-flex items-center gap-2 rounded-full border border-[#d8d1c8] bg-white px-4 py-2 text-sm font-medium text-[#2b2c2a] shadow-sm hover:bg-[#faf7f3]"
           >
-            <ArrowLeft className="h-4 w-4" />
-            Back to scenarios
-          </Link>
+            <X className="h-4 w-4" />
+            Cancel roleplay
+          </button>
 
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={handleCancelRoleplay}
-              className="inline-flex items-center gap-2 rounded-full border border-[#d8d1c8] bg-white px-4 py-2 text-sm font-medium text-[#2b2c2a] shadow-sm hover:bg-[#faf7f3]"
-            >
-              <X className="h-4 w-4" />
-              Cancel roleplay
-            </button>
-
-            <button
-              type="button"
-              onClick={handleCompleteSession}
-              disabled={completing}
-              className="inline-flex items-center gap-2 rounded-full bg-[#1f4d38] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-95 disabled:opacity-50"
-            >
-              {completing ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Square className="h-4 w-4" />
-              )}
-              End session
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={handleCompleteSession}
+            disabled={completing}
+            className="inline-flex items-center gap-2 rounded-full bg-[#1f4d38] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-95 disabled:opacity-50"
+          >
+            {completing ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Square className="h-4 w-4" />
+            )}
+            End session
+          </button>
         </div>
-      </header>
+      </div>
+    </header>
 
-      <div className="mx-auto max-w-[980px] px-6 py-8">
-        <div className="mb-6">
-          <p className="text-sm font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
-            Live roleplay
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-[-0.03em] text-[#171714]">
-            AI Sales Roleplay Session
-          </h1>
-          <p className="mt-2 text-sm leading-7 text-[#5f625d]">
-            Speak naturally, handle objections, and practise your flow.
-          </p>
+    <div className="mx-auto max-w-[1440px] px-6 py-8 md:px-8">
+      <div className="mb-6">
+        <p className="text-sm font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
+          Live roleplay
+        </p>
+        <h1 className="mt-2 text-3xl font-semibold tracking-[-0.03em] text-[#171714]">
+          AI Sales Roleplay Session
+        </h1>
+        <p className="mt-2 text-sm leading-7 text-[#5f625d]">
+          Speak naturally, handle objections, and practise your flow.
+        </p>
+      </div>
+
+      {error ? (
+        <div className="mb-6 rounded-[18px] border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
         </div>
+      ) : null}
 
-        {sessionMeta ? (
-          <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <div className="rounded-[20px] border border-[#e8ded3] bg-white px-5 py-4 shadow-[0_8px_24px_rgba(25,25,20,0.04)]">
-              <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
-                Industry
+      <div className="grid gap-6 xl:grid-cols-[0.4fr_0.6fr]">
+        <aside className="space-y-6">
+          <div className="overflow-hidden rounded-[28px] border border-[#e8ded3] bg-white shadow-[0_14px_40px_rgba(25,25,20,0.05)]">
+            <div className="bg-[linear-gradient(135deg,#f7ede6_0%,#eef5f0_100%)] px-6 py-6">
+              <div className="flex items-start gap-4">
+                <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-full border-4 border-white bg-[#1f4d38] shadow-[0_12px_24px_rgba(25,25,20,0.08)]">
+                  {sessionMeta?.buyer_persona?.avatar_url ? (
+                    <img
+                      src={sessionMeta.buyer_persona.avatar_url}
+                      alt={sessionMeta.buyer_persona.name}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : null}
+
+                  {!sessionMeta?.buyer_persona?.avatar_url ? (
+                    <div className="absolute inset-0 flex items-center justify-center text-lg font-semibold text-white">
+                      {personaInitials}
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="min-w-0 flex-1">
+                  <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
+                    AI buyer persona
+                  </div>
+                  <div className="mt-1 text-2xl font-semibold tracking-[-0.03em] text-[#181815]">
+                    {sessionMeta?.buyer_persona?.name || 'Buyer persona'}
+                  </div>
+                  <div className="mt-1 text-sm font-medium text-[#454844]">
+                    {sessionMeta?.buyer_persona?.title ||
+                      sessionMeta?.selected_buyer_role ||
+                      'Buyer'}
+                  </div>
+                  <div className="mt-1 text-sm text-[#666864]">
+                    {sessionMeta?.buyer_persona?.company_name || '—'}
+                  </div>
+                  {sessionMeta?.buyer_persona?.company_size ? (
+                    <div className="mt-1 text-sm text-[#666864]">
+                      {sessionMeta.buyer_persona.company_size}
+                    </div>
+                  ) : null}
+                </div>
               </div>
-              <div className="mt-2 text-base font-semibold text-[#1b1b18]">
-                {sessionMeta.selected_industry || '—'}
+
+              <div className="mt-5 flex flex-wrap gap-2">
+                {isRinging ? (
+                  <div className="inline-flex items-center gap-2 rounded-full border border-[#ecd7cb] bg-white/80 px-4 py-2 text-sm font-medium text-[#a2542f]">
+                    <PhoneCall className="h-4 w-4" />
+                    Ringing...
+                  </div>
+                ) : callReady ? (
+                  <div className="inline-flex items-center gap-2 rounded-full border border-[#d7e6dc] bg-white/80 px-4 py-2 text-sm font-medium text-[#1f4d38]">
+                    <span className="h-2 w-2 rounded-full bg-[#79c26d]" />
+                    Call connected
+                  </div>
+                ) : (
+                  <div className="inline-flex items-center gap-2 rounded-full border border-[#e5d7cf] bg-white/80 px-4 py-2 text-sm font-medium text-[#6b6d68]">
+                    Preparing call...
+                  </div>
+                )}
               </div>
             </div>
 
-            <div className="rounded-[20px] border border-[#e8ded3] bg-white px-5 py-4 shadow-[0_8px_24px_rgba(25,25,20,0.04)]">
-              <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
-                Buyer role
+            <div className="p-5">
+              <div className="rounded-[18px] border border-[#ece4da] bg-[#faf8f5] p-4">
+                <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
+                  Suggested opener
+                </div>
+                <div className="mt-2 text-sm leading-7 text-[#4f514d]">
+                  {sessionMeta?.buyer_persona?.name
+                    ? `Try: "Hi ${sessionMeta.buyer_persona.name}, thanks for taking the time today."`
+                    : 'Open with a confident introduction and a clear reason for the conversation.'}
+                </div>
               </div>
-              <div className="mt-2 text-base font-semibold text-[#1b1b18]">
-                {sessionMeta.selected_buyer_role || '—'}
-              </div>
-            </div>
 
-            <div className="rounded-[20px] border border-[#e8ded3] bg-white px-5 py-4 shadow-[0_8px_24px_rgba(25,25,20,0.04)]">
-              <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
-                Roleplay type
-              </div>
-              <div className="mt-2 text-base font-semibold text-[#1b1b18]">
-                {sessionMeta.selected_roleplay_type || '—'}
-              </div>
-            </div>
+              <div className="mt-4 grid grid-cols-2 gap-3">
+                <div className="rounded-[16px] border border-[#ece4da] bg-white px-4 py-3">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
+                    Industry
+                  </div>
+                  <div className="mt-1.5 text-sm font-semibold text-[#1b1b18]">
+                    {sessionMeta?.selected_industry || '—'}
+                  </div>
+                </div>
 
-            <div className="rounded-[20px] border border-[#e8ded3] bg-white px-5 py-4 shadow-[0_8px_24px_rgba(25,25,20,0.04)]">
-              <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
-                Buyer mood
-              </div>
-              <div className="mt-2 text-base font-semibold capitalize text-[#1b1b18]">
-                {moodLabel}
-              </div>
-            </div>
+                <div className="rounded-[16px] border border-[#ece4da] bg-white px-4 py-3">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
+                    Buyer mood
+                  </div>
+                  <div className="mt-1.5 text-sm font-semibold capitalize text-[#1b1b18]">
+                    {moodLabel}
+                  </div>
+                </div>
 
-            <div className="rounded-[20px] border border-[#e8ded3] bg-white px-5 py-4 shadow-[0_8px_24px_rgba(25,25,20,0.04)]">
-              <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
-                Deal size
-              </div>
-              <div className="mt-2 text-base font-semibold text-[#1b1b18]">
-                {sessionMeta.selected_deal_size || '—'}
-              </div>
-            </div>
+                <div className="rounded-[16px] border border-[#ece4da] bg-white px-4 py-3">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
+                    Buyer role
+                  </div>
+                  <div className="mt-1.5 text-sm font-semibold text-[#1b1b18]">
+                    {sessionMeta?.selected_buyer_role || '—'}
+                  </div>
+                </div>
 
-            <div className="rounded-[20px] border border-[#e8ded3] bg-white px-5 py-4 shadow-[0_8px_24px_rgba(25,25,20,0.04)]">
-              <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
-                Pain level
-              </div>
-              <div className="mt-2 text-base font-semibold text-[#1b1b18]">
-                {formatPainLevel(sessionMeta.selected_pain_level)}
-              </div>
-            </div>
+                <div className="rounded-[16px] border border-[#ece4da] bg-white px-4 py-3">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
+                    Roleplay type
+                  </div>
+                  <div className="mt-1.5 text-sm font-semibold text-[#1b1b18]">
+                    {sessionMeta?.selected_roleplay_type || '—'}
+                  </div>
+                </div>
 
-            <div className="rounded-[20px] border border-[#e8ded3] bg-white px-5 py-4 shadow-[0_8px_24px_rgba(25,25,20,0.04)]">
-              <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
-                Company stage
-              </div>
-              <div className="mt-2 text-base font-semibold text-[#1b1b18]">
-                {sessionMeta.selected_company_stage || '—'}
-              </div>
-            </div>
+                <div className="rounded-[16px] border border-[#ece4da] bg-white px-4 py-3">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
+                    Deal size
+                  </div>
+                  <div className="mt-1.5 text-sm font-semibold text-[#1b1b18]">
+                    {sessionMeta?.selected_deal_size || '—'}
+                  </div>
+                </div>
 
-            <div className="rounded-[20px] border border-[#e8ded3] bg-white px-5 py-4 shadow-[0_8px_24px_rgba(25,25,20,0.04)]">
-              <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
-                Time pressure
-              </div>
-              <div className="mt-2 text-base font-semibold text-[#1b1b18]">
-                {formatTimePressure(sessionMeta.selected_time_pressure)}
+                <div className="rounded-[16px] border border-[#ece4da] bg-white px-4 py-3">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
+                    Pain level
+                  </div>
+                  <div className="mt-1.5 text-sm font-semibold text-[#1b1b18]">
+                    {formatPainLevel(sessionMeta?.selected_pain_level || null)}
+                  </div>
+                </div>
+
+                <div className="rounded-[16px] border border-[#ece4da] bg-white px-4 py-3">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
+                    Company stage
+                  </div>
+                  <div className="mt-1.5 text-sm font-semibold text-[#1b1b18]">
+                    {sessionMeta?.selected_company_stage || '—'}
+                  </div>
+                </div>
+
+                <div className="rounded-[16px] border border-[#ece4da] bg-white px-4 py-3">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
+                    Time pressure
+                  </div>
+                  <div className="mt-1.5 text-sm font-semibold text-[#1b1b18]">
+                    {formatTimePressure(sessionMeta?.selected_time_pressure || null)}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-        ) : null}
+        </aside>
 
-        {error ? (
-          <div className="mb-6 rounded-[18px] border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">
-            {error}
-          </div>
-        ) : null}
-
-        <div className="rounded-[28px] border border-[#e8ded3] bg-white p-5 shadow-[0_14px_40px_rgba(25,25,20,0.05)]">
-          <div className="mb-4 flex items-center justify-between">
+        <section className="rounded-[28px] border border-[#e8ded3] bg-white p-5 shadow-[0_14px_40px_rgba(25,25,20,0.05)]">
+          <div className="mb-4 flex items-center justify-between gap-4">
             <div>
               <h2 className="text-lg font-semibold text-[#181815]">
                 Conversation
@@ -613,15 +778,31 @@ export default function SessionPage() {
             </div>
           </div>
 
-          <div className="min-h-[420px] max-h-[520px] overflow-y-auto rounded-[20px] border border-[#efe6dc] bg-[#fcfaf8] p-4">
+          <div className="min-h-[520px] max-h-[620px] overflow-y-auto rounded-[20px] border border-[#efe6dc] bg-[#fcfaf8] p-4">
             {loading ? (
               <div className="flex items-center gap-2 text-sm text-[#666864]">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 Loading conversation...
               </div>
+            ) : isRinging ? (
+              <div className="flex min-h-[440px] items-center justify-center">
+                <div className="rounded-[22px] border border-[#eadfd4] bg-white px-8 py-8 text-center shadow-sm">
+                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#fff3ed] text-[#d6612d]">
+                    <PhoneCall className="h-6 w-6" />
+                  </div>
+                  <div className="mt-4 text-lg font-semibold text-[#181815]">
+                    Ringing {sessionMeta?.buyer_persona?.name || 'buyer'}...
+                  </div>
+                  <div className="mt-2 text-sm text-[#666864]">
+                    Joining the call now.
+                  </div>
+                </div>
+              </div>
             ) : messages.length === 0 ? (
               <div className="rounded-[16px] border border-dashed border-[#ddd4ca] bg-white px-4 py-4 text-sm text-[#666864]">
-                Start the roleplay by sending your first message.
+                {callReady && sessionMeta?.buyer_persona?.name
+                  ? `Start the roleplay by greeting ${sessionMeta.buyer_persona.name} or sending your first message.`
+                  : 'Start the roleplay by sending your first message.'}
               </div>
             ) : (
               <div className="space-y-4">
@@ -635,7 +816,7 @@ export default function SessionPage() {
                     }`}
                   >
                     <div
-                      className={`max-w-[78%] rounded-[18px] px-4 py-3 text-sm leading-7 shadow-sm ${
+                      className={`max-w-[80%] rounded-[18px] px-4 py-3 text-sm leading-7 shadow-sm ${
                         message.speaker === 'user'
                           ? 'bg-[#d6612d] text-white'
                           : 'border border-[#ece4da] bg-white text-[#232320]'
@@ -664,8 +845,12 @@ export default function SessionPage() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Type or speak what the seller would say..."
-              disabled={sending || aiTyping || aiSpeaking}
+              placeholder={
+                callReady && sessionMeta?.buyer_persona?.name
+                  ? `Say something like "Hi ${sessionMeta.buyer_persona.name}..."`
+                  : 'Type or speak what the seller would say...'
+              }
+              disabled={sending || aiTyping || aiSpeaking || !callReady}
               className="flex-1 rounded-full border border-[#d6cdc2] bg-white px-5 py-3 text-sm text-[#1f1f1c] shadow-sm placeholder:text-[#8d908a] focus:border-[#d6612d] focus:outline-none"
             />
 
@@ -699,8 +884,9 @@ export default function SessionPage() {
               )}
             </button>
           </div>
-        </div>
+        </section>
       </div>
-    </main>
-  )
+    </div>
+  </main>
+)
 }

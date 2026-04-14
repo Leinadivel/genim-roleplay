@@ -35,6 +35,15 @@ type Evaluation = {
   selectedPainLevel?: string | null
   selectedCompanyStage?: string | null
   selectedTimePressure?: string | null
+
+  buyerPersona?: {
+    id: string
+    name: string
+    title: string
+    company_name: string
+    avatar_url?: string | null
+  } | null
+
   transcript?: TranscriptMessage[]
 }
 
@@ -294,112 +303,61 @@ export default function ReportPage() {
 
       <section className="border-b border-[#e8ded3] bg-[#f3ece4]">
         <div className="mx-auto max-w-[1240px] px-6 py-10">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-[760px]">
-              <div className="inline-flex items-center gap-2 rounded-full border border-[#efc7b7] bg-[#f7ede6] px-4 py-2 text-sm font-medium text-[#d6612d]">
-                <span className="h-2.5 w-2.5 rounded-full bg-[#e1805c]" />
-                Session report
-              </div>
-
-              <h1 className="mt-5 text-4xl font-semibold tracking-[-0.04em] text-[#171714] md:text-6xl">
-                Performance review
-              </h1>
-
-              <p className="mt-4 max-w-[720px] text-base leading-8 text-[#5b5d59] md:text-lg">
-                Review the session outcome, identify what worked, and see where
-                the seller needs sharper execution.
-              </p>
+          <div className="max-w-[760px]">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#efc7b7] bg-[#f7ede6] px-4 py-2 text-sm font-medium text-[#d6612d]">
+              <span className="h-2.5 w-2.5 rounded-full bg-[#e1805c]" />
+              Session report
             </div>
 
-            <div className="rounded-[22px] border border-[#e2d8cd] bg-white px-5 py-4 shadow-[0_8px_24px_rgba(25,25,20,0.04)]">
-              <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
-                Session summary
-              </div>
+            <h1 className="mt-5 text-4xl font-semibold tracking-[-0.04em] text-[#171714] md:text-6xl">
+              Performance review
+            </h1>
 
-              <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                <div>
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8a8d87]">
-                    Scenario
-                  </div>
-                  <div className="mt-1 text-sm font-medium text-[#2b2c2a]">
-                    {state.evaluation?.scenarioTitle || '—'}
-                  </div>
+            <p className="mt-4 max-w-[720px] text-base leading-8 text-[#5b5d59] md:text-lg">
+              Review the session outcome, identify what worked, and see where
+              the seller needs sharper execution.
+            </p>
+
+            {/* 🔥 PERSONA BLOCK */}
+            {state.evaluation?.buyerPersona && (
+              <div className="mt-6 flex items-center gap-4 rounded-[20px] border border-[#e6ddd2] bg-white px-5 py-4 shadow-[0_10px_30px_rgba(0,0,0,0.04)]">
+                
+                {/* Avatar */}
+                <div className="relative h-14 w-14 shrink-0">
+                  {state.evaluation.buyerPersona.avatar_url ? (
+                    <img
+                      src={state.evaluation.buyerPersona.avatar_url}
+                      alt={state.evaluation.buyerPersona.name}
+                      className="h-full w-full rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center rounded-full bg-[#1f4d38] text-sm font-semibold text-white">
+                      {state.evaluation.buyerPersona.name
+                        .split(' ')
+                        .map((n) => n[0])
+                        .join('')
+                        .slice(0, 2)}
+                    </div>
+                  )}
+
+                  {/* live indicator */}
+                  <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white bg-green-500" />
                 </div>
 
+                {/* Persona Info */}
                 <div>
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8a8d87]">
-                    Industry
+                  <div className="text-sm font-semibold text-[#1a1a17]">
+                    {state.evaluation.buyerPersona.name}
                   </div>
-                  <div className="mt-1 text-sm font-medium text-[#2b2c2a]">
-                    {state.evaluation?.selectedIndustry || '—'}
+                  <div className="text-xs text-[#666864]">
+                    {state.evaluation.buyerPersona.title}
                   </div>
-                </div>
-
-                <div>
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8a8d87]">
-                    Buyer role
-                  </div>
-                  <div className="mt-1 text-sm font-medium text-[#2b2c2a]">
-                    {state.evaluation?.selectedBuyerRole || '—'}
-                  </div>
-                </div>
-
-                <div>
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8a8d87]">
-                    Type
-                  </div>
-                  <div className="mt-1 text-sm font-medium text-[#2b2c2a]">
-                    {state.evaluation?.selectedRoleplayType || '—'}
-                  </div>
-                </div>
-
-                <div>
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8a8d87]">
-                    Buyer mood
-                  </div>
-                  <div className="mt-1 text-sm font-medium capitalize text-[#2b2c2a]">
-                    {state.evaluation?.selectedBuyerMood?.replace('_', ' ') ||
-                      '—'}
-                  </div>
-                </div>
-
-                <div>
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8a8d87]">
-                    Deal size
-                  </div>
-                  <div className="mt-1 text-sm font-medium text-[#2b2c2a]">
-                    {state.evaluation?.selectedDealSize || '—'}
-                  </div>
-                </div>
-
-                <div>
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8a8d87]">
-                    Pain level
-                  </div>
-                  <div className="mt-1 text-sm font-medium text-[#2b2c2a]">
-                    {formatPainLevel(state.evaluation?.selectedPainLevel)}
-                  </div>
-                </div>
-
-                <div>
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8a8d87]">
-                    Company stage
-                  </div>
-                  <div className="mt-1 text-sm font-medium text-[#2b2c2a]">
-                    {state.evaluation?.selectedCompanyStage || '—'}
-                  </div>
-                </div>
-
-                <div className="sm:col-span-2">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8a8d87]">
-                    Time pressure
-                  </div>
-                  <div className="mt-1 text-sm font-medium text-[#2b2c2a]">
-                    {formatTimePressure(state.evaluation?.selectedTimePressure)}
+                  <div className="text-xs text-[#8a8d87]">
+                    {state.evaluation.buyerPersona.company_name}
                   </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </section>

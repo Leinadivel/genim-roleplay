@@ -3,8 +3,8 @@ import { NextResponse } from 'next/server'
 import { generateBuyerResponse } from '@/services/ai/generate-buyer-response'
 import { getScenarioBundleById } from '@/services/scenarios/get-scenario-bundle'
 import { appendSessionMessage } from '@/services/sessions/append-session-message'
-import { getSessionById } from '@/services/sessions/get-session-by-id'
 import { getSessionMessages } from '@/services/sessions/get-session-messages'
+import { getSessionWithPersona } from '@/services/sessions/get-session-by-id'
 
 type RespondRequestBody = {
   sessionId?: string
@@ -22,7 +22,7 @@ export async function POST(request: Request) {
       )
     }
 
-    const session = await getSessionById(sessionId)
+    const { session, buyerPersona } = await getSessionWithPersona(sessionId)
 
     if (session.status !== 'live') {
       return NextResponse.json(
@@ -31,10 +31,15 @@ export async function POST(request: Request) {
       )
     }
 
-    const [scenarioBundle, messages] = await Promise.all([
+    const [baseScenarioBundle, messages] = await Promise.all([
       getScenarioBundleById(session.scenario_id),
       getSessionMessages(sessionId),
     ])
+
+    const scenarioBundle = {
+      ...baseScenarioBundle,
+      buyerPersona: buyerPersona ?? baseScenarioBundle.buyerPersona,
+    }
 
     const nextTurnIndex =
       messages.length > 0
@@ -63,6 +68,10 @@ export async function POST(request: Request) {
       turnIndex: nextTurnIndex,
       metadata: {
         source: 'openai',
+        buyerPersonaId: scenarioBundle.buyerPersona?.id ?? null,
+        buyerPersonaName: scenarioBundle.buyerPersona?.name ?? null,
+        buyerPersonaTitle: scenarioBundle.buyerPersona?.title ?? null,
+        buyerPersonaCompany: scenarioBundle.buyerPersona?.company_name ?? null,
         selectedIndustry: session.selected_industry,
         selectedRoleplayType: session.selected_roleplay_type,
         selectedBuyerMood: session.selected_buyer_mood,

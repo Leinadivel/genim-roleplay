@@ -91,6 +91,15 @@ export type Database = {
           title: string | null
           company_name: string | null
           company_size: string | null
+          avatar_url: string | null
+          gender: 'male' | 'female' | null
+          industry: string | null
+          buyer_role: string | null
+          buyer_mood: 'nice' | 'less_rude' | 'rude' | null
+          deal_size: string | null
+          pain_level: 'low' | 'moderate' | 'high' | null
+          company_stage: string | null
+          time_pressure: string | null
           tone: string | null
           background: string | null
           hidden_pain_points: Json
@@ -98,6 +107,7 @@ export type Database = {
           goals: Json
           constraints: Json
           is_active: boolean
+          priority: number
           created_at: string
           updated_at: string
         }
@@ -108,6 +118,15 @@ export type Database = {
           title?: string | null
           company_name?: string | null
           company_size?: string | null
+          avatar_url?: string | null
+          gender?: 'male' | 'female' | null
+          industry?: string | null
+          buyer_role?: string | null
+          buyer_mood?: 'nice' | 'less_rude' | 'rude' | null
+          deal_size?: string | null
+          pain_level?: 'low' | 'moderate' | 'high' | null
+          company_stage?: string | null
+          time_pressure?: string | null
           tone?: string | null
           background?: string | null
           hidden_pain_points?: Json
@@ -115,6 +134,7 @@ export type Database = {
           goals?: Json
           constraints?: Json
           is_active?: boolean
+          priority?: number
           created_at?: string
           updated_at?: string
         }
@@ -125,6 +145,15 @@ export type Database = {
           title?: string | null
           company_name?: string | null
           company_size?: string | null
+          avatar_url?: string | null
+          gender?: 'male' | 'female' | null
+          industry?: string | null
+          buyer_role?: string | null
+          buyer_mood?: 'nice' | 'less_rude' | 'rude' | null
+          deal_size?: string | null
+          pain_level?: 'low' | 'moderate' | 'high' | null
+          company_stage?: string | null
+          time_pressure?: string | null
           tone?: string | null
           background?: string | null
           hidden_pain_points?: Json
@@ -132,6 +161,7 @@ export type Database = {
           goals?: Json
           constraints?: Json
           is_active?: boolean
+          priority?: number
           created_at?: string
           updated_at?: string
         }
@@ -281,10 +311,10 @@ export type Database = {
           selected_roleplay_type?: string | null
           selected_buyer_mood?: 'nice' | 'less_rude' | 'rude' | null
           selected_buyer_role?: string | null
-          selected_deal_size: string | null
-          selected_pain_level: string | null
-          selected_company_stage: string | null
-          selected_time_pressure: string | null
+          selected_deal_size?: string | null
+          selected_pain_level?: string | null
+          selected_company_stage?: string | null
+          selected_time_pressure?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -308,10 +338,10 @@ export type Database = {
           selected_roleplay_type?: string | null
           selected_buyer_mood?: 'nice' | 'less_rude' | 'rude' | null
           selected_buyer_role?: string | null
-          selected_deal_size: string | null
-          selected_pain_level: string | null
-          selected_company_stage: string | null
-          selected_time_pressure: string | null
+          selected_deal_size?: string | null
+          selected_pain_level?: string | null
+          selected_company_stage?: string | null
+          selected_time_pressure?: string | null
           created_at?: string
           updated_at?: string
         }

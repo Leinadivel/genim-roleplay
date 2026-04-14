@@ -35,19 +35,19 @@ function getRoleplayTypeInstruction(roleplayType: string | null): string {
     case 'Discovery Call':
       return 'This is a discovery call. Only reveal deeper pain when the seller asks good questions.'
     case 'Demo Call':
-      return 'This is a demo call. Judge relevance carefully and push back if the seller is too generic.'
+      return 'This is a scheduled demo or product conversation. You expected the meeting, but you still judge relevance carefully and push back if the seller is generic.'
     case 'Upsell Call':
-      return 'This is an upsell call. You are already a customer, but you need a strong reason to expand.'
+      return 'This is an upsell call with an existing customer relationship context. You expected the discussion, but you need a strong reason to expand.'
     case 'Cross-sell Call':
       return 'This is a cross-sell call. You are evaluating whether the additional offer is actually relevant.'
     case 'Renewal Call':
-      return 'This is a renewal call. You will consider staying, but you may question value, pricing, or timing.'
+      return 'This is a renewal call. You expected the conversation, but you may question value, pricing, timing, or whether to continue.'
     case 'Pricing Negotiation Call':
-      return 'This is a pricing negotiation call. Push on cost, value, and commercial flexibility.'
+      return 'This is a pricing negotiation call. You expected to discuss commercials. Push on cost, value, terms, flexibility, and justification.'
     case 'Objection Handling Call':
       return 'This conversation centers on objections. Raise realistic pushback and make the seller address it properly.'
     case 'Closing Call':
-      return 'This is a closing call. You are near a decision but may hesitate or stall if not convinced.'
+      return 'This is a closing call. You are near a decision and expected the conversation, but you may hesitate, stall, or ask for reassurance if not fully convinced.'
     case 'Manager Coaching Call':
       return 'This is a coaching-style roleplay. Challenge the seller in a way that tests skill, clarity, and thinking.'
     default:
@@ -277,6 +277,47 @@ function getTimePressureInstruction(timePressure: string | null): string {
   }
 }
 
+function isBookedCallType(roleplayType: string | null): boolean {
+  return [
+    'Demo Call',
+    'Upsell Call',
+    'Renewal Call',
+    'Pricing Negotiation Call',
+    'Closing Call',
+  ].includes(roleplayType ?? '')
+}
+
+function getOpeningBehaviourInstruction(roleplayType: string | null): string {
+  if (isBookedCallType(roleplayType)) {
+    return `
+This is not a cold interruption.
+Treat the first exchange like a booked or expected call.
+If the seller opens naturally, respond like someone who joined the scheduled conversation.
+Do not act surprised that the seller is there.
+You may still be skeptical, rushed, commercial, or demanding, but not confused about why the conversation is happening.
+`
+  }
+
+  return `
+If this is an unbooked conversation, behave consistently with the roleplay type.
+Cold calls should feel unexpected.
+Warm or discovery conversations may have some prior context, but do not become too easy.
+`
+}
+
+function getNameUsageInstruction(name: string | null): string {
+  if (!name) {
+    return 'You have a realistic human name. Stay in character as a real buyer.'
+  }
+
+  return `
+Your name is ${name}.
+You are a real human buyer with that identity.
+If the seller greets you by name, respond naturally.
+Do not repeatedly restate your own name unless it feels natural.
+`
+}
+
 function buildSystemPrompt(
   bundle: ScenarioBundle,
   context: SessionContext
@@ -330,6 +371,12 @@ ${(persona?.constraints ?? []).join(', ')}
 === ROLEPLAY-TYPE BEHAVIOUR ===
 ${getRoleplayTypeInstruction(context.selectedRoleplayType)}
 
+=== OPENING CONTEXT ===
+${getOpeningBehaviourInstruction(context.selectedRoleplayType)}
+
+=== IDENTITY BEHAVIOUR ===
+${getNameUsageInstruction(persona?.name ?? null)}
+
 === MOOD BEHAVIOUR ===
 ${getMoodInstruction(context.selectedBuyerMood)}
 
@@ -371,6 +418,8 @@ Make the conversation feel natural for ${context.selectedIndustry ?? 'the chosen
 - Let pain level influence urgency
 - Let company stage influence maturity and expectations
 - Let time pressure influence patience and pacing
+- For booked-call scenarios, behave like the meeting was expected
+- For cold-call scenarios, behave like the outreach was unexpected
 
 You are NOT an assistant.
 You are the buyer.

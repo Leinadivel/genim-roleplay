@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import {
-  getScenarioBundleById,
   getScenarioBundleBySlug,
+  getScenarioBundleForSelection,
 } from '@/services/scenarios/get-scenario-bundle'
 import type { Database } from '@/types/database'
 import type {
@@ -73,16 +73,59 @@ export async function startSession(
     throw new Error('You must be signed in to start a session')
   }
 
-  const scenarioBundle = isUuid(input.scenarioId)
-    ? await getScenarioBundleById(input.scenarioId)
-    : await getScenarioBundleBySlug(input.scenarioId)
+  let scenarioBundle: StartSessionResult['scenarioBundle']
+
+  if (isUuid(input.scenarioId)) {
+    scenarioBundle = await getScenarioBundleForSelection({
+      scenarioId: input.scenarioId,
+      selectedIndustry: input.selectedIndustry ?? null,
+      selectedBuyerRole: input.selectedBuyerRole ?? null,
+      selectedBuyerMood: input.selectedBuyerMood ?? null,
+      selectedDealSize: input.selectedDealSize ?? null,
+      selectedPainLevel: input.selectedPainLevel ?? null,
+      selectedCompanyStage: input.selectedCompanyStage ?? null,
+      selectedTimePressure: input.selectedTimePressure ?? null,
+    })
+  } else {
+    const baseScenarioBundle = await getScenarioBundleBySlug(input.scenarioId)
+
+    scenarioBundle = await getScenarioBundleForSelection({
+      scenarioId: baseScenarioBundle.scenario.id,
+      selectedIndustry: input.selectedIndustry ?? null,
+      selectedBuyerRole: input.selectedBuyerRole ?? null,
+      selectedBuyerMood: input.selectedBuyerMood ?? null,
+      selectedDealSize: input.selectedDealSize ?? null,
+      selectedPainLevel: input.selectedPainLevel ?? null,
+      selectedCompanyStage: input.selectedCompanyStage ?? null,
+      selectedTimePressure: input.selectedTimePressure ?? null,
+    })
+  }
+
+  let buyerPersonaId: string | null = null
+
+  if (scenarioBundle.buyerPersona?.id) {
+    const { data: personaCheck, error: personaCheckError } = await supabase
+      .from('buyer_personas')
+      .select('id')
+      .eq('id', scenarioBundle.buyerPersona.id)
+      .eq('is_active', true)
+      .maybeSingle()
+
+    if (personaCheckError) {
+      throw new Error(
+        `Failed to validate buyer persona: ${personaCheckError.message}`
+      )
+    }
+
+    buyerPersonaId = personaCheck?.id ?? null
+  }
 
   const { data: session, error: sessionError } = await supabase
     .from('roleplay_sessions')
     .insert({
       user_id: user.id,
       scenario_id: scenarioBundle.scenario.id,
-      buyer_persona_id: scenarioBundle.buyerPersona?.id ?? null,
+      buyer_persona_id: buyerPersonaId,
       rubric_id: scenarioBundle.rubricId,
       mode: input.mode ?? 'voice',
       status: 'live',

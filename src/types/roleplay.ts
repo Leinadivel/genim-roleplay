@@ -56,6 +56,85 @@ export type BuyerRoleOption =
   | 'VP of Engineering'
   | 'Director of Engineering'
   | 'Engineering Manager'
+  | 'Chief Revenue Officer'
+  | 'Head of Revenue / Head of Growth'
+  | 'VP of Revenue / VP of Growth'
+  | 'Director of Revenue Operations'
+  | 'Revenue Operations Manager'
+  | 'Chief Product Officer'
+  | 'Head of Product'
+  | 'VP of Product'
+  | 'Director of Product'
+  | 'Product Manager'
+  | 'Chief Operations Officer'
+  | 'Head of Operations'
+  | 'VP of Operations'
+  | 'Director of Operations'
+  | 'Operations Manager'
+  | 'Chief Marketing Officer'
+  | 'Head of Marketing'
+  | 'VP of Marketing'
+  | 'Director of Marketing'
+  | 'Marketing Manager'
+  | 'Chief Legal Officer'
+  | 'Head of Legal'
+  | 'VP of Legal'
+  | 'Director of Legal'
+  | 'Legal Manager'
+  | 'Chief Finance Officer'
+  | 'Head of Finance'
+  | 'VP of Finance'
+  | 'Director of Finance'
+  | 'Finance Manager'
+  | 'Finance Lead'
+  | 'Chief Security Officer'
+  | 'Head of Security'
+  | 'VP of Security'
+  | 'Director of Security'
+  | 'Security Manager'
+  | 'Chief People Officer / CHRO'
+  | 'Head of People / Head of Talent'
+  | 'VP of People / VP of Talent'
+  | 'Director of HR / Talent'
+  | 'HR / Talent Manager'
+  | 'Chief Logistics Officer'
+  | 'Head of Logistics / Supply Chain'
+  | 'VP of Logistics / Supply Chain'
+  | 'Director of Logistics'
+  | 'Logistics Manager'
+  | 'Chief Event Officer'
+  | 'Head of Events'
+  | 'VP of Events'
+  | 'Director of Events'
+  | 'Event Manager'
+  | 'Chief Education Officer'
+  | 'Head of Education / Learning'
+  | 'VP of Education'
+  | 'Director of Education'
+  | 'Education Manager'
+  | 'Chief Customer Officer'
+  | 'Head of Customer Success'
+  | 'VP of Customer Success'
+  | 'Director of Customer Success'
+  | 'Customer Success Manager'
+
+export type DealSizeOption = '$3k' | '$10k' | '$50k' | '$100k' | '$250k'
+
+export type PainLevelOption = 'low' | 'moderate' | 'high'
+
+export type CompanyStageOption =
+  | 'Seed'
+  | 'Series A & B'
+  | 'Series C & D'
+  | 'Series E & F'
+  | 'IPO'
+
+export type TimePressureOption =
+  | 'none'
+  | '5_min'
+  | '15_min'
+  | '30_min'
+  | 'rush'
 
 export type RubricCategoryKey =
   | 'opening_rapport'
@@ -66,34 +145,7 @@ export type RubricCategoryKey =
   | 'confidence_clarity'
   | 'closing_next_step'
 
-  export type DealSizeOption =
-  | '$3k'
-  | '$10k'
-  | '$50k'
-  | '$100k'
-  | '$250k'
-
-  export type PainLevelOption =
-  | 'low'
-  | 'moderate'
-  | 'high'
-
-
-export type CompanyStageOption =
-  | 'Seed'
-  | 'Series A & B'
-  | 'Series C & D'
-  | 'Series E & F'
-  | 'IPO'
-
-  export type TimePressureOption =
-  | 'none'
-  | '5_min'
-  | '15_min'
-  | '30_min'
-  | 'rush'
-
-  export const DEAL_SIZE_OPTIONS: DealSizeOption[] = [
+export const DEAL_SIZE_OPTIONS: DealSizeOption[] = [
   '$3k',
   '$10k',
   '$50k',
@@ -101,15 +153,10 @@ export type CompanyStageOption =
   '$250k',
 ]
 
-export const TIME_PRESSURE_OPTIONS = [
-  { value: 'none', label: 'No time limit' },
-  { value: '5_min', label: '5-minute quick call' },
-  { value: '15_min', label: '15-minute structured call' },
-  { value: '30_min', label: '30-minute structured call' },
-  { value: 'rush', label: 'Prospect in a rush' },
-]
-
-export const PAIN_LEVEL_OPTIONS = [
+export const PAIN_LEVEL_OPTIONS: Array<{
+  value: PainLevelOption
+  label: string
+}> = [
   { value: 'low', label: 'Low Pain (just exploring)' },
   { value: 'moderate', label: 'Moderate Pain (actively looking)' },
   { value: 'high', label: 'High Pain (needs solution now)' },
@@ -121,6 +168,17 @@ export const COMPANY_STAGE_OPTIONS: CompanyStageOption[] = [
   'Series C & D',
   'Series E & F',
   'IPO',
+]
+
+export const TIME_PRESSURE_OPTIONS: Array<{
+  value: TimePressureOption
+  label: string
+}> = [
+  { value: 'none', label: 'No time limit' },
+  { value: '5_min', label: '5-minute quick call' },
+  { value: '15_min', label: '15-minute structured call' },
+  { value: '30_min', label: '30-minute structured call' },
+  { value: 'rush', label: 'Prospect in a rush' },
 ]
 
 export const INDUSTRY_OPTIONS: IndustryOption[] = [
@@ -154,13 +212,82 @@ export const ROLEPLAY_TYPE_OPTIONS: RoleplayTypeOption[] = [
 
 export const BUYER_ROLE_OPTIONS: BuyerRoleOption[] = [
   'CEO / Founder',
+  'Head of Company',
+  'VP of Strategy / VP of Business',
+  'Director of Business Operations',
+  'Business Operations Manager',
+  'Chief Sales Officer',
   'Head of Sales',
   'VP of Sales',
+  'Director of Sales',
   'Sales Manager',
   'Chief Technology Officer',
+  'Head of Engineering',
+  'VP of Engineering',
+  'Director of Engineering',
   'Engineering Manager',
+  'Chief Revenue Officer',
+  'Head of Revenue / Head of Growth',
+  'VP of Revenue / VP of Growth',
+  'Director of Revenue Operations',
+  'Revenue Operations Manager',
+  'Chief Product Officer',
+  'Head of Product',
+  'VP of Product',
+  'Director of Product',
+  'Product Manager',
+  'Chief Operations Officer',
+  'Head of Operations',
+  'VP of Operations',
+  'Director of Operations',
+  'Operations Manager',
+  'Chief Marketing Officer',
+  'Head of Marketing',
+  'VP of Marketing',
+  'Director of Marketing',
+  'Marketing Manager',
+  'Chief Legal Officer',
+  'Head of Legal',
+  'VP of Legal',
+  'Director of Legal',
+  'Legal Manager',
+  'Chief Finance Officer',
+  'Head of Finance',
+  'VP of Finance',
+  'Director of Finance',
+  'Finance Manager',
+  'Finance Lead',
+  'Chief Security Officer',
+  'Head of Security',
+  'VP of Security',
+  'Director of Security',
+  'Security Manager',
+  'Chief People Officer / CHRO',
+  'Head of People / Head of Talent',
+  'VP of People / VP of Talent',
+  'Director of HR / Talent',
+  'HR / Talent Manager',
+  'Chief Logistics Officer',
+  'Head of Logistics / Supply Chain',
+  'VP of Logistics / Supply Chain',
+  'Director of Logistics',
+  'Logistics Manager',
+  'Chief Event Officer',
+  'Head of Events',
+  'VP of Events',
+  'Director of Events',
+  'Event Manager',
+  'Chief Education Officer',
+  'Head of Education / Learning',
+  'VP of Education',
+  'Director of Education',
+  'Education Manager',
+  'Chief Customer Officer',
+  'Head of Customer Success',
+  'VP of Customer Success',
+  'Director of Customer Success',
+  'Customer Success Manager',
 ]
-
 
 export const BUYER_MOOD_OPTIONS: Array<{
   value: BuyerMood
@@ -201,6 +328,7 @@ export type BuyerPersona = {
   title: string | null
   company_name: string | null
   company_size: string | null
+  avatar_url: string | null
   tone: string | null
   background: string | null
   hidden_pain_points: string[]
@@ -284,11 +412,9 @@ export type RoleplaySession = {
 export type StartSessionInput = {
   scenarioId: string
   mode?: SessionMode
-
   selectedIndustry?: string | null
   selectedRoleplayType?: string | null
   selectedBuyerMood?: BuyerMood | null
-
   selectedBuyerRole?: string | null
   selectedDealSize?: string | null
   selectedPainLevel?: string | null

@@ -3,25 +3,24 @@
 import Link from 'next/link'
 import { useMemo, useState } from 'react'
 import {
+  AlertTriangle,
   ArrowRight,
   AudioWaveform,
   Brain,
+  Building2,
+  Clock3,
+  DollarSign,
   Headphones,
   LogOut,
   Mic,
   ShieldCheck,
   Target,
   UserRound,
-  DollarSign,
-  AlertTriangle,
-  Building2,
-  Clock3,
 } from 'lucide-react'
 import {
   BUYER_MOOD_OPTIONS,
   INDUSTRY_OPTIONS,
   ROLEPLAY_TYPE_OPTIONS,
-  BUYER_ROLE_OPTIONS,
   DEAL_SIZE_OPTIONS,
   PAIN_LEVEL_OPTIONS,
   COMPANY_STAGE_OPTIONS,
@@ -37,6 +36,11 @@ type Scenario = {
   industry: string | null
   difficulty: 'beginner' | 'intermediate' | 'advanced'
   objective: string | null
+}
+
+type BuyerRoleCategory = {
+  title: string
+  roles: string[]
 }
 
 const SCENARIOS: Scenario[] = [
@@ -87,6 +91,540 @@ const SCENARIOS: Scenario[] = [
   },
 ]
 
+const BUYER_ROLE_CATEGORIES: BuyerRoleCategory[] = [
+  {
+    title: 'Executive Leadership',
+    roles: [
+      'CEO / Founder',
+      'Head of Company',
+      'VP of Strategy / VP of Business',
+      'Director of Business Operations',
+      'Business Operations Manager',
+    ],
+  },
+  {
+    title: 'Sales Leadership',
+    roles: [
+      'Chief Sales Officer',
+      'Head of Sales',
+      'VP of Sales',
+      'Director of Sales',
+      'Sales Manager',
+    ],
+  },
+  {
+    title: 'Technology Leadership',
+    roles: [
+      'Chief Technology Officer',
+      'Head of Engineering',
+      'VP of Engineering',
+      'Director of Engineering',
+      'Engineering Manager',
+    ],
+  },
+  {
+    title: 'Revenue Leadership',
+    roles: [
+      'Chief Revenue Officer',
+      'Head of Revenue / Head of Growth',
+      'VP of Revenue / VP of Growth',
+      'Director of Revenue Operations',
+      'Revenue Operations Manager',
+    ],
+  },
+  {
+    title: 'Product Leadership',
+    roles: [
+      'Chief Product Officer',
+      'Head of Product',
+      'VP of Product',
+      'Director of Product',
+      'Product Manager',
+    ],
+  },
+  {
+    title: 'Operations Leadership',
+    roles: [
+      'Chief Operations Officer',
+      'Head of Operations',
+      'VP of Operations',
+      'Director of Operations',
+      'Operations Manager',
+    ],
+  },
+  {
+    title: 'Marketing Leadership',
+    roles: [
+      'Chief Marketing Officer',
+      'Head of Marketing',
+      'VP of Marketing',
+      'Director of Marketing',
+      'Marketing Manager',
+    ],
+  },
+  {
+    title: 'Legal Leadership',
+    roles: [
+      'Chief Legal Officer',
+      'Head of Legal',
+      'VP of Legal',
+      'Director of Legal',
+      'Legal Manager',
+    ],
+  },
+  {
+    title: 'Finance Leadership',
+    roles: [
+      'Chief Finance Officer',
+      'Head of Finance',
+      'VP of Finance',
+      'Director of Finance',
+      'Finance Manager',
+    ],
+  },
+  {
+    title: 'Security Leadership',
+    roles: [
+      'Chief Security Officer',
+      'Head of Security',
+      'VP of Security',
+      'Director of Security',
+      'Security Manager',
+    ],
+  },
+  {
+    title: 'People & Talent Leadership',
+    roles: [
+      'Chief People Officer / CHRO',
+      'Head of People / Head of Talent',
+      'VP of People / VP of Talent',
+      'Director of HR / Talent',
+      'HR / Talent Manager',
+    ],
+  },
+  {
+    title: 'Logistics & Supply Chain Leadership',
+    roles: [
+      'Chief Logistics Officer',
+      'Head of Logistics / Supply Chain',
+      'VP of Logistics / Supply Chain',
+      'Director of Logistics',
+      'Logistics Manager',
+    ],
+  },
+  {
+    title: 'Events Leadership',
+    roles: [
+      'Chief Event Officer',
+      'Head of Events',
+      'VP of Events',
+      'Director of Events',
+      'Event Manager',
+    ],
+  },
+  {
+    title: 'Education Leadership',
+    roles: [
+      'Chief Education Officer',
+      'Head of Education / Learning',
+      'VP of Education',
+      'Director of Education',
+      'Education Manager',
+    ],
+  },
+  {
+    title: 'Customer Leadership',
+    roles: [
+      'Chief Customer Officer',
+      'Head of Customer Success',
+      'VP of Customer Success',
+      'Director of Customer Success',
+      'Customer Success Manager',
+    ],
+  },
+]
+
+const PERSONA_DIRECTORY: Record<
+  string,
+  { name: string; company: string; avatar: string }
+> = {
+  'CEO / Founder': {
+    name: 'Daniel Foster',
+    company: 'Northstar Growth Labs',
+    avatar: 'https://randomuser.me/api/portraits/men/32.jpg',
+  },
+  'Head of Company': {
+    name: 'Maya Roberts',
+    company: 'SummitBridge Ventures',
+    avatar: 'https://randomuser.me/api/portraits/women/44.jpg',
+  },
+  'VP of Strategy / VP of Business': {
+    name: 'Rachel Moore',
+    company: 'PeakAxis Systems',
+    avatar: 'https://randomuser.me/api/portraits/women/68.jpg',
+  },
+  'Director of Business Operations': {
+    name: 'Owen Richards',
+    company: 'ClarityOps Group',
+    avatar: 'https://randomuser.me/api/portraits/men/41.jpg',
+  },
+  'Business Operations Manager': {
+    name: 'Emily Hayes',
+    company: 'ProcessLift Co.',
+    avatar: 'https://randomuser.me/api/portraits/women/21.jpg',
+  },
+  'Chief Sales Officer': {
+    name: 'Marcus Allen',
+    company: 'RevenueCore Global',
+    avatar: 'https://randomuser.me/api/portraits/men/51.jpg',
+  },
+  'Head of Sales': {
+    name: 'David Emmanuel',
+    company: 'Northstar Revenue Systems',
+    avatar: 'https://randomuser.me/api/portraits/men/32.jpg',
+  },
+  'VP of Sales': {
+    name: 'Sarah Mitchell',
+    company: 'Velocity Cloud Systems',
+    avatar: 'https://randomuser.me/api/portraits/women/45.jpg',
+  },
+  'Director of Sales': {
+    name: 'Jordan Blake',
+    company: 'Horizon Pipeline Co.',
+    avatar: 'https://randomuser.me/api/portraits/men/53.jpg',
+  },
+  'Sales Manager': {
+    name: 'Lena Brooks',
+    company: 'QuotaPath Solutions',
+    avatar: 'https://randomuser.me/api/portraits/women/54.jpg',
+  },
+  'Chief Technology Officer': {
+    name: 'Aisha Bello',
+    company: 'OrbitStack Labs',
+    avatar: 'https://randomuser.me/api/portraits/women/63.jpg',
+  },
+  'Head of Engineering': {
+    name: 'Noah Price',
+    company: 'ScaleForge Tech',
+    avatar: 'https://randomuser.me/api/portraits/men/67.jpg',
+  },
+  'VP of Engineering': {
+    name: 'Priya Raman',
+    company: 'BuildLayer Systems',
+    avatar: 'https://randomuser.me/api/portraits/women/47.jpg',
+  },
+  'Director of Engineering': {
+    name: 'Ethan Cole',
+    company: 'InfraPulse',
+    avatar: 'https://randomuser.me/api/portraits/men/39.jpg',
+  },
+  'Engineering Manager': {
+    name: 'Sophia Grant',
+    company: 'FlowStack Cloud',
+    avatar: 'https://randomuser.me/api/portraits/women/57.jpg',
+  },
+  'Chief Revenue Officer': {
+    name: 'Adrian Wells',
+    company: 'GrowthSignal Inc.',
+    avatar: 'https://randomuser.me/api/portraits/men/64.jpg',
+  },
+  'Head of Revenue / Head of Growth': {
+    name: 'Tara Lewis',
+    company: 'ExpandIQ',
+    avatar: 'https://randomuser.me/api/portraits/women/33.jpg',
+  },
+  'VP of Revenue / VP of Growth': {
+    name: 'Chris Dalton',
+    company: 'LiftMetric',
+    avatar: 'https://randomuser.me/api/portraits/men/36.jpg',
+  },
+  'Director of Revenue Operations': {
+    name: 'Nina Patel',
+    company: 'OpsPilot Revenue',
+    avatar: 'https://randomuser.me/api/portraits/women/29.jpg',
+  },
+  'Revenue Operations Manager': {
+    name: 'Isaac Green',
+    company: 'Forecastly',
+    avatar: 'https://randomuser.me/api/portraits/men/60.jpg',
+  },
+  'Chief Product Officer': {
+    name: 'Helen Ward',
+    company: 'VisionTrack Product',
+    avatar: 'https://randomuser.me/api/portraits/women/52.jpg',
+  },
+  'Head of Product': {
+    name: 'Samir Khan',
+    company: 'Pathwise Software',
+    avatar: 'https://randomuser.me/api/portraits/men/43.jpg',
+  },
+  'VP of Product': {
+    name: 'Claire Benson',
+    company: 'ProductAxis',
+    avatar: 'https://randomuser.me/api/portraits/women/61.jpg',
+  },
+  'Director of Product': {
+    name: 'Victor Hall',
+    company: 'Roadmap Works',
+    avatar: 'https://randomuser.me/api/portraits/men/48.jpg',
+  },
+  'Product Manager': {
+    name: 'Mia Turner',
+    company: 'FeatureFlow',
+    avatar: 'https://randomuser.me/api/portraits/women/25.jpg',
+  },
+  'Chief Operations Officer': {
+    name: 'Rachel Morgan',
+    company: 'Westbridge Commerce Group',
+    avatar: 'https://randomuser.me/api/portraits/women/49.jpg',
+  },
+  'Head of Operations': {
+    name: 'Elliot Barnes',
+    company: 'OpsBridge International',
+    avatar: 'https://randomuser.me/api/portraits/men/55.jpg',
+  },
+  'VP of Operations': {
+    name: 'Grace Holloway',
+    company: 'ScalePort',
+    avatar: 'https://randomuser.me/api/portraits/women/58.jpg',
+  },
+  'Director of Operations': {
+    name: 'Hassan Ali',
+    company: 'MotionWorks',
+    avatar: 'https://randomuser.me/api/portraits/men/57.jpg',
+  },
+  'Operations Manager': {
+    name: 'Naomi Reed',
+    company: 'Process Lane',
+    avatar: 'https://randomuser.me/api/portraits/women/19.jpg',
+  },
+  'Chief Marketing Officer': {
+    name: 'Bianca James',
+    company: 'BrandScale Media',
+    avatar: 'https://randomuser.me/api/portraits/women/72.jpg',
+  },
+  'Head of Marketing': {
+    name: 'Elena Cruz',
+    company: 'DemandFuel Agency',
+    avatar: 'https://randomuser.me/api/portraits/women/36.jpg',
+  },
+  'VP of Marketing': {
+    name: 'Jason Reed',
+    company: 'InboundNorth',
+    avatar: 'https://randomuser.me/api/portraits/men/58.jpg',
+  },
+  'Director of Marketing': {
+    name: 'Anita Cole',
+    company: 'Pipeline Creative',
+    avatar: 'https://randomuser.me/api/portraits/women/38.jpg',
+  },
+  'Marketing Manager': {
+    name: 'Sophie White',
+    company: 'CampaignIQ',
+    avatar: 'https://randomuser.me/api/portraits/women/43.jpg',
+  },
+  'Chief Legal Officer': {
+    name: 'Victoria Stone',
+    company: 'GovernEdge Legal',
+    avatar: 'https://randomuser.me/api/portraits/women/40.jpg',
+  },
+  'Head of Legal': {
+    name: 'Aaron Bell',
+    company: 'PolicyBridge',
+    avatar: 'https://randomuser.me/api/portraits/men/46.jpg',
+  },
+  'VP of Legal': {
+    name: 'Monica Shaw',
+    company: 'ClausePoint',
+    avatar: 'https://randomuser.me/api/portraits/women/35.jpg',
+  },
+  'Director of Legal': {
+    name: 'Paul Jenkins',
+    company: 'ComplyTrack',
+    avatar: 'https://randomuser.me/api/portraits/men/59.jpg',
+  },
+  'Legal Manager': {
+    name: 'Ivy Matthews',
+    company: 'RiskLine',
+    avatar: 'https://randomuser.me/api/portraits/women/41.jpg',
+  },
+  'Chief Finance Officer': {
+    name: 'Michael Torres',
+    company: 'SummitCore Technologies',
+    avatar: 'https://randomuser.me/api/portraits/men/62.jpg',
+  },
+  'Head of Finance': {
+    name: 'Laura Finch',
+    company: 'CapitalArc',
+    avatar: 'https://randomuser.me/api/portraits/women/42.jpg',
+  },
+  'VP of Finance': {
+    name: 'Bryan Holt',
+    company: 'LedgerPilot',
+    avatar: 'https://randomuser.me/api/portraits/men/56.jpg',
+  },
+  'Director of Finance': {
+    name: 'Nadia Fox',
+    company: 'MarginWorks',
+    avatar: 'https://randomuser.me/api/portraits/women/53.jpg',
+  },
+  'Finance Manager': {
+    name: 'Carmen Ellis',
+    company: 'SpendSignal',
+    avatar: 'https://randomuser.me/api/portraits/women/59.jpg',
+  },
+  'Chief Security Officer': {
+    name: 'Derek Vaughn',
+    company: 'ShieldGrid Security',
+    avatar: 'https://randomuser.me/api/portraits/men/66.jpg',
+  },
+  'Head of Security': {
+    name: 'Olivia Kent',
+    company: 'ControlWall',
+    avatar: 'https://randomuser.me/api/portraits/women/62.jpg',
+  },
+  'VP of Security': {
+    name: 'Trevor Long',
+    company: 'TrustLayer',
+    avatar: 'https://randomuser.me/api/portraits/men/61.jpg',
+  },
+  'Director of Security': {
+    name: 'Leah Foster',
+    company: 'SecureOps Global',
+    avatar: 'https://randomuser.me/api/portraits/women/46.jpg',
+  },
+  'Security Manager': {
+    name: 'Caleb Ross',
+    company: 'GuardPoint',
+    avatar: 'https://randomuser.me/api/portraits/men/44.jpg',
+  },
+  'Chief People Officer / CHRO': {
+    name: 'Hannah Scott',
+    company: 'PeopleRise',
+    avatar: 'https://randomuser.me/api/portraits/women/66.jpg',
+  },
+  'Head of People / Head of Talent': {
+    name: 'Molly Evans',
+    company: 'TalentBridge',
+    avatar: 'https://randomuser.me/api/portraits/women/64.jpg',
+  },
+  'VP of People / VP of Talent': {
+    name: 'Benjamin Clark',
+    company: 'HireScope',
+    avatar: 'https://randomuser.me/api/portraits/men/63.jpg',
+  },
+  'Director of HR / Talent': {
+    name: 'Jasmine Hall',
+    company: 'PeopleFlow',
+    avatar: 'https://randomuser.me/api/portraits/women/67.jpg',
+  },
+  'HR / Talent Manager': {
+    name: 'Tina Brooks',
+    company: 'TeamPulse',
+    avatar: 'https://randomuser.me/api/portraits/women/31.jpg',
+  },
+  'Chief Logistics Officer': {
+    name: 'Patrick Reed',
+    company: 'RouteScale Logistics',
+    avatar: 'https://randomuser.me/api/portraits/men/65.jpg',
+  },
+  'Head of Logistics / Supply Chain': {
+    name: 'Amara Okafor',
+    company: 'MoveChain Global',
+    avatar: 'https://randomuser.me/api/portraits/women/69.jpg',
+  },
+  'VP of Logistics / Supply Chain': {
+    name: 'Gavin Price',
+    company: 'FreightAxis',
+    avatar: 'https://randomuser.me/api/portraits/men/68.jpg',
+  },
+  'Director of Logistics': {
+    name: 'Renee Palmer',
+    company: 'FlowFreight',
+    avatar: 'https://randomuser.me/api/portraits/women/70.jpg',
+  },
+  'Logistics Manager': {
+    name: 'Jonas Hill',
+    company: 'SupplyMap',
+    avatar: 'https://randomuser.me/api/portraits/men/70.jpg',
+  },
+  'Chief Event Officer': {
+    name: 'Celeste Morgan',
+    company: 'EventFrame',
+    avatar: 'https://randomuser.me/api/portraits/women/74.jpg',
+  },
+  'Head of Events': {
+    name: 'Paige Turner',
+    company: 'SummitLive',
+    avatar: 'https://randomuser.me/api/portraits/women/76.jpg',
+  },
+  'VP of Events': {
+    name: 'Ryan Cole',
+    company: 'StageFlow',
+    avatar: 'https://randomuser.me/api/portraits/men/72.jpg',
+  },
+  'Director of Events': {
+    name: 'Ariana Wells',
+    company: 'EventSync',
+    avatar: 'https://randomuser.me/api/portraits/women/73.jpg',
+  },
+  'Event Manager': {
+    name: 'Luke Martin',
+    company: 'VenuePilot',
+    avatar: 'https://randomuser.me/api/portraits/men/73.jpg',
+  },
+  'Chief Education Officer': {
+    name: 'Dr. Melissa Grant',
+    company: 'LearnSphere',
+    avatar: 'https://randomuser.me/api/portraits/women/77.jpg',
+  },
+  'Head of Education / Learning': {
+    name: 'Joanna Price',
+    company: 'SkillBridge',
+    avatar: 'https://randomuser.me/api/portraits/women/78.jpg',
+  },
+  'VP of Education': {
+    name: 'Nathan Reed',
+    company: 'EduFlow',
+    avatar: 'https://randomuser.me/api/portraits/men/74.jpg',
+  },
+  'Director of Education': {
+    name: 'Isabel Woods',
+    company: 'OutcomeWorks',
+    avatar: 'https://randomuser.me/api/portraits/women/79.jpg',
+  },
+  'Education Manager': {
+    name: 'Peter Long',
+    company: 'CourseStack',
+    avatar: 'https://randomuser.me/api/portraits/men/75.jpg',
+  },
+  'Chief Customer Officer': {
+    name: 'Natalie Brooks',
+    company: 'ClientPath',
+    avatar: 'https://randomuser.me/api/portraits/women/71.jpg',
+  },
+  'Head of Customer Success': {
+    name: 'Claire Donovan',
+    company: 'RetentionOS',
+    avatar: 'https://randomuser.me/api/portraits/women/65.jpg',
+  },
+  'VP of Customer Success': {
+    name: 'Evan Mitchell',
+    company: 'SuccessScale',
+    avatar: 'https://randomuser.me/api/portraits/men/69.jpg',
+  },
+  'Director of Customer Success': {
+    name: 'Julia Sanders',
+    company: 'AccountPilot',
+    avatar: 'https://randomuser.me/api/portraits/women/75.jpg',
+  },
+  'Customer Success Manager': {
+    name: 'Megan Ross',
+    company: 'ClientOrbit',
+    avatar: 'https://randomuser.me/api/portraits/women/55.jpg',
+  },
+}
+
 function ScenarioIcon({ slug }: { slug: string }) {
   if (slug.includes('cold')) return <Mic className="h-5 w-5" />
   if (slug.includes('discovery')) return <Brain className="h-5 w-5" />
@@ -110,6 +648,15 @@ function SectionHeader({
       <div className="mt-1 text-sm text-[#666864]">{subtitle}</div>
     </div>
   )
+}
+
+function getInitials(name: string) {
+  return name
+    .split(' ')
+    .map((part) => part[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase()
 }
 
 export default function ScenariosPage() {
@@ -146,6 +693,16 @@ export default function ScenariosPage() {
   const selectedTimePressureLabel =
     TIME_PRESSURE_OPTIONS.find((item) => item.value === selectedTimePressure)
       ?.label ?? selectedTimePressure
+
+  const personaPreview = useMemo(() => {
+    return (
+      PERSONA_DIRECTORY[selectedBuyerRole] ?? {
+        name: 'David Emmanuel',
+        company: 'Northstar Revenue Systems',
+        avatar: 'https://randomuser.me/api/portraits/men/32.jpg',
+      }
+    )
+  }, [selectedBuyerRole])
 
   async function handleStartSession() {
     try {
@@ -310,28 +867,39 @@ export default function ScenariosPage() {
                 title="Buyer role"
                 subtitle="Choose who you are selling to"
               />
-              <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-                {BUYER_ROLE_OPTIONS.map((role) => {
-                  const active = role === selectedBuyerRole
 
-                  return (
-                    <button
-                      key={role}
-                      type="button"
-                      onClick={() => setSelectedBuyerRole(role)}
-                      className={`rounded-[16px] border px-3 py-3 text-left text-sm font-medium transition ${
-                        active
-                          ? 'border-[#1f4d38] bg-[#eef5f0] text-[#1f4d38]'
-                          : 'border-[#e9e0d6] bg-[#faf8f5] text-[#4d4f4a] hover:bg-white'
-                      }`}
-                    >
-                      <div className="flex items-start gap-2">
-                        <UserRound className="mt-0.5 h-4 w-4 shrink-0" />
-                        <span>{role}</span>
-                      </div>
-                    </button>
-                  )
-                })}
+              <div className="space-y-5">
+                {BUYER_ROLE_CATEGORIES.map((category) => (
+                  <div key={category.title}>
+                    <div className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-[#8a8d87]">
+                      {category.title}
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+                      {category.roles.map((role) => {
+                        const active = role === selectedBuyerRole
+
+                        return (
+                          <button
+                            key={role}
+                            type="button"
+                            onClick={() => setSelectedBuyerRole(role)}
+                            className={`rounded-[16px] border px-3 py-3 text-left text-sm font-medium transition ${
+                              active
+                                ? 'border-[#1f4d38] bg-[#eef5f0] text-[#1f4d38]'
+                                : 'border-[#e9e0d6] bg-[#faf8f5] text-[#4d4f4a] hover:bg-white'
+                            }`}
+                          >
+                            <div className="flex items-start gap-2">
+                              <UserRound className="mt-0.5 h-4 w-4 shrink-0" />
+                              <span>{role}</span>
+                            </div>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -543,118 +1111,155 @@ export default function ScenariosPage() {
                 Session summary
               </p>
 
-              <div className="mt-5 rounded-[22px] border border-[#ece4da] bg-[#faf8f5] p-5">
-                <div className="flex items-start gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#f5ede6] text-[#d6612d]">
-                    <ScenarioIcon slug={selectedScenario.slug} />
-                  </div>
-
-                  <div>
-                    <div className="text-lg font-semibold text-[#181815]">
-                      {selectedScenario.title}
+              <div className="mt-5 overflow-hidden rounded-[24px] border border-[#ece4da] bg-[#faf8f5]">
+                <div className="bg-[linear-gradient(135deg,#f7ede6_0%,#eef5f0_100%)] px-5 py-5">
+                  <div className="flex items-start gap-4">
+                    <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-full border-2 border-white bg-[#1f4d38] shadow-sm">
+                      <img
+                        src={personaPreview.avatar}
+                        alt={personaPreview.name}
+                        className="h-full w-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none'
+                        }}
+                      />
+                      {/* <div className="absolute inset-0 flex items-center justify-center text-sm font-semibold text-white">
+                        {getInitials(personaPreview.name)}
+                      </div> */}
                     </div>
-                    <div className="mt-1 text-sm leading-6 text-[#5f625d]">
-                      {selectedScenario.description}
+
+                    <div className="min-w-0">
+                      <div className="text-lg font-semibold text-[#181815]">
+                        {personaPreview.name}
+                      </div>
+                      <div className="mt-0.5 text-sm font-medium text-[#3d413c]">
+                        {selectedBuyerRole}
+                      </div>
+                      <div className="mt-0.5 text-sm text-[#666864]">
+                        {personaPreview.company}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 rounded-[18px] border border-white/70 bg-white/70 px-4 py-3">
+                    <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
+                      Selected scenario
+                    </div>
+                    <div className="mt-2 flex items-start gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#f5ede6] text-[#d6612d]">
+                        <ScenarioIcon slug={selectedScenario.slug} />
+                      </div>
+
+                      <div>
+                        <div className="text-base font-semibold text-[#181815]">
+                          {selectedScenario.title}
+                        </div>
+                        <div className="mt-1 text-sm leading-6 text-[#5f625d]">
+                          {selectedScenario.description}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="mt-5 grid grid-cols-2 gap-3">
-                <div className="rounded-[18px] border border-[#ece4da] bg-white px-4 py-3">
-                  <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
-                    Industry
+                <div className="p-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-[18px] border border-[#ece4da] bg-white px-4 py-3">
+                      <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
+                        Industry
+                      </div>
+                      <div className="mt-1.5 text-sm font-semibold text-[#1b1b18]">
+                        {selectedIndustry}
+                      </div>
+                    </div>
+
+                    <div className="rounded-[18px] border border-[#ece4da] bg-white px-4 py-3">
+                      <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
+                        Buyer mood
+                      </div>
+                      <div className="mt-1.5 text-sm font-semibold capitalize text-[#1b1b18]">
+                        {selectedBuyerMood.replace('_', ' ')}
+                      </div>
+                    </div>
+
+                    <div className="rounded-[18px] border border-[#ece4da] bg-white px-4 py-3">
+                      <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
+                        Buyer role
+                      </div>
+                      <div className="mt-1.5 text-sm font-semibold text-[#1b1b18]">
+                        {selectedBuyerRole}
+                      </div>
+                    </div>
+
+                    <div className="rounded-[18px] border border-[#ece4da] bg-white px-4 py-3">
+                      <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
+                        Roleplay type
+                      </div>
+                      <div className="mt-1.5 text-sm font-semibold text-[#1b1b18]">
+                        {selectedRoleplayType}
+                      </div>
+                    </div>
+
+                    <div className="rounded-[18px] border border-[#ece4da] bg-white px-4 py-3">
+                      <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
+                        Deal size
+                      </div>
+                      <div className="mt-1.5 text-sm font-semibold text-[#1b1b18]">
+                        {selectedDealSize}
+                      </div>
+                    </div>
+
+                    <div className="rounded-[18px] border border-[#ece4da] bg-white px-4 py-3">
+                      <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
+                        Pain level
+                      </div>
+                      <div className="mt-1.5 text-sm font-semibold text-[#1b1b18]">
+                        {selectedPainLevelLabel}
+                      </div>
+                    </div>
+
+                    <div className="rounded-[18px] border border-[#ece4da] bg-white px-4 py-3">
+                      <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
+                        Company stage
+                      </div>
+                      <div className="mt-1.5 text-sm font-semibold text-[#1b1b18]">
+                        {selectedCompanyStage}
+                      </div>
+                    </div>
+
+                    <div className="rounded-[18px] border border-[#ece4da] bg-white px-4 py-3">
+                      <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
+                        Time pressure
+                      </div>
+                      <div className="mt-1.5 text-sm font-semibold text-[#1b1b18]">
+                        {selectedTimePressureLabel}
+                      </div>
+                    </div>
                   </div>
-                  <div className="mt-1.5 text-sm font-semibold text-[#1b1b18]">
-                    {selectedIndustry}
+
+                  <div className="mt-4 rounded-[16px] border border-[#cfe0d5] bg-[#eef5f0] p-3">
+                    <div className="text-sm font-semibold text-[#385244]">
+                      Training objective
+                    </div>
+                    <div className="mt-1.5 text-sm leading-6 text-[#4f6155]">
+                      {selectedScenario.objective}
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleStartSession}
+                    disabled={starting}
+                    className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#d6612d] px-6 py-4 text-sm font-semibold text-white transition hover:opacity-95 disabled:opacity-50"
+                  >
+                    {starting ? 'Starting session...' : 'Start roleplay'}
+                    {!starting ? <ArrowRight className="h-4 w-4" /> : null}
+                  </button>
+
+                  <div className="mt-4 text-center text-xs leading-6 text-[#777a75]">
+                    Persona preview updates with your chosen buyer role.
                   </div>
                 </div>
-
-                <div className="rounded-[18px] border border-[#ece4da] bg-white px-4 py-4">
-                  <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
-                    Buyer mood
-                  </div>
-                  <div className="mt-1.5 text-sm font-semibold capitalize text-[#1b1b18]">
-                    {selectedBuyerMood.replace('_', ' ')}
-                  </div>
-                </div>
-
-                <div className="rounded-[18px] border border-[#ece4da] bg-white px-4 py-4">
-                  <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
-                    Buyer role
-                  </div>
-                  <div className="mt-1.5 text-sm font-semibold text-[#1b1b18]">
-                    {selectedBuyerRole}
-                  </div>
-                </div>
-
-                <div className="rounded-[18px] border border-[#ece4da] bg-white px-4 py-4">
-                  <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
-                    Roleplay type
-                  </div>
-                  <div className="mt-1.5 text-sm font-semibold text-[#1b1b18]">
-                    {selectedRoleplayType}
-                  </div>
-                </div>
-
-                <div className="rounded-[18px] border border-[#ece4da] bg-white px-4 py-4">
-                  <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
-                    Deal size
-                  </div>
-                  <div className="mt-1.5 text-sm font-semibold text-[#1b1b18]">
-                    {selectedDealSize}
-                  </div>
-                </div>
-
-                <div className="rounded-[18px] border border-[#ece4da] bg-white px-4 py-4">
-                  <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
-                    Pain level
-                  </div>
-                  <div className="mt-1.5 text-sm font-semibold text-[#1b1b18]">
-                    {selectedPainLevelLabel}
-                  </div>
-                </div>
-
-                <div className="rounded-[18px] border border-[#ece4da] bg-white px-4 py-4">
-                  <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
-                    Company stage
-                  </div>
-                  <div className="mt-1.5 text-sm font-semibold text-[#1b1b18]">
-                    {selectedCompanyStage}
-                  </div>
-                </div>
-
-                <div className="rounded-[18px] border border-[#ece4da] bg-white px-4 py-4">
-                  <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
-                    Time pressure
-                  </div>
-                  <div className="mt-1.5 text-sm font-semibold text-[#1b1b18]">
-                    {selectedTimePressureLabel}
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-4 rounded-[16px] border border-[#cfe0d5] bg-[#eef5f0] p-3">
-                <div className="text-sm font-semibold text-[#385244]">
-                  Training objective
-                </div>
-                <div className="mt-1.5 text-sm leading-6 text-[#4f6155]">
-                  {selectedScenario.objective}
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={handleStartSession}
-                disabled={starting}
-                className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#d6612d] px-6 py-4 text-sm font-semibold text-white transition hover:opacity-95 disabled:opacity-50"
-              >
-                {starting ? 'Starting session...' : 'Start roleplay'}
-                {!starting ? <ArrowRight className="h-4 w-4" /> : null}
-              </button>
-
-              <div className="mt-4 text-center text-xs leading-6 text-[#777a75]">
-                Every change on the left updates this summary instantly.
               </div>
             </div>
           </div>

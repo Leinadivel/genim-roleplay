@@ -1,9 +1,17 @@
 import { createClient } from '@/lib/supabase/server'
 import type { Database } from '@/types/database'
-import type { RoleplaySession } from '@/types/roleplay'
+import type { BuyerPersona, RoleplaySession } from '@/types/roleplay'
 
 type RoleplaySessionRow =
   Database['public']['Tables']['roleplay_sessions']['Row']
+
+type BuyerPersonaRow =
+  Database['public']['Tables']['buyer_personas']['Row']
+
+function toStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return []
+  return value.filter((item): item is string => typeof item === 'string')
+}
 
 function mapRoleplaySession(row: RoleplaySessionRow): RoleplaySession {
   return {
@@ -41,6 +49,24 @@ function mapRoleplaySession(row: RoleplaySessionRow): RoleplaySession {
   }
 }
 
+function mapBuyerPersona(row: BuyerPersonaRow): BuyerPersona {
+  return {
+    id: row.id,
+    scenario_id: row.scenario_id,
+    name: row.name,
+    title: row.title,
+    company_name: row.company_name,
+    company_size: row.company_size,
+    avatar_url: row.avatar_url,
+    tone: row.tone,
+    background: row.background,
+    hidden_pain_points: toStringArray(row.hidden_pain_points),
+    common_objections: toStringArray(row.common_objections),
+    goals: toStringArray(row.goals),
+    constraints: toStringArray(row.constraints),
+  }
+}
+
 export async function getSessionById(
   sessionId: string
 ): Promise<RoleplaySession> {
@@ -61,4 +87,46 @@ export async function getSessionById(
   }
 
   return mapRoleplaySession(data)
+}
+
+export async function getSessionWithPersona(sessionId: string): Promise<{
+  session: RoleplaySession
+  buyerPersona: BuyerPersona | null
+}> {
+  const supabase = await createClient()
+
+  const { data: sessionData, error: sessionError } = await supabase
+    .from('roleplay_sessions')
+    .select('*')
+    .eq('id', sessionId)
+    .single()
+
+  if (sessionError) {
+    throw new Error(`Failed to load session with persona: ${sessionError.message}`)
+  }
+
+  if (!sessionData) {
+    throw new Error('Session not found')
+  }
+
+  let buyerPersona: BuyerPersona | null = null
+
+  if (sessionData.buyer_persona_id) {
+    const { data: personaData, error: personaError } = await supabase
+      .from('buyer_personas')
+      .select('*')
+      .eq('id', sessionData.buyer_persona_id)
+      .maybeSingle()
+
+    if (personaError) {
+      throw new Error(`Failed to load buyer persona: ${personaError.message}`)
+    }
+
+    buyerPersona = personaData ? mapBuyerPersona(personaData) : null
+  }
+
+  return {
+    session: mapRoleplaySession(sessionData),
+    buyerPersona,
+  }
 }

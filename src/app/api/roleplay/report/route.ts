@@ -37,6 +37,14 @@ export async function GET(request: Request) {
           selected_time_pressure,
           scenarios (
             title
+          ),
+          buyer_personas (
+            id,
+            name,
+            title,
+            company_name,
+            company_size,
+            avatar_url
           )
         `
         )
@@ -53,8 +61,15 @@ export async function GET(request: Request) {
       Array.isArray(data.scenarios) && data.scenarios.length > 0
         ? (data.scenarios[0] as { title?: string }).title ?? null
         : !Array.isArray(data.scenarios) && data.scenarios
-        ? (data.scenarios as { title?: string }).title ?? null
-        : null
+          ? (data.scenarios as { title?: string }).title ?? null
+          : null
+
+    const buyerPersona =
+      Array.isArray(data.buyer_personas) && data.buyer_personas.length > 0
+        ? data.buyer_personas[0]
+        : !Array.isArray(data.buyer_personas) && data.buyer_personas
+          ? data.buyer_personas
+          : null
 
     return NextResponse.json({
       report: {
@@ -72,6 +87,16 @@ export async function GET(request: Request) {
         selectedPainLevel: data.selected_pain_level ?? null,
         selectedCompanyStage: data.selected_company_stage ?? null,
         selectedTimePressure: data.selected_time_pressure ?? null,
+        buyerPersona: buyerPersona
+          ? {
+              id: buyerPersona.id,
+              name: buyerPersona.name,
+              title: buyerPersona.title,
+              company_name: buyerPersona.company_name,
+              company_size: buyerPersona.company_size,
+              avatar_url: buyerPersona.avatar_url,
+            }
+          : null,
         transcript: messages.map((message) => ({
           id: message.id,
           speaker: message.speaker,
