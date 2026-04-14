@@ -48,12 +48,14 @@ export default function LoginPage() {
 
           <div className="relative flex h-full flex-col justify-between px-10 py-10">
             <div>
-              <Link
-                href="/"
-                className="text-[28px] font-semibold tracking-[-0.04em]"
-              >
-                <span className="text-[#1b1b18]">Gen</span>
-                <span className="italic text-[#d6612d]">im</span>
+              <Link href="/" className="flex items-center pr-4 md:pr-6">
+                <div className="flex h-10 items-center overflow-hidden">
+                  <img
+                    src="/images/logo.png"
+                    alt="Genim Logo"
+                    className="h-[200px] w-auto max-w-none object-contain"
+                  />
+                </div>
               </Link>
 
               <div className="mt-16 max-w-[520px]">

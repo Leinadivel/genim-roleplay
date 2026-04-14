@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import link from 'next/image'
 import {
   ArrowRight,
   BarChart3,
@@ -191,9 +192,14 @@ export default function HomePage() {
     <main className="min-h-screen bg-[#f7f3ee] text-[#1f1f1c]">
       <header className="sticky top-0 z-50 border-b border-[#e6ddd2]/90 bg-[#f7f3ee]/90 backdrop-blur">
         <div className="mx-auto flex max-w-[1400px] items-center justify-between px-6 py-5 md:px-10">
-          <Link href="/" className="text-[28px] font-semibold tracking-[-0.04em]">
-            <span className="text-[#1b1b18]">Gen</span>
-            <span className="italic text-[#d6612d]">im</span>
+          <Link href="/" className="flex items-center pr-4 md:pr-6">
+            <div className="flex h-10 items-center overflow-hidden">
+              <img
+                src="/images/logo.png"
+                alt="Genim Logo"
+                className="h-[200px] w-auto max-w-none object-contain"
+              />
+            </div>
           </Link>
 
           <nav className="hidden items-center gap-10 md:flex">

@@ -737,12 +737,14 @@ export default function ScenariosPage() {
       <header className="border-b border-[#e6ddd2] bg-[#f7f3ee]">
         <div className="mx-auto flex max-w-[1440px] items-center justify-between px-6 py-5 md:px-8">
           <div className="flex items-center gap-4">
-            <Link
-              href="/"
-              className="text-[28px] font-semibold tracking-[-0.04em]"
-            >
-              <span className="text-[#1b1b18]">Gen</span>
-              <span className="italic text-[#d6612d]">im</span>
+            <Link href="/" className="flex items-center pr-4 md:pr-6">
+              <div className="flex h-10 items-center overflow-hidden">
+                <img
+                  src="/images/logo.png"
+                  alt="Genim Logo"
+                  className="h-[200px] w-auto max-w-none object-contain"
+                />
+              </div>
             </Link>
           </div>
 

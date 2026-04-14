@@ -15,6 +15,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: 'Genim',
   description: 'AI-powered sales roleplay training',
+  icons: {
+    icon: '/favicon.jpg',
+  },
 }
 
 export default function RootLayout({
