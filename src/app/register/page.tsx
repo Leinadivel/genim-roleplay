@@ -40,10 +40,15 @@ export default function RegisterPage() {
     try {
       const supabase = createClient()
 
+      const baseUrl =
+        process.env.NEXT_PUBLIC_SITE_URL ||
+        window.location.origin
+
       const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
+          emailRedirectTo: `${baseUrl}/auth/callback?next=/post-login`,
           data: {
             full_name: fullName,
             phone,
