@@ -1,11 +1,11 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
-export default function AuthCallbackPage() {
+function AuthCallbackContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [error, setError] = useState<string | null>(null)
@@ -133,5 +133,33 @@ export default function AuthCallbackPage() {
         </div>
       </div>
     </main>
+  )
+}
+
+function AuthCallbackFallback() {
+  return (
+    <main className="min-h-screen bg-[#f7f3ee] px-6 py-10 text-[#1f1f1c]">
+      <div className="mx-auto flex min-h-[80vh] max-w-[640px] items-center justify-center">
+        <div className="w-full rounded-[32px] border border-[#e8ded3] bg-white p-8 text-center shadow-[0_18px_50px_rgba(28,28,20,0.05)] md:p-10">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#fff3ed] text-[#d6612d]">
+            <Loader2 className="h-6 w-6 animate-spin" />
+          </div>
+          <div className="mt-5 text-sm font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
+            Loading
+          </div>
+          <h1 className="mt-3 text-3xl font-semibold text-[#181815]">
+            Preparing authentication
+          </h1>
+        </div>
+      </div>
+    </main>
+  )
+}
+
+export default function AuthCallbackPage() {
+  return (
+    <Suspense fallback={<AuthCallbackFallback />}>
+      <AuthCallbackContent />
+    </Suspense>
   )
 }
