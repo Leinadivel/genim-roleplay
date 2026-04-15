@@ -61,8 +61,10 @@ function getStatusBadgeClasses(status: string) {
 
 export default function TeamInvitePanel({
   members,
+  canInvite,
 }: {
   members: MemberRow[]
+  canInvite: boolean
 }) {
   const [email, setEmail] = useState('')
   const [role, setRole] = useState('rep')
@@ -213,7 +215,7 @@ export default function TeamInvitePanel({
             <button
               type="button"
               onClick={handleInvite}
-              disabled={loading}
+              disabled={loading || !canInvite}
               className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#1f4d38] px-6 py-4 text-sm font-semibold text-white transition hover:opacity-95 disabled:opacity-50 lg:w-auto"
             >
               {loading ? <RefreshCw className="h-4 w-4 animate-spin" /> : null}

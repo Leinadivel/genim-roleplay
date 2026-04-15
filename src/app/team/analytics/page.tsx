@@ -395,7 +395,7 @@ export default async function TeamAnalyticsPage() {
             <div className="divide-y divide-[#f1e9e0]">
               {analyticsRows.length > 0 ? (
                 analyticsRows.map((row) => (
-                  <div key={row.id ?? row.email ?? row.full_name}>
+                  <div key={row.user_id ?? row.email ?? `${row.full_name}-${row.role}-${row.status}`}>
                     <div className="hidden xl:grid xl:grid-cols-[1.4fr_1.3fr_0.8fr_0.8fr_0.8fr_1fr_1.2fr] xl:gap-4 xl:px-6 xl:py-5">
                       <div>
                         <div className="text-sm font-semibold text-[#1a1a17]">
