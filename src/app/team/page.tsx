@@ -4,9 +4,12 @@ import {
   ArrowRight,
   Building2,
   ChevronRight,
+  Clock3,
   CreditCard,
+  LogOut,
   Shield,
   Sparkles,
+  Target,
   Users,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
@@ -18,6 +21,21 @@ type MemberRow = {
   user_id: string | null
   role: string
   status: string
+  created_at: string
+}
+
+type MemberProfile = {
+  email: string | null
+  full_name: string | null
+}
+
+type SessionRow = {
+  id: string
+  user_id: string
+  overall_score: number | null
+  status: string
+  selected_roleplay_type: string | null
+  selected_industry: string | null
   created_at: string
 }
 
@@ -80,6 +98,20 @@ function getWorkspaceHealth(memberCount: number, teamLimit: number | null) {
   }
 }
 
+function formatDateTime(value: string) {
+  return new Intl.DateTimeFormat('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  }).format(new Date(value))
+}
+
+function formatScore(value: number | null) {
+  return typeof value === 'number' ? `${value}%` : '—'
+}
+
 export default async function TeamPage() {
   const supabase = await createClient()
 
@@ -101,6 +133,7 @@ export default async function TeamPage() {
     .from('company_members')
     .select('company_id, role, status')
     .eq('user_id', user.id)
+    .eq('status', 'active')
     .order('created_at', { ascending: true })
     .limit(1)
     .maybeSingle()
@@ -210,27 +243,12 @@ export default async function TeamPage() {
     )
   }
 
-  if (profile.account_type !== 'team' && profile.role !== 'owner') {
-    redirect('/scenarios')
-  }
-
-  const { count: memberCount, error: memberCountError } = await supabase
-    .from('company_members')
-    .select('*', { count: 'exact', head: true })
-    .eq('company_id', company.id)
-
-  if (memberCountError) {
-    throw new Error(`Failed to load member count: ${memberCountError.message}`)
-  }
-
-  const { count: sessionCount, error: sessionCountError } = await supabase
-    .from('roleplay_sessions')
-    .select('*', { count: 'exact', head: true })
-    .eq('user_id', user.id)
-
-  if (sessionCountError) {
-    throw new Error(`Failed to load session count: ${sessionCountError.message}`)
-  }
+  const currentCompanyRole = membership.role
+  const isOwner = currentCompanyRole === 'owner'
+  const isAdmin = currentCompanyRole === 'admin'
+  const isManager = currentCompanyRole === 'manager'
+  const canManageWorkspace = isOwner || isAdmin
+  const canViewTeamManagement = isOwner || isAdmin || isManager
 
   const { data: rawMembers, error: membersError } = await supabase
     .from('company_members')
@@ -246,24 +264,27 @@ export default async function TeamPage() {
     .map((member) => member.user_id)
     .filter((id): id is string => Boolean(id))
 
-  let profileEmailMap = new Map<string, string>()
+  let profileMap = new Map<string, MemberProfile>()
 
   if (userIds.length > 0) {
     const { data: memberProfiles, error: memberProfilesError } = await supabase
       .from('profiles')
-      .select('id, email')
+      .select('id, email, full_name')
       .in('id', userIds)
 
     if (memberProfilesError) {
       throw new Error(
-        `Failed to load member emails: ${memberProfilesError.message}`
+        `Failed to load member profiles: ${memberProfilesError.message}`
       )
     }
 
-    profileEmailMap = new Map(
+    profileMap = new Map(
       (memberProfiles ?? []).map((memberProfile) => [
         memberProfile.id,
-        memberProfile.email ?? '',
+        {
+          email: memberProfile.email ?? null,
+          full_name: memberProfile.full_name ?? null,
+        },
       ])
     )
   }
@@ -272,16 +293,61 @@ export default async function TeamPage() {
     ...member,
     email:
       member.email ||
-      (member.user_id ? profileEmailMap.get(member.user_id) ?? null : null),
+      (member.user_id ? profileMap.get(member.user_id)?.email ?? null : null),
   }))
 
-  const activeMemberCount = members.filter(
-    (member) => member.status === 'active'
-  ).length
+  const activeMembers = members.filter((member) => member.status === 'active')
+  const activeUserIds = activeMembers
+    .map((member) => member.user_id)
+    .filter((id): id is string => Boolean(id))
 
+  const activeMemberCount = activeMembers.length
+  const totalReps = activeMembers.filter((member) => member.role === 'rep').length
   const pendingInviteCount = members.filter((member) =>
     isInviteLikeStatus(member.status)
   ).length
+
+  let teamSessions: SessionRow[] = []
+
+  if (activeUserIds.length > 0) {
+    const { data: rawSessions, error: sessionsError } = await supabase
+      .from('roleplay_sessions')
+      .select(
+        'id, user_id, overall_score, status, selected_roleplay_type, selected_industry, created_at'
+      )
+      .in('user_id', activeUserIds)
+      .order('created_at', { ascending: false })
+
+    if (sessionsError) {
+      throw new Error(`Failed to load team sessions: ${sessionsError.message}`)
+    }
+
+    teamSessions = (rawSessions ?? []) as SessionRow[]
+  }
+
+  const totalCompanySessions = teamSessions.length
+  const recentSessions = teamSessions.slice(0, 6)
+  const lastTrainedSession = teamSessions[0] ?? null
+
+  const latestScoreByRep = new Map<string, number>()
+
+  for (const session of teamSessions) {
+    if (
+      !latestScoreByRep.has(session.user_id) &&
+      typeof session.overall_score === 'number'
+    ) {
+      latestScoreByRep.set(session.user_id, session.overall_score)
+    }
+  }
+
+  const latestScoreValues = Array.from(latestScoreByRep.values())
+  const averageLatestScorePerRep =
+    latestScoreValues.length > 0
+      ? Math.round(
+          latestScoreValues.reduce((sum, value) => sum + value, 0) /
+            latestScoreValues.length
+        )
+      : null
 
   const teamLimit = parseTeamSize(company.team_size)
   const usagePercent =
@@ -290,6 +356,17 @@ export default async function TeamPage() {
       : null
 
   const workspaceHealth = getWorkspaceHealth(activeMemberCount, teamLimit)
+
+  const memberRoleLabel =
+    currentCompanyRole.charAt(0).toUpperCase() + currentCompanyRole.slice(1)
+
+  const lastTrainedName = lastTrainedSession
+    ? profileMap.get(lastTrainedSession.user_id)?.full_name || 'Unnamed team member'
+    : '—'
+
+  const lastTrainedEmail = lastTrainedSession
+    ? profileMap.get(lastTrainedSession.user_id)?.email || null
+    : null
 
   return (
     <main className="min-h-screen bg-[#f7f3ee] text-[#1f1f1c]">
@@ -306,6 +383,15 @@ export default async function TeamPage() {
           </Link>
 
           <div className="flex items-center gap-3">
+            {canViewTeamManagement ? (
+              <Link
+                href="/team/analytics"
+                className="inline-flex items-center gap-2 rounded-full border border-[#d8d1c8] bg-white px-4 py-2 text-sm font-medium text-[#2b2c2a] shadow-sm hover:bg-[#faf7f3]"
+              >
+                View analytics
+              </Link>
+            ) : null}
+
             <Link
               href="/scenarios"
               className="inline-flex items-center gap-2 rounded-full border border-[#d8d1c8] bg-white px-4 py-2 text-sm font-medium text-[#2b2c2a] shadow-sm hover:bg-[#faf7f3]"
@@ -313,6 +399,16 @@ export default async function TeamPage() {
               Open roleplay
               <ChevronRight className="h-4 w-4" />
             </Link>
+
+            <form action="/auth/signout" method="post">
+              <button
+                type="submit"
+                className="inline-flex items-center gap-2 rounded-full border border-[#d8d1c8] bg-white px-4 py-2 text-sm font-medium text-[#2b2c2a] shadow-sm hover:bg-[#faf7f3]"
+              >
+                <LogOut className="h-4 w-4" />
+                Sign out
+              </button>
+            </form>
           </div>
         </div>
       </header>
@@ -332,22 +428,25 @@ export default async function TeamPage() {
 
               <p className="mt-4 max-w-[760px] text-base leading-8 text-[#5b5d59] md:text-lg">
                 Welcome back
-                {profile.full_name ? `, ${profile.full_name}` : ''}. Manage team
-                training, review adoption, and shape a workspace that is ready
-                for seat-based billing.
+                {profile.full_name ? `, ${profile.full_name}` : ''}. You are in
+                the company workspace as a {memberRoleLabel.toLowerCase()}.
               </p>
             </div>
 
             <div className="rounded-[22px] border border-[#e2d8cd] bg-white px-5 py-4 shadow-[0_8px_24px_rgba(25,25,20,0.04)]">
               <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
-                Billing readiness
+                Access level
               </div>
               <div className="mt-2 flex items-center gap-2 text-lg font-semibold text-[#171714]">
-                <CreditCard className="h-5 w-5 text-[#1f4d38]" />
-                Team flow ready first
+                <Shield className="h-5 w-5 text-[#1f4d38]" />
+                {memberRoleLabel}
               </div>
               <div className="mt-1 text-sm text-[#666864]">
-                Finalise seats, invites, and ownership before checkout goes live.
+                {canManageWorkspace
+                  ? 'Can invite and manage workspace members.'
+                  : canViewTeamManagement
+                  ? 'Can view team structure and training workspace.'
+                  : 'Can access roleplays and training activity only.'}
               </div>
             </div>
           </div>
@@ -359,62 +458,61 @@ export default async function TeamPage() {
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
             <div className="rounded-[28px] border border-[#e8ded3] bg-white p-6 shadow-[0_14px_40px_rgba(25,25,20,0.05)]">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#f5ede6] text-[#d6612d]">
-                <Building2 className="h-6 w-6" />
+                <Users className="h-6 w-6" />
               </div>
               <div className="mt-5 text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
-                Company
+                Total reps
               </div>
               <div className="mt-2 text-2xl font-semibold text-[#1a1a17]">
-                {company.name}
+                {totalReps}
               </div>
               <div className="mt-1 text-sm text-[#666864]">
-                Slug: {company.slug || 'Not set'}
+                Active reps inside the company
               </div>
             </div>
 
             <div className="rounded-[28px] border border-[#e8ded3] bg-white p-6 shadow-[0_14px_40px_rgba(25,25,20,0.05)]">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#eef5f0] text-[#1f4d38]">
-                <Users className="h-6 w-6" />
+                <Clock3 className="h-6 w-6" />
               </div>
               <div className="mt-5 text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
-                Active members
+                Pending invites
               </div>
               <div className="mt-2 text-2xl font-semibold text-[#1a1a17]">
-                {activeMemberCount}
+                {pendingInviteCount}
               </div>
               <div className="mt-1 text-sm text-[#666864]">
-                {pendingInviteCount} pending invite
-                {pendingInviteCount === 1 ? '' : 's'}
+                Not yet activated
               </div>
             </div>
 
             <div className="rounded-[28px] border border-[#e8ded3] bg-white p-6 shadow-[0_14px_40px_rgba(25,25,20,0.05)]">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#f5ede6] text-[#d6612d]">
-                <Shield className="h-6 w-6" />
+                <Sparkles className="h-6 w-6" />
               </div>
               <div className="mt-5 text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
-                Your role
+                Total company sessions
               </div>
-              <div className="mt-2 text-2xl font-semibold capitalize text-[#1a1a17]">
-                {membership.role}
+              <div className="mt-2 text-2xl font-semibold text-[#1a1a17]">
+                {totalCompanySessions}
               </div>
-              <div className="mt-1 text-sm capitalize text-[#666864]">
-                Status: {membership.status}
+              <div className="mt-1 text-sm text-[#666864]">
+                Across all active team members
               </div>
             </div>
 
             <div className="rounded-[28px] border border-[#e8ded3] bg-white p-6 shadow-[0_14px_40px_rgba(25,25,20,0.05)]">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#eef5f0] text-[#1f4d38]">
-                <Sparkles className="h-6 w-6" />
+                <Target className="h-6 w-6" />
               </div>
               <div className="mt-5 text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
-                Sessions created
+                Average latest score
               </div>
               <div className="mt-2 text-2xl font-semibold text-[#1a1a17]">
-                {sessionCount ?? 0}
+                {formatScore(averageLatestScorePerRep)}
               </div>
               <div className="mt-1 text-sm text-[#666864]">
-                Your current training activity
+                Latest scored session per rep
               </div>
             </div>
           </div>
@@ -427,12 +525,12 @@ export default async function TeamPage() {
                     Seat planning
                   </div>
                   <h2 className="mt-3 text-2xl font-semibold text-[#1a1a17]">
-                    Team capacity before billing
+                    Team capacity
                   </h2>
                   <p className="mt-3 text-sm leading-8 text-[#5f625d]">
-                    This workspace should be commercially ready before checkout
-                    is added. The key pieces are seats, member onboarding, and
-                    owner visibility.
+                    {canManageWorkspace
+                      ? 'This workspace is commercially ready once seats, member onboarding, and billing are connected.'
+                      : 'This workspace already tracks capacity, team makeup, and training access across the company.'}
                   </p>
                 </div>
 
@@ -489,46 +587,100 @@ export default async function TeamPage() {
                   {workspaceHealth.message}
                 </p>
               </div>
+
+              <div className="mt-6 rounded-[22px] border border-[#ece4da] bg-[#faf8f5] p-5">
+                <div className="text-sm font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
+                  Who trained last
+                </div>
+
+                {lastTrainedSession ? (
+                  <div className="mt-4">
+                    <div className="text-xl font-semibold text-[#1a1a17]">
+                      {lastTrainedName}
+                    </div>
+                    <div className="mt-1 text-sm text-[#666864]">
+                      {lastTrainedEmail || 'No email available'}
+                    </div>
+
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <span className="rounded-full border border-[#ece4da] bg-white px-3 py-1 text-xs font-medium text-[#555854]">
+                        {lastTrainedSession.selected_roleplay_type || 'Roleplay'}
+                      </span>
+                      <span className="rounded-full border border-[#ece4da] bg-white px-3 py-1 text-xs font-medium text-[#555854]">
+                        {lastTrainedSession.selected_industry || 'Industry not set'}
+                      </span>
+                      <span className="rounded-full border border-[#ece4da] bg-white px-3 py-1 text-xs font-medium text-[#555854]">
+                        {formatDateTime(lastTrainedSession.created_at)}
+                      </span>
+                      <span className="rounded-full border border-[#d7e6dc] bg-[#eef5f0] px-3 py-1 text-xs font-semibold text-[#1f4d38]">
+                        {formatScore(lastTrainedSession.overall_score)}
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mt-4 text-sm text-[#666864]">
+                    No one has trained yet.
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="rounded-[28px] border border-[#e8ded3] bg-white p-6 shadow-[0_14px_40px_rgba(25,25,20,0.05)]">
               <div className="text-sm font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
-                Commercial readiness
+                Recent sessions across team
               </div>
               <h2 className="mt-3 text-2xl font-semibold text-[#1a1a17]">
-                What makes this sellable next
+                Latest team activity
               </h2>
 
-              <div className="mt-5 space-y-4">
-                <div className="rounded-[18px] border border-[#ece4da] bg-[#faf8f5] px-4 py-4">
-                  <div className="text-sm font-semibold text-[#1a1a17]">
-                    1. Team owner can invite and manage members
-                  </div>
-                  <div className="mt-1 text-sm leading-7 text-[#5f625d]">
-                    This is already in place and should stay smooth before any
-                    billing layer is introduced.
-                  </div>
-                </div>
+              <div className="mt-5 space-y-3">
+                {recentSessions.length > 0 ? (
+                  recentSessions.map((session) => {
+                    const sessionName =
+                      profileMap.get(session.user_id)?.full_name ||
+                      'Unnamed team member'
+                    const sessionEmail =
+                      profileMap.get(session.user_id)?.email || null
 
-                <div className="rounded-[18px] border border-[#ece4da] bg-[#faf8f5] px-4 py-4">
-                  <div className="text-sm font-semibold text-[#1a1a17]">
-                    2. Seats become the billing driver
-                  </div>
-                  <div className="mt-1 text-sm leading-7 text-[#5f625d]">
-                    The current team size and active member count will naturally
-                    become the input for Stripe and PayPal seat-based plans.
-                  </div>
-                </div>
+                    return (
+                      <div
+                        key={session.id}
+                        className="rounded-[18px] border border-[#ece4da] bg-[#faf8f5] px-4 py-4"
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="min-w-0">
+                            <div className="text-sm font-semibold text-[#1a1a17]">
+                              {sessionName}
+                            </div>
+                            <div className="mt-1 truncate text-xs text-[#7d7f7a]">
+                              {sessionEmail || 'No email available'}
+                            </div>
+                          </div>
 
-                <div className="rounded-[18px] border border-[#ece4da] bg-[#faf8f5] px-4 py-4">
-                  <div className="text-sm font-semibold text-[#1a1a17]">
-                    3. Checkout unlocks or expands access
+                          <div className="rounded-full border border-[#d7e6dc] bg-[#eef5f0] px-3 py-1 text-xs font-semibold text-[#1f4d38]">
+                            {formatScore(session.overall_score)}
+                          </div>
+                        </div>
+
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <span className="rounded-full border border-[#ece4da] bg-white px-3 py-1 text-xs font-medium text-[#555854]">
+                            {session.selected_roleplay_type || 'Roleplay'}
+                          </span>
+                          <span className="rounded-full border border-[#ece4da] bg-white px-3 py-1 text-xs font-medium text-[#555854]">
+                            {session.selected_industry || 'Industry not set'}
+                          </span>
+                          <span className="rounded-full border border-[#ece4da] bg-white px-3 py-1 text-xs font-medium text-[#555854]">
+                            {formatDateTime(session.created_at)}
+                          </span>
+                        </div>
+                      </div>
+                    )
+                  })
+                ) : (
+                  <div className="rounded-[18px] border border-[#ece4da] bg-[#faf8f5] px-4 py-4 text-sm text-[#666864]">
+                    No team sessions yet.
                   </div>
-                  <div className="mt-1 text-sm leading-7 text-[#5f625d]">
-                    Once payment is wired, company owners should be able to pay,
-                    increase seats, and keep the workspace active.
-                  </div>
-                </div>
+                )}
               </div>
 
               <div className="mt-6 flex flex-wrap gap-3">
@@ -536,23 +688,30 @@ export default async function TeamPage() {
                   href="/scenarios"
                   className="inline-flex items-center gap-2 rounded-full bg-[#d6612d] px-5 py-3 text-sm font-semibold text-white"
                 >
-                  Run team training
+                  Run roleplay
                   <ArrowRight className="h-4 w-4" />
                 </Link>
 
-                <button
-                  type="button"
-                  className="inline-flex items-center gap-2 rounded-full border border-[#d8d1c8] bg-white px-5 py-3 text-sm font-medium text-[#2b2c2a]"
-                >
-                  Billing coming next
-                </button>
+                {canManageWorkspace ? (
+                  <button
+                    type="button"
+                    className="inline-flex items-center gap-2 rounded-full border border-[#d8d1c8] bg-white px-5 py-3 text-sm font-medium text-[#2b2c2a]"
+                  >
+                    Billing coming next
+                  </button>
+                ) : null}
               </div>
             </div>
           </div>
 
-          <div className="mt-6">
-            <TeamInvitePanel members={members} />
-          </div>
+          {canViewTeamManagement ? (
+            <div className="mt-6">
+              <TeamInvitePanel
+                members={members}
+                canInvite={canManageWorkspace}
+              />
+            </div>
+          ) : null}
         </div>
       </section>
     </main>
