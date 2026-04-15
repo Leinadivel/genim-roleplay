@@ -11,11 +11,38 @@ function AuthCallbackContent() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    let cancelled = false
+
+    async function finishWithSession(typeHint?: string | null) {
+      const supabase = createClient()
+      const next = searchParams.get('next') || '/post-login'
+
+      const { data, error: sessionError } = await supabase.auth.getSession()
+
+      if (sessionError) {
+        throw sessionError
+      }
+
+      if (!data.session) {
+        return false
+      }
+
+      if (cancelled) return true
+
+      if (typeHint === 'invite' || typeHint === 'recovery') {
+        router.replace('/set-password')
+        return true
+      }
+
+      router.replace(next)
+      return true
+    }
+
     async function handleAuthCallback() {
       try {
         const supabase = createClient()
-
         const next = searchParams.get('next') || '/post-login'
+
         const hash = window.location.hash.startsWith('#')
           ? window.location.hash.slice(1)
           : window.location.hash
@@ -39,7 +66,9 @@ function AuthCallbackContent() {
             throw sessionError
           }
 
-          if (typeFromHash === 'recovery' || typeFromHash === 'invite') {
+          if (cancelled) return
+
+          if (typeFromHash === 'invite' || typeFromHash === 'recovery') {
             router.replace('/set-password')
             return
           }
@@ -56,8 +85,9 @@ function AuthCallbackContent() {
             throw exchangeError
           }
 
-          router.replace(next)
-          return
+          if (await finishWithSession(typeFromQuery)) {
+            return
+          }
         }
 
         if (tokenHash && typeFromQuery) {
@@ -75,22 +105,53 @@ function AuthCallbackContent() {
             throw verifyError
           }
 
-          if (typeFromQuery === 'invite' || typeFromQuery === 'recovery') {
-            router.replace('/set-password')
+          if (await finishWithSession(typeFromQuery)) {
             return
           }
+        }
 
-          router.replace(next)
+        if (await finishWithSession(typeFromHash || typeFromQuery)) {
           return
         }
 
-        router.replace('/login')
+        const {
+          data: { subscription },
+        } = supabase.auth.onAuthStateChange(async (event) => {
+          if (cancelled) return
+
+          if (
+            event === 'SIGNED_IN' ||
+            event === 'TOKEN_REFRESHED' ||
+            event === 'USER_UPDATED'
+          ) {
+            subscription.unsubscribe()
+
+            if (await finishWithSession(typeFromHash || typeFromQuery)) {
+              return
+            }
+          }
+        })
+
+        setTimeout(async () => {
+          subscription.unsubscribe()
+          if (cancelled) return
+
+          if (await finishWithSession(typeFromHash || typeFromQuery)) {
+            return
+          }
+
+          router.replace('/login')
+        }, 2500)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Authentication failed')
       }
     }
 
     void handleAuthCallback()
+
+    return () => {
+      cancelled = true
+    }
   }, [router, searchParams])
 
   return (
