@@ -56,7 +56,7 @@ export async function GET(request: Request) {
         `
         )
         .eq('id', sessionId)
-        .single(),
+        .maybeSingle(),
       getSessionMessages(sessionId),
     ])
 

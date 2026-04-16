@@ -77,14 +77,14 @@ export async function getSessionById(
     .from('roleplay_sessions')
     .select('*')
     .eq('id', sessionId)
-    .single()
+    .maybeSingle()
 
   if (error) {
     throw new Error(`Failed to load session: ${error.message}`)
   }
 
   if (!data) {
-    throw new Error('Session not found')
+    throw new Error('Session not found or duplicate rows detected')
   }
 
   return mapRoleplaySession(data)
@@ -100,7 +100,7 @@ export async function getSessionWithPersona(sessionId: string): Promise<{
     .from('roleplay_sessions')
     .select('*')
     .eq('id', sessionId)
-    .single()
+    .maybeSingle()
 
   if (sessionError) {
     throw new Error(`Failed to load session with persona: ${sessionError.message}`)
