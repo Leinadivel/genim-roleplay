@@ -2,6 +2,19 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getSessionMessages } from '@/services/sessions/get-session-messages'
 
+type ScenarioRow = {
+  title?: string | null
+}
+
+type BuyerPersonaRow = {
+  id: string
+  name: string | null
+  title: string | null
+  company_name: string | null
+  company_size: string | null
+  avatar_url?: string | null
+}
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
@@ -22,6 +35,8 @@ export async function GET(request: Request) {
         .select(
           `
           id,
+          scenario_id,
+          buyer_persona_id,
           overall_score,
           strengths,
           improvements,
@@ -37,14 +52,6 @@ export async function GET(request: Request) {
           selected_time_pressure,
           scenarios (
             title
-          ),
-          buyer_personas (
-            id,
-            name,
-            title,
-            company_name,
-            company_size,
-            avatar_url
           )
         `
         )
@@ -53,23 +60,32 @@ export async function GET(request: Request) {
       getSessionMessages(sessionId),
     ])
 
-    if (error) {
-      throw new Error(error.message)
+    if (error || !data) {
+      throw new Error(error?.message || 'Failed to load session report')
     }
 
     const scenarioTitle =
       Array.isArray(data.scenarios) && data.scenarios.length > 0
-        ? (data.scenarios[0] as { title?: string }).title ?? null
+        ? ((data.scenarios[0] as ScenarioRow).title ?? null)
         : !Array.isArray(data.scenarios) && data.scenarios
-          ? (data.scenarios as { title?: string }).title ?? null
+          ? ((data.scenarios as ScenarioRow).title ?? null)
           : null
 
-    const buyerPersona =
-      Array.isArray(data.buyer_personas) && data.buyer_personas.length > 0
-        ? data.buyer_personas[0]
-        : !Array.isArray(data.buyer_personas) && data.buyer_personas
-          ? data.buyer_personas
-          : null
+    let buyerPersona: BuyerPersonaRow | null = null
+
+    if (data.buyer_persona_id) {
+      const { data: personaData, error: personaError } = await supabase
+        .from('buyer_personas')
+        .select('id, name, title, company_name, company_size, avatar_url')
+        .eq('id', data.buyer_persona_id)
+        .maybeSingle()
+
+      if (personaError) {
+        throw new Error(personaError.message)
+      }
+
+      buyerPersona = personaData
+    }
 
     return NextResponse.json({
       report: {
@@ -94,7 +110,7 @@ export async function GET(request: Request) {
               title: buyerPersona.title,
               company_name: buyerPersona.company_name,
               company_size: buyerPersona.company_size,
-              avatar_url: buyerPersona.avatar_url,
+              avatar_url: buyerPersona.avatar_url ?? null,
             }
           : null,
         transcript: messages.map((message) => ({
