@@ -83,6 +83,98 @@ export type Database = {
         Relationships: []
       }
 
+      team_roleplay_assignments: {
+        Row: {
+          id: string
+          company_id: string
+          assigned_to_user_id: string
+          assigned_by_user_id: string
+          scenario_id: string
+          buyer_persona_id: string | null
+          title: string | null
+          note: string | null
+          due_at: string | null
+          status: string
+          completed_session_id: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          company_id: string
+          assigned_to_user_id: string
+          assigned_by_user_id: string
+          scenario_id: string
+          buyer_persona_id?: string | null
+          title?: string | null
+          note?: string | null
+          due_at?: string | null
+          status?: string
+          completed_session_id?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          company_id?: string
+          assigned_to_user_id?: string
+          assigned_by_user_id?: string
+          scenario_id?: string
+          buyer_persona_id?: string | null
+          title?: string | null
+          note?: string | null
+          due_at?: string | null
+          status?: string
+          completed_session_id?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'team_roleplay_assignments_company_id_fkey'
+            columns: ['company_id']
+            isOneToOne: false
+            referencedRelation: 'companies'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'team_roleplay_assignments_assigned_to_user_id_fkey'
+            columns: ['assigned_to_user_id']
+            isOneToOne: false
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'team_roleplay_assignments_assigned_by_user_id_fkey'
+            columns: ['assigned_by_user_id']
+            isOneToOne: false
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'team_roleplay_assignments_scenario_id_fkey'
+            columns: ['scenario_id']
+            isOneToOne: false
+            referencedRelation: 'scenarios'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'team_roleplay_assignments_buyer_persona_id_fkey'
+            columns: ['buyer_persona_id']
+            isOneToOne: false
+            referencedRelation: 'buyer_personas'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'team_roleplay_assignments_completed_session_id_fkey'
+            columns: ['completed_session_id']
+            isOneToOne: false
+            referencedRelation: 'roleplay_sessions'
+            referencedColumns: ['id']
+          }
+        ]
+      }
+
       buyer_personas: {
         Row: {
           id: string
@@ -270,6 +362,7 @@ export type Database = {
           scenario_id: string
           buyer_persona_id: string | null
           rubric_id: string | null
+          assignment_id: string | null
           mode: 'voice' | 'text'
           status: 'draft' | 'live' | 'completed' | 'evaluated' | 'failed'
           started_at: string | null
@@ -297,6 +390,7 @@ export type Database = {
           scenario_id: string
           buyer_persona_id?: string | null
           rubric_id?: string | null
+          assignment_id?: string | null
           mode?: 'voice' | 'text'
           status?: 'draft' | 'live' | 'completed' | 'evaluated' | 'failed'
           started_at?: string | null
@@ -324,6 +418,7 @@ export type Database = {
           scenario_id?: string
           buyer_persona_id?: string | null
           rubric_id?: string | null
+          assignment_id?: string | null
           mode?: 'voice' | 'text'
           status?: 'draft' | 'live' | 'completed' | 'evaluated' | 'failed'
           started_at?: string | null
@@ -358,6 +453,13 @@ export type Database = {
             columns: ['scenario_id']
             isOneToOne: false
             referencedRelation: 'scenarios'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'roleplay_sessions_assignment_id_fkey'
+            columns: ['assignment_id']
+            isOneToOne: false
+            referencedRelation: 'team_roleplay_assignments'
             referencedColumns: ['id']
           },
           {

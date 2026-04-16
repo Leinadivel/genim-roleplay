@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useMemo, useState } from 'react'
+import AssignedRoleplays from './assigned-roleplays'
 import DashboardLink from './dashboard-link'
 import {
   AlertTriangle,
@@ -808,6 +809,7 @@ export default function ScenariosPage() {
       <section className="px-6 py-6 md:px-8">
         <div className="mx-auto grid max-w-[1440px] gap-6 xl:grid-cols-12">
           <div className="space-y-6 xl:col-span-8">
+            <AssignedRoleplays />
             <div className="rounded-[24px] border border-[#e8ded3] bg-white p-5 shadow-[0_10px_30px_rgba(25,25,20,0.04)]">
               <SectionHeader
                 title="Industry"

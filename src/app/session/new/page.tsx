@@ -7,6 +7,7 @@ type SessionNewPageProps = {
   searchParams: Promise<{
     scenarioId?: string
     mode?: 'voice' | 'text'
+    assignmentId?: string
     selectedIndustry?: string
     selectedRoleplayType?: string
     selectedBuyerMood?: BuyerMood
@@ -25,6 +26,7 @@ export default async function SessionNewPage({
 
   const scenarioId = params.scenarioId?.trim()
   const mode = params.mode === 'text' ? 'text' : 'voice'
+  const assignmentId = params.assignmentId?.trim() || null
 
   const selectedIndustry = params.selectedIndustry?.trim() || null
   const selectedRoleplayType = params.selectedRoleplayType?.trim() || null
@@ -58,6 +60,7 @@ export default async function SessionNewPage({
   const result = await startSession({
     scenarioId,
     mode,
+    assignmentId,
     selectedIndustry,
     selectedRoleplayType,
     selectedBuyerMood,

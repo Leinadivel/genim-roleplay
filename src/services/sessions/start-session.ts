@@ -13,6 +13,9 @@ import type {
 type RoleplaySessionRow =
   Database['public']['Tables']['roleplay_sessions']['Row']
 
+type TeamRoleplayAssignmentRow =
+  Database['public']['Tables']['team_roleplay_assignments']['Row']
+
 function mapRoleplaySession(row: RoleplaySessionRow): RoleplaySession {
   return {
     id: row.id,
@@ -20,6 +23,7 @@ function mapRoleplaySession(row: RoleplaySessionRow): RoleplaySession {
     scenario_id: row.scenario_id,
     buyer_persona_id: row.buyer_persona_id,
     rubric_id: row.rubric_id,
+    assignment_id: row.assignment_id,
     mode: row.mode,
     status: row.status,
     started_at: row.started_at,
@@ -73,9 +77,46 @@ export async function startSession(
     throw new Error('You must be signed in to start a session')
   }
 
+  const assignmentId = input.assignmentId?.trim() || null
+
+  let assignment: TeamRoleplayAssignmentRow | null = null
+
+  if (assignmentId) {
+    const { data: assignmentData, error: assignmentError } = await supabase
+      .from('team_roleplay_assignments')
+      .select('*')
+      .eq('id', assignmentId)
+      .eq('assigned_to_user_id', user.id)
+      .in('status', ['assigned', 'in_progress', 'overdue'])
+      .maybeSingle()
+
+    if (assignmentError) {
+      throw new Error(
+        `Failed to validate assignment: ${assignmentError.message}`
+      )
+    }
+
+    if (!assignmentData) {
+      throw new Error('Assignment not found or not available to this user')
+    }
+
+    assignment = assignmentData
+  }
+
   let scenarioBundle: StartSessionResult['scenarioBundle']
 
-  if (isUuid(input.scenarioId)) {
+  if (assignment) {
+    scenarioBundle = await getScenarioBundleForSelection({
+      scenarioId: assignment.scenario_id,
+      selectedIndustry: input.selectedIndustry ?? null,
+      selectedBuyerRole: input.selectedBuyerRole ?? null,
+      selectedBuyerMood: input.selectedBuyerMood ?? null,
+      selectedDealSize: input.selectedDealSize ?? null,
+      selectedPainLevel: input.selectedPainLevel ?? null,
+      selectedCompanyStage: input.selectedCompanyStage ?? null,
+      selectedTimePressure: input.selectedTimePressure ?? null,
+    })
+  } else if (isUuid(input.scenarioId)) {
     scenarioBundle = await getScenarioBundleForSelection({
       scenarioId: input.scenarioId,
       selectedIndustry: input.selectedIndustry ?? null,
@@ -103,7 +144,23 @@ export async function startSession(
 
   let buyerPersonaId: string | null = null
 
-  if (scenarioBundle.buyerPersona?.id) {
+  if (assignment?.buyer_persona_id) {
+    const { data: assignedPersonaCheck, error: assignedPersonaCheckError } =
+      await supabase
+        .from('buyer_personas')
+        .select('id')
+        .eq('id', assignment.buyer_persona_id)
+        .eq('is_active', true)
+        .maybeSingle()
+
+    if (assignedPersonaCheckError) {
+      throw new Error(
+        `Failed to validate assigned buyer persona: ${assignedPersonaCheckError.message}`
+      )
+    }
+
+    buyerPersonaId = assignedPersonaCheck?.id ?? null
+  } else if (scenarioBundle.buyerPersona?.id) {
     const { data: personaCheck, error: personaCheckError } = await supabase
       .from('buyer_personas')
       .select('id')
@@ -127,6 +184,7 @@ export async function startSession(
       scenario_id: scenarioBundle.scenario.id,
       buyer_persona_id: buyerPersonaId,
       rubric_id: scenarioBundle.rubricId,
+      assignment_id: assignment?.id ?? null,
       mode: input.mode ?? 'voice',
       status: 'live',
       started_at: new Date().toISOString(),
@@ -144,6 +202,21 @@ export async function startSession(
 
   if (sessionError) {
     throw new Error(`Failed to start session: ${sessionError.message}`)
+  }
+
+  if (assignment) {
+    const { error: assignmentUpdateError } = await supabase
+      .from('team_roleplay_assignments')
+      .update({
+        status: 'in_progress',
+      })
+      .eq('id', assignment.id)
+
+    if (assignmentUpdateError) {
+      throw new Error(
+        `Session started but failed to update assignment: ${assignmentUpdateError.message}`
+      )
+    }
   }
 
   return {

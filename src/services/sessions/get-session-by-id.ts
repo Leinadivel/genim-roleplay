@@ -20,6 +20,7 @@ function mapRoleplaySession(row: RoleplaySessionRow): RoleplaySession {
     scenario_id: row.scenario_id,
     buyer_persona_id: row.buyer_persona_id,
     rubric_id: row.rubric_id,
+    assignment_id: row.assignment_id,
     mode: row.mode,
     status: row.status,
     started_at: row.started_at,

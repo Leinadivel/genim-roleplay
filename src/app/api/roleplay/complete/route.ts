@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 
+import { createClient } from '@/lib/supabase/server'
 import { completeSession } from '@/services/sessions/complete-session'
 import { buildSessionTranscript } from '@/services/sessions/build-session-transcript'
 import { getSessionById } from '@/services/sessions/get-session-by-id'
@@ -42,6 +43,24 @@ export async function POST(request: Request) {
       endedAt: body.endedAt,
       durationSeconds: body.durationSeconds ?? null,
     })
+
+    if (updatedSession.assignment_id) {
+      const supabase = await createClient()
+
+      const { error: assignmentUpdateError } = await supabase
+        .from('team_roleplay_assignments')
+        .update({
+          status: 'completed',
+          completed_session_id: sessionId,
+        })
+        .eq('id', updatedSession.assignment_id)
+
+      if (assignmentUpdateError) {
+        throw new Error(
+          `Session completed but failed to update assignment: ${assignmentUpdateError.message}`
+        )
+      }
+    }
 
     return NextResponse.json({
       ok: true,
