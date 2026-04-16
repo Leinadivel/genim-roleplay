@@ -3,8 +3,8 @@ import { redirect } from 'next/navigation'
 import {
   BarChart3,
   ChevronLeft,
+  ChevronRight,
   LogOut,
-  Target,
   Sparkles,
   TrendingUp,
   Users,
@@ -37,6 +37,7 @@ type SessionRow = {
 }
 
 type RepAnalyticsRow = {
+  company_member_id: string
   user_id: string | null
   full_name: string
   email: string | null
@@ -222,6 +223,7 @@ export default async function TeamAnalyticsPage() {
     const profile = member.user_id ? profileMap.get(member.user_id) : null
 
     return {
+      company_member_id: member.id,
       user_id: member.user_id,
       full_name: profile?.full_name || 'Unnamed team member',
       email: member.email || profile?.email || null,
@@ -237,16 +239,24 @@ export default async function TeamAnalyticsPage() {
   })
 
   const totalReps = analyticsRows.filter((row) => row.role === 'rep').length
-  const activeMembers = analyticsRows.filter((row) => row.status === 'active').length
-  const repsWhoTrained = analyticsRows.filter((row) => row.total_sessions > 0).length
+  const activeMembers = analyticsRows.filter(
+    (row) => row.status === 'active'
+  ).length
+  const repsWhoTrained = analyticsRows.filter(
+    (row) => row.total_sessions > 0
+  ).length
+
+  const rowsWithAverage = analyticsRows.filter(
+    (row) => typeof row.average_score === 'number'
+  )
+
   const overallAverage =
-    analyticsRows.filter((row) => typeof row.average_score === 'number').length > 0
+    rowsWithAverage.length > 0
       ? Math.round(
-          analyticsRows
-            .filter((row) => typeof row.average_score === 'number')
-            .reduce((sum, row) => sum + (row.average_score ?? 0), 0) /
-            analyticsRows.filter((row) => typeof row.average_score === 'number')
-              .length
+          rowsWithAverage.reduce(
+            (sum, row) => sum + (row.average_score ?? 0),
+            0
+          ) / rowsWithAverage.length
         )
       : null
 
@@ -299,7 +309,7 @@ export default async function TeamAnalyticsPage() {
 
           <p className="mt-4 max-w-[780px] text-base leading-8 text-[#5b5d59] md:text-lg">
             Review team activity, training consistency, session outcomes, and
-            who is actually practising across the workspace.
+            open individual rep performance details.
           </p>
         </div>
       </section>
@@ -377,12 +387,12 @@ export default async function TeamAnalyticsPage() {
                 Rep performance and activity
               </h2>
               <p className="mt-2 text-sm leading-7 text-[#5f625d]">
-                Use this to see who is practising, who is inactive, and which
-                reps are performing better over time.
+                Click any rep to open a dedicated analytics page for that team
+                member.
               </p>
             </div>
 
-            <div className="hidden grid-cols-[1.4fr_1.3fr_0.8fr_0.8fr_0.8fr_1fr_1.2fr] gap-4 border-b border-[#ece4da] bg-[#faf8f5] px-6 py-4 text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a] xl:grid">
+            <div className="hidden grid-cols-[1.4fr_1.3fr_0.8fr_0.8fr_0.8fr_1fr_1.2fr_0.5fr] gap-4 border-b border-[#ece4da] bg-[#faf8f5] px-6 py-4 text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a] xl:grid">
               <div>Rep</div>
               <div>Role / Status</div>
               <div>Sessions</div>
@@ -390,13 +400,18 @@ export default async function TeamAnalyticsPage() {
               <div>Average</div>
               <div>Last trained</div>
               <div>Last session type</div>
+              <div />
             </div>
 
             <div className="divide-y divide-[#f1e9e0]">
               {analyticsRows.length > 0 ? (
-                analyticsRows.map((row) => (
-                  <div key={row.user_id ?? row.email ?? `${row.full_name}-${row.role}-${row.status}`}>
-                    <div className="hidden xl:grid xl:grid-cols-[1.4fr_1.3fr_0.8fr_0.8fr_0.8fr_1fr_1.2fr] xl:gap-4 xl:px-6 xl:py-5">
+                analyticsRows.map((row) => {
+                  const detailHref = row.user_id
+                    ? `/team/analytics/${row.user_id}`
+                    : null
+
+                  const desktopContent = (
+                    <div className="hidden xl:grid xl:grid-cols-[1.4fr_1.3fr_0.8fr_0.8fr_0.8fr_1fr_1.2fr_0.5fr] xl:gap-4 xl:px-6 xl:py-5">
                       <div>
                         <div className="text-sm font-semibold text-[#1a1a17]">
                           {row.full_name}
@@ -443,8 +458,18 @@ export default async function TeamAnalyticsPage() {
                         {row.latest_roleplay_type || '—'}
                         {row.latest_industry ? ` • ${row.latest_industry}` : ''}
                       </div>
-                    </div>
 
+                      <div className="flex items-center justify-end">
+                        {detailHref ? (
+                          <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#e3d9ce] bg-white text-[#666864]">
+                            <ChevronRight className="h-4 w-4" />
+                          </span>
+                        ) : null}
+                      </div>
+                    </div>
+                  )
+
+                  const mobileContent = (
                     <div className="space-y-3 px-4 py-4 xl:hidden">
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
@@ -512,13 +537,51 @@ export default async function TeamAnalyticsPage() {
                         </div>
                       </div>
 
-                      <div className="text-sm text-[#555854]">
-                        {row.latest_roleplay_type || 'No session type yet'}
-                        {row.latest_industry ? ` • ${row.latest_industry}` : ''}
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="text-sm text-[#555854]">
+                          {row.latest_roleplay_type || 'No session type yet'}
+                          {row.latest_industry ? ` • ${row.latest_industry}` : ''}
+                        </div>
+
+                        {detailHref ? (
+                          <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#e3d9ce] bg-white text-[#666864]">
+                            <ChevronRight className="h-4 w-4" />
+                          </span>
+                        ) : null}
                       </div>
                     </div>
-                  </div>
-                ))
+                  )
+
+                  if (!detailHref) {
+                    return (
+                      <div
+                        key={
+                          row.user_id ??
+                          row.email ??
+                          `${row.full_name}-${row.role}-${row.status}`
+                        }
+                      >
+                        {desktopContent}
+                        {mobileContent}
+                      </div>
+                    )
+                  }
+
+                  return (
+                    <Link
+                      key={
+                        row.user_id ??
+                        row.email ??
+                        `${row.full_name}-${row.role}-${row.status}`
+                      }
+                      href={detailHref}
+                      className="block transition hover:bg-[#fcfaf8]"
+                    >
+                      {desktopContent}
+                      {mobileContent}
+                    </Link>
+                  )
+                })
               ) : (
                 <div className="px-6 py-8 text-sm text-[#666864]">
                   No analytics data yet.
