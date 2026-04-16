@@ -160,7 +160,12 @@ export async function POST(request: Request) {
       throw new Error(updateAssessmentError.message)
     }
 
-    return NextResponse.redirect(new URL(`/session/${session.id}`, request.url))
+    return NextResponse.redirect(
+      new URL(
+        `/candidate-assessment/${token}/session?sessionId=${session.id}`,
+        request.url
+      )
+    )
   } catch (error) {
     return NextResponse.json(
       {
