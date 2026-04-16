@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import link from 'next/image'
 import {
   ArrowRight,
   BarChart3,
@@ -14,6 +13,7 @@ import {
   Users,
   AudioWaveform,
 } from 'lucide-react'
+import DemoModalButton from '@/components/demo-modal-button'
 
 function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
   return (
@@ -133,21 +133,37 @@ function PricingCard({
   description,
   features,
   highlight = false,
+  ctaLabel,
+  ctaHref,
 }: {
   title: string
   price: string
   description: string
   features: string[]
   highlight?: boolean
+  ctaLabel?: string
+  ctaHref?: string
 }) {
+  const buttonLabel = ctaLabel || 'Start free trial'
+  const buttonHref = ctaHref || '/register'
+  const isSalesCard = buttonLabel.toLowerCase().includes('demo')
+
   return (
     <div
-      className={`rounded-[30px] border p-7 ${
+      className={`relative rounded-[30px] border p-7 ${
         highlight
           ? 'border-[#d6612d] bg-white shadow-[0_18px_50px_rgba(214,97,45,0.12)]'
           : 'border-[#e8ded3] bg-white'
       }`}
     >
+      {isSalesCard ? (
+        <div className="absolute -top-3 left-6">
+          <span className="rounded-full bg-[#1f4d38] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-white shadow-sm">
+            Talk to sales
+          </span>
+        </div>
+      ) : null}
+
       <div className="flex items-center justify-between gap-4">
         <h3 className="text-2xl font-semibold text-[#181815]">{title}</h3>
         {highlight ? (
@@ -157,32 +173,51 @@ function PricingCard({
         ) : null}
       </div>
 
-      <p className="mt-3 text-[15px] leading-7 text-[#63655f]">{description}</p>
+      <p className="mt-3 text-[15px] leading-7 text-[#63655f]">
+        {description}
+      </p>
 
       <div className="mt-6 text-5xl font-semibold tracking-[-0.04em] text-[#181815]">
         {price}
       </div>
-      <div className="mt-1 text-sm text-[#666864]">per month / bill annually</div>
+      <div className="mt-1 text-sm text-[#666864]">
+        per month / bill annually
+      </div>
 
       <div className="mt-8 space-y-4">
         {features.map((feature) => (
           <div key={feature} className="flex items-start gap-3">
             <CheckCircle2 className="mt-0.5 h-5 w-5 text-[#1f4d38]" />
-            <span className="text-[15px] leading-7 text-[#4f514d]">{feature}</span>
+            <span className="text-[15px] leading-7 text-[#4f514d]">
+              {feature}
+            </span>
           </div>
         ))}
       </div>
 
-      <Link
-        href="/register"
-        className={`mt-8 inline-flex w-full items-center justify-center rounded-full px-5 py-4 text-sm font-semibold transition ${
-          highlight
-            ? 'bg-[#d6612d] text-white hover:opacity-95'
-            : 'border border-[#d8d1c8] text-[#1f1f1c] hover:bg-[#faf7f3]'
-        }`}
-      >
-        Start free trial
-      </Link>
+      {isSalesCard ? (
+        <DemoModalButton
+          calendlyUrl={buttonHref}
+          label={buttonLabel}
+          className={`mt-8 inline-flex w-full items-center justify-center rounded-full px-5 py-4 text-sm font-semibold transition ${
+            highlight
+              ? 'bg-[#d6612d] text-white hover:opacity-95'
+              : 'border border-[#d8d1c8] text-[#1f1f1c] hover:bg-[#faf7f3]'
+          }`}
+          showIcon={false}
+        />
+      ) : (
+        <Link
+          href={buttonHref}
+          className={`mt-8 inline-flex w-full items-center justify-center rounded-full px-5 py-4 text-sm font-semibold transition ${
+            highlight
+              ? 'bg-[#d6612d] text-white hover:opacity-95'
+              : 'border border-[#d8d1c8] text-[#1f1f1c] hover:bg-[#faf7f3]'
+          }`}
+        >
+          {buttonLabel}
+        </Link>
+      )}
     </div>
   )
 }
@@ -257,13 +292,11 @@ export default function HomePage() {
                 <ArrowRight className="h-5 w-5" />
               </Link>
 
-              <button
-                type="button"
+             <DemoModalButton
+                calendlyUrl="https://calendly.com/your-link"
                 className="inline-flex items-center gap-3 rounded-full border border-[#d8d1c8] bg-[#f7f3ee] px-8 py-5 text-xl font-semibold text-[#20211f] transition hover:bg-white"
-              >
-                <Play className="h-5 w-5" />
-                Watch a demo
-              </button>
+                label="Book a demo"
+              />
             </div>
 
             <div className="mt-14 flex flex-wrap items-center gap-5">
@@ -649,6 +682,8 @@ export default function HomePage() {
                 'Team scenario rollout',
                 'Custom enablement setup',
               ]}
+              ctaLabel="Book a demo"
+              ctaHref="https://calendly.com/your-link"
             />
           </div>
         </div>

@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useMemo, useState } from 'react'
+import DashboardLink from './dashboard-link'
 import {
   AlertTriangle,
   ArrowRight,
@@ -749,20 +750,22 @@ export default function ScenariosPage() {
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="hidden rounded-full border border-[#ddd4ca] bg-white px-4 py-2 text-sm text-[#555854] md:block">
-              Session builder
-            </div>
+  <div className="hidden rounded-full border border-[#ddd4ca] bg-white px-4 py-2 text-sm text-[#555854] md:block">
+    Session builder
+  </div>
 
-            <form action="/auth/signout" method="post">
-              <button
-                type="submit"
-                className="inline-flex items-center gap-2 rounded-full border border-[#d8d1c8] px-5 py-3 text-sm font-medium text-[#2b2c2a] transition hover:bg-white"
-              >
-                <LogOut className="h-4 w-4" />
-                Sign out
-              </button>
-            </form>
-          </div>
+  <DashboardLink />
+
+  <form action="/auth/signout" method="post">
+    <button
+      type="submit"
+      className="inline-flex items-center gap-2 rounded-full border border-[#d8d1c8] px-5 py-3 text-sm font-medium text-[#2b2c2a] transition hover:bg-white"
+    >
+      <LogOut className="h-4 w-4" />
+      Sign out
+    </button>
+  </form>
+</div>
         </div>
       </header>
 
