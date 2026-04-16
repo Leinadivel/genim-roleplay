@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { PopupModal } from 'react-calendly'
 import { Play } from 'lucide-react'
 
@@ -18,6 +18,11 @@ export default function DemoModalButton({
   showIcon = true,
 }: DemoModalButtonProps) {
   const [isOpen, setIsOpen] = useState(false)
+  const [isMounted, setIsMounted] = useState(false)
+
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   return (
     <>
@@ -30,12 +35,14 @@ export default function DemoModalButton({
         {label}
       </button>
 
-      <PopupModal
-        url={calendlyUrl}
-        open={isOpen}
-        onModalClose={() => setIsOpen(false)}
-        rootElement={document.body}
-      />
+      {isMounted ? (
+        <PopupModal
+          url={calendlyUrl}
+          open={isOpen}
+          onModalClose={() => setIsOpen(false)}
+          rootElement={document.body}
+        />
+      ) : null}
     </>
   )
 }
