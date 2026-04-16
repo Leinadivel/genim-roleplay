@@ -11,6 +11,7 @@ import {
   Shield,
   Sparkles,
   Target,
+  Briefcase,
   Users,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
@@ -384,43 +385,53 @@ export default async function TeamPage() {
           </Link>
 
           <div className="flex items-center gap-3">
-  {canViewTeamManagement ? (
-    <Link
-      href="/team/analytics"
-      className="inline-flex items-center gap-2 rounded-full border border-[#d8d1c8] bg-white px-4 py-2 text-sm font-medium text-[#2b2c2a] shadow-sm hover:bg-[#faf7f3]"
-    >
-      View analytics
-    </Link>
-  ) : null}
+            {canManageWorkspace ? (
+              <Link
+                href="/team/hiring"
+                className="inline-flex items-center gap-2 rounded-full border border-[#d8d1c8] bg-white px-4 py-2 text-sm font-medium text-[#2b2c2a] shadow-sm hover:bg-[#faf7f3]"
+              >
+                <Briefcase className="h-4 w-4" />
+                Hiring
+              </Link>
+            ) : null}
+            
+            {canViewTeamManagement ? (
+              <Link
+                href="/team/analytics"
+                className="inline-flex items-center gap-2 rounded-full border border-[#d8d1c8] bg-white px-4 py-2 text-sm font-medium text-[#2b2c2a] shadow-sm hover:bg-[#faf7f3]"
+              >
+                View analytics
+              </Link>
+            ) : null}
 
-  {canManageWorkspace ? (
-    <Link
-      href="/team/assignments"
-      className="inline-flex items-center gap-2 rounded-full border border-[#d8d1c8] bg-white px-4 py-2 text-sm font-medium text-[#2b2c2a] shadow-sm hover:bg-[#faf7f3]"
-    >
-      <ClipboardList className="h-4 w-4" />
-      Assignments
-    </Link>
-  ) : null}
+            {canManageWorkspace ? (
+              <Link
+                href="/team/assignments"
+                className="inline-flex items-center gap-2 rounded-full border border-[#d8d1c8] bg-white px-4 py-2 text-sm font-medium text-[#2b2c2a] shadow-sm hover:bg-[#faf7f3]"
+              >
+                <ClipboardList className="h-4 w-4" />
+                Assignments
+              </Link>
+            ) : null}
 
-  <Link
-    href="/scenarios"
-    className="inline-flex items-center gap-2 rounded-full border border-[#d8d1c8] bg-white px-4 py-2 text-sm font-medium text-[#2b2c2a] shadow-sm hover:bg-[#faf7f3]"
-  >
-    Open roleplay
-    <ChevronRight className="h-4 w-4" />
-  </Link>
+            <Link
+              href="/scenarios"
+              className="inline-flex items-center gap-2 rounded-full border border-[#d8d1c8] bg-white px-4 py-2 text-sm font-medium text-[#2b2c2a] shadow-sm hover:bg-[#faf7f3]"
+            >
+              Open roleplay
+              <ChevronRight className="h-4 w-4" />
+            </Link>
 
-  <form action="/auth/signout" method="post">
-    <button
-      type="submit"
-      className="inline-flex items-center gap-2 rounded-full border border-[#d8d1c8] bg-white px-4 py-2 text-sm font-medium text-[#2b2c2a] shadow-sm hover:bg-[#faf7f3]"
-    >
-      <LogOut className="h-4 w-4" />
-      Sign out
-    </button>
-  </form>
-</div>
+            <form action="/auth/signout" method="post">
+              <button
+                type="submit"
+                className="inline-flex items-center gap-2 rounded-full border border-[#d8d1c8] bg-white px-4 py-2 text-sm font-medium text-[#2b2c2a] shadow-sm hover:bg-[#faf7f3]"
+              >
+                <LogOut className="h-4 w-4" />
+                Sign out
+              </button>
+            </form>
+          </div>
         </div>
       </header>
 

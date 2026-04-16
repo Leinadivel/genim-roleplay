@@ -24,6 +24,7 @@ function mapRoleplaySession(row: RoleplaySessionRow): RoleplaySession {
     buyer_persona_id: row.buyer_persona_id,
     rubric_id: row.rubric_id,
     assignment_id: row.assignment_id,
+    candidate_assessment_id: row.candidate_assessment_id,
     mode: row.mode,
     status: row.status,
     started_at: row.started_at,
@@ -196,6 +197,7 @@ export async function startSession(
       selected_pain_level: input.selectedPainLevel ?? null,
       selected_company_stage: input.selectedCompanyStage ?? null,
       selected_time_pressure: input.selectedTimePressure ?? null,
+      candidate_assessment_id: input.candidateAssessmentId ?? null,
     })
     .select('*')
     .single()

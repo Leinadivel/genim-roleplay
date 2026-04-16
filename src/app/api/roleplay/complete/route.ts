@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { completeSession } from '@/services/sessions/complete-session'
 import { buildSessionTranscript } from '@/services/sessions/build-session-transcript'
 import { getSessionById } from '@/services/sessions/get-session-by-id'
@@ -58,6 +59,25 @@ export async function POST(request: Request) {
       if (assignmentUpdateError) {
         throw new Error(
           `Session completed but failed to update assignment: ${assignmentUpdateError.message}`
+        )
+      }
+    }
+
+    if (updatedSession.candidate_assessment_id) {
+      const admin = createAdminClient()
+
+      const { error: candidateUpdateError } = await admin
+        .from('candidate_roleplay_assessments')
+        .update({
+          status: 'completed',
+          completed_at: new Date().toISOString(),
+          completed_session_id: sessionId,
+        })
+        .eq('id', updatedSession.candidate_assessment_id)
+
+      if (candidateUpdateError) {
+        throw new Error(
+          `Session completed but failed to update candidate assessment: ${candidateUpdateError.message}`
         )
       }
     }

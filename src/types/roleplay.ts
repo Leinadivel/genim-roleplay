@@ -388,6 +388,7 @@ export type RoleplaySession = {
   buyer_persona_id: string | null
   rubric_id: string | null
   assignment_id: string | null
+  candidate_assessment_id: string | null
   mode: SessionMode
   status: SessionStatus
   started_at: string | null
@@ -414,6 +415,7 @@ export type StartSessionInput = {
   scenarioId: string
   mode?: SessionMode
   assignmentId?: string | null
+  candidateAssessmentId?: string | null
   selectedIndustry?: string | null
   selectedRoleplayType?: string | null
   selectedBuyerMood?: BuyerMood | null
