@@ -1,4 +1,7 @@
+'use client'
+
 import Link from 'next/link'
+import { useState } from 'react'
 import {
   ArrowRight,
   BarChart3,
@@ -130,6 +133,7 @@ function StepCard({
 function PricingCard({
   title,
   price,
+  priceNote,
   description,
   features,
   highlight = false,
@@ -138,6 +142,7 @@ function PricingCard({
 }: {
   title: string
   price: string
+  priceNote?: string
   description: string
   features: string[]
   highlight?: boolean
@@ -180,8 +185,9 @@ function PricingCard({
       <div className="mt-6 text-5xl font-semibold tracking-[-0.04em] text-[#181815]">
         {price}
       </div>
-      <div className="mt-1 text-sm text-[#666864]">
-        per month / bill annually
+
+      <div className="mt-1 min-h-[24px] text-sm text-[#666864]">
+        {priceNote || '\u00A0'}
       </div>
 
       <div className="mt-8 space-y-4">
@@ -219,6 +225,116 @@ function PricingCard({
         </Link>
       )}
     </div>
+  )
+}
+
+function PricingSection() {
+  const [billingCycle, setBillingCycle] = useState<'annual' | 'monthly'>('annual')
+
+  const isAnnual = billingCycle === 'annual'
+
+  return (
+    <section id="pricing" className="px-6 py-20 md:px-10">
+      <div className="mx-auto max-w-[1400px]">
+        <SectionTitle
+          badge="Pricing"
+          title="Simple pricing for reps and teams"
+          description="Choose the plan that fits your training volume today, then upgrade as your roleplay needs grow. Annual billing is selected by default for the best value."
+        />
+
+        <div className="mt-10 flex justify-center">
+          <div className="inline-flex items-center rounded-full border border-[#e5dbcf] bg-white p-1 shadow-sm">
+            <button
+              type="button"
+              onClick={() => setBillingCycle('monthly')}
+              className={`rounded-full px-5 py-2.5 text-sm font-semibold transition ${
+                !isAnnual
+                  ? 'bg-[#1f4d38] text-white'
+                  : 'text-[#5f625d] hover:text-[#1f1f1c]'
+              }`}
+            >
+              Monthly
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setBillingCycle('annual')}
+              className={`rounded-full px-5 py-2.5 text-sm font-semibold transition ${
+                isAnnual
+                  ? 'bg-[#d6612d] text-white'
+                  : 'text-[#5f625d] hover:text-[#1f1f1c]'
+              }`}
+            >
+              Annual
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-14 grid gap-6 lg:grid-cols-4">
+          <PricingCard
+            title="Starter"
+            price="Free"
+            priceNote="5 roleplays total"
+            description="For first-time users who want to test the Genim experience before committing to ongoing practice."
+            features={[
+              '5 roleplays total',
+              'Live AI roleplays',
+              'Basic coaching experience',
+            ]}
+            ctaLabel="Start free"
+            ctaHref="/register"
+          />
+
+          <PricingCard
+            title="Pro"
+            price={isAnnual ? '$120' : '$13'}
+            priceNote={
+              isAnnual ? 'billed annually • effective $10/month' : 'billed monthly'
+            }
+            description="For individual reps who want regular practice, stronger objection handling, and consistent coaching."
+            features={[
+              '10 roleplays per week',
+              'Live AI roleplays',
+              'AI coaching',
+            ]}
+            ctaLabel="Start free trial"
+            ctaHref="/register"
+          />
+
+          <PricingCard
+            title="Advanced"
+            price={isAnnual ? '$240' : '$25'}
+            priceNote={
+              isAnnual ? 'billed annually • effective $20/month' : 'billed monthly'
+            }
+            description="For serious reps who want unlimited practice, deeper repetition, and everything included in Pro."
+            features={[
+              'Unlimited roleplays',
+              'Everything in Pro',
+              'Unlimited AI Scenarios',
+            ]}
+            highlight
+            ctaLabel="Start free trial"
+            ctaHref="/register"
+          />
+
+          <PricingCard
+            title="Teams"
+            price="Custom"
+            priceNote="Built around your team needs"
+            description="For sales teams that want manager visibility, shared training structure, and custom enablement support."
+            features={[
+              'Multi-rep training workflows',
+              'Manager reporting direction',
+              'Team scenario rollout',
+              'Custom enablement setup',
+            ]}
+            ctaLabel="Book Demo"
+            ctaHref="https://calendly.com/your-link"
+          />
+        </div>
+      </div>
+    </section>
   )
 }
 
@@ -629,65 +745,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section id="pricing" className="px-6 py-20 md:px-10">
-        <div className="mx-auto max-w-[1400px]">
-          <SectionTitle
-            badge="Pricing"
-            title="Simple pricing for reps and teams"
-            description="Start with individual practice, then expand into team training once your reps and managers want more structure, reporting, and custom scenarios."
-          />
-
-          <div className="mt-14 grid gap-6 lg:grid-cols-4">
-            <PricingCard
-              title="Starter"
-              price="$0"
-              description="For first-time users who want to experience the roleplay workflow and coaching format."
-              features={[
-                'Access to selected practice scenarios',
-                'Basic session flow',
-                'Limited evaluation access',
-                'Good for initial product trial',
-              ]}
-            />
-            <PricingCard
-              title="Pro"
-              price="$8"
-              description="For individual reps who want consistent practice, better objection handling, and stronger sales confidence."
-              features={[
-                'Full scenario access',
-                'Structured AI feedback',
-                'Transcript-based session review',
-                'Designed for solo reps and job seekers',
-              ]}
-            />
-            <PricingCard
-              title="Advanced"
-              price="$24"
-              description="For experienced reps who want to master complex deals, handle high-stakes objections, and close with ease."
-              features={[
-                'Full advanced scenario library',
-                'Deep AI performance analytics',
-                'Detailed transcript + coaching breakdown',
-                'Built for high-performing reps and closers',
-              ]}
-              highlight
-            />
-            <PricingCard
-              title="Teams"
-              price="Custom"
-              description="For sales teams that want manager visibility, shared training structure, and scalable rep development."
-              features={[
-                'Multi-rep training workflows',
-                'Manager reporting direction',
-                'Team scenario rollout',
-                'Custom enablement setup',
-              ]}
-              ctaLabel="Book a demo"
-              ctaHref="https://calendly.com/your-link"
-            />
-          </div>
-        </div>
-      </section>
+      <PricingSection />
 
       <section id="teams" className="px-6 py-20 md:px-10">
         <div className="mx-auto max-w-[1400px] rounded-[36px] border border-[#e4d9cf] bg-white p-8 shadow-[0_16px_50px_rgba(28,28,20,0.05)] md:p-12">
