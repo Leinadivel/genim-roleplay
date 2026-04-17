@@ -275,11 +275,11 @@ function PricingSection() {
             title="Starter"
             price="Free"
             priceNote="5 roleplays total"
-            description="For first-time users who want to test the Genim experience before committing to ongoing practice."
+            description="For first-time users who want to experience the platform before committing to regular practice."
             features={[
               '5 roleplays total',
               'Live AI roleplays',
-              'Basic coaching experience',
+              'Basic AI coaching',
             ]}
             ctaLabel="Start free"
             ctaHref="/register"
@@ -287,11 +287,11 @@ function PricingSection() {
 
           <PricingCard
             title="Pro"
-            price={isAnnual ? '$120' : '$13'}
+            price={isAnnual ? '$10' : '$13'}
             priceNote={
-              isAnnual ? 'billed annually • effective $10/month' : 'billed monthly'
+              isAnnual ? 'per month, billed annually' : 'per month, billed monthly'
             }
-            description="For individual reps who want regular practice, stronger objection handling, and consistent coaching."
+            description="For reps who want consistent practice, stronger objection handling, and ongoing coaching."
             features={[
               '10 roleplays per week',
               'Live AI roleplays',
@@ -303,15 +303,15 @@ function PricingSection() {
 
           <PricingCard
             title="Advanced"
-            price={isAnnual ? '$240' : '$25'}
+            price={isAnnual ? '$20' : '$25'}
             priceNote={
-              isAnnual ? 'billed annually • effective $20/month' : 'billed monthly'
+              isAnnual ? 'per month, billed annually' : 'per month, billed monthly'
             }
-            description="For serious reps who want unlimited practice, deeper repetition, and everything included in Pro."
+            description="For serious reps who want unlimited practice and everything included in Pro and more."
             features={[
-              'Unlimited roleplays',
               'Everything in Pro',
-              'Unlimited AI Scenarios',
+              'Unlimited roleplays',
+              'Unlimited scenarios',
             ]}
             highlight
             ctaLabel="Start free trial"
@@ -321,8 +321,8 @@ function PricingSection() {
           <PricingCard
             title="Teams"
             price="Custom"
-            priceNote="Built around your team needs"
-            description="For sales teams that want manager visibility, shared training structure, and custom enablement support."
+            priceNote="Custom pricing for team rollout"
+            description="For sales teams that want manager visibility, structured coaching, and scalable enablement."
             features={[
               'Multi-rep training workflows',
               'Manager reporting direction',
