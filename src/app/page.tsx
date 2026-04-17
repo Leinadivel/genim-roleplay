@@ -273,7 +273,7 @@ function PricingSection() {
         <div className="mt-14 grid gap-6 lg:grid-cols-4">
           <PricingCard
             title="Starter"
-            price="Free"
+            price="$0"
             priceNote="5 roleplays total"
             description="For first-time users who want to experience the platform before committing to regular practice."
             features={[
