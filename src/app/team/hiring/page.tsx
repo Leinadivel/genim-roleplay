@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import CopyLinkButton from './copy-link-button'
+import RowActionMenu from '../../../components/row-action-menu'
 
 type ScenarioRow = {
   id: string
@@ -519,61 +520,60 @@ export default async function TeamHiringPage() {
                               ) : null}
                             </div>
 
-                            <div className="shrink-0 space-y-2">
+                            <div className="shrink-0 self-start space-y-2">
                               <CopyLinkButton value={publicUrl} />
 
-                              <Link
-                                href={`/candidate-assessment/${assessment.access_token}`}
-                                target="_blank"
-                                className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-[#d8d1c8] bg-white px-4 py-2 text-sm font-medium text-[#2b2c2a] hover:bg-[#fff]"
-                              >
-                                Open link
-                                <ExternalLink className="h-4 w-4" />
-                              </Link>
-
-                              <Link
-                                href={`/team/hiring/${assessment.id}/edit`}
-                                className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-[#d8d1c8] bg-white px-4 py-2 text-sm font-medium text-[#2b2c2a] hover:bg-[#fff]"
-                              >
-                                <FileEdit className="h-4 w-4" />
-                                Edit
-                              </Link>
-
-                              {canArchiveAssessment(assessment) ? (
-                                <form action="/api/team/hiring/archive" method="post">
-                                  <input type="hidden" name="assessmentId" value={assessment.id} />
-                                  <button
-                                    type="submit"
-                                    className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-[#d8d1c8] bg-white px-4 py-2 text-sm font-medium text-[#2b2c2a] hover:bg-[#fff]"
-                                  >
-                                    <Archive className="h-4 w-4" />
-                                    Archive
-                                  </button>
-                                </form>
-                              ) : null}
-
-                              {canDeleteAssessment(assessment) ? (
-                                <form action="/api/team/hiring/delete" method="post">
-                                  <input type="hidden" name="assessmentId" value={assessment.id} />
-                                  <button
-                                    type="submit"
-                                    className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                    Delete
-                                  </button>
-                                </form>
-                              ) : null}
-
-                              {assessment.completed_session_id ? (
-                                <Link
-                                  href={`/session/${assessment.completed_session_id}/report`}
-                                  className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-[#d8d1c8] bg-white px-4 py-2 text-sm font-medium text-[#2b2c2a] hover:bg-[#fff]"
-                                >
-                                  View report
-                                  <ChevronRight className="h-4 w-4" />
-                                </Link>
-                              ) : null}
+                              <RowActionMenu
+                                items={[
+                                  {
+                                    type: 'link',
+                                    label: 'Open link',
+                                    href: `/candidate-assessment/${assessment.access_token}`,
+                                    icon: 'report',
+                                  },
+                                  {
+                                    type: 'link',
+                                    label: 'Edit',
+                                    href: `/team/hiring/${assessment.id}/edit`,
+                                    icon: 'edit',
+                                  },
+                                  ...(canArchiveAssessment(assessment)
+                                    ? [
+                                        {
+                                          type: 'form' as const,
+                                          label: 'Archive',
+                                          action: '/api/team/hiring/archive',
+                                          valueName: 'assessmentId',
+                                          value: assessment.id,
+                                          icon: 'archive' as const,
+                                        },
+                                      ]
+                                    : []),
+                                  ...(canDeleteAssessment(assessment)
+                                    ? [
+                                        {
+                                          type: 'form' as const,
+                                          label: 'Delete',
+                                          action: '/api/team/hiring/delete',
+                                          valueName: 'assessmentId',
+                                          value: assessment.id,
+                                          icon: 'delete' as const,
+                                          danger: true,
+                                        },
+                                      ]
+                                    : []),
+                                  ...(assessment.completed_session_id
+                                    ? [
+                                        {
+                                          type: 'link' as const,
+                                          label: 'View report',
+                                          href: `/session/${assessment.completed_session_id}/report`,
+                                          icon: 'report' as const,
+                                        },
+                                      ]
+                                    : []),
+                                ]}
+                              />
                             </div>
                           </div>
 

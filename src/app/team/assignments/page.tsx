@@ -1,16 +1,20 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import {
+  Archive,
   CalendarClock,
   ChevronRight,
   ClipboardList,
+  FileEdit,
   LogOut,
   PlusCircle,
   Shield,
   Sparkles,
+  Trash2,
   User2,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
+import RowActionMenu from '../../../components/row-action-menu'
 
 type CompanyMemberRow = {
   id: string
@@ -90,10 +94,19 @@ function getStatusBadge(status: string) {
     case 'overdue':
       return 'border-[#f0d7c8] bg-[#fff4ed] text-[#a2542f]'
     case 'cancelled':
+    case 'archived':
       return 'border-[#e6ddd2] bg-[#faf8f5] text-[#666864]'
     default:
       return 'border-[#efe1d5] bg-[#fff8f3] text-[#b35b33]'
   }
+}
+
+function canDeleteAssignment(assignment: AssignmentRow) {
+  return assignment.status === 'assigned' && !assignment.completed_session_id
+}
+
+function canArchiveAssignment(assignment: AssignmentRow) {
+  return assignment.status !== 'archived' && assignment.status !== 'cancelled'
 }
 
 export default async function TeamAssignmentsPage() {
@@ -134,25 +147,28 @@ export default async function TeamAssignmentsPage() {
     redirect('/team')
   }
 
-  const [{ data: rawMembers, error: membersError }, { data: scenarios, error: scenariosError }, { data: rawAssignments, error: assignmentsError }] =
-    await Promise.all([
-      supabase
-        .from('company_members')
-        .select('id, company_id, user_id, email, role, status, created_at')
-        .eq('company_id', company.id)
-        .eq('status', 'active')
-        .order('created_at', { ascending: false }),
-      supabase
-        .from('scenarios')
-        .select('id, title, difficulty, industry, active')
-        .eq('active', true)
-        .order('title', { ascending: true }),
-      supabase
-        .from('team_roleplay_assignments')
-        .select('*')
-        .eq('company_id', company.id)
-        .order('created_at', { ascending: false }),
-    ])
+  const [
+    { data: rawMembers, error: membersError },
+    { data: scenarios, error: scenariosError },
+    { data: rawAssignments, error: assignmentsError },
+  ] = await Promise.all([
+    supabase
+      .from('company_members')
+      .select('id, company_id, user_id, email, role, status, created_at')
+      .eq('company_id', company.id)
+      .eq('status', 'active')
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('scenarios')
+      .select('id, title, difficulty, industry, active')
+      .eq('active', true)
+      .order('title', { ascending: true }),
+    supabase
+      .from('team_roleplay_assignments')
+      .select('*')
+      .eq('company_id', company.id)
+      .order('created_at', { ascending: false }),
+  ])
 
   if (membersError) {
     throw new Error(`Failed to load members: ${membersError.message}`)
@@ -175,7 +191,10 @@ export default async function TeamAssignmentsPage() {
     .filter((value): value is string => Boolean(value))
 
   const assignmentActorIds = assignments
-    .flatMap((assignment) => [assignment.assigned_to_user_id, assignment.assigned_by_user_id])
+    .flatMap((assignment) => [
+      assignment.assigned_to_user_id,
+      assignment.assigned_by_user_id,
+    ])
     .filter((value): value is string => Boolean(value))
 
   const allUserIds = Array.from(new Set([...memberUserIds, ...assignmentActorIds]))
@@ -286,7 +305,7 @@ export default async function TeamAssignmentsPage() {
                 {formatRole(membership.role)}
               </div>
               <div className="mt-1 text-sm text-[#666864]">
-                Owners, admins, and managers can assign roleplays.
+                Owners, admins, and managers can assign and manage roleplays.
               </div>
             </div>
           </div>
@@ -370,6 +389,11 @@ export default async function TeamAssignmentsPage() {
                 then create the assignment.
               </p>
 
+              <div className="mt-4 rounded-[18px] border border-[#ece4da] bg-[#faf8f5] px-4 py-4 text-sm leading-7 text-[#5f625d]">
+                Due dates should be stored in UTC so assignments still expire correctly
+                when managers and reps are in different countries.
+              </div>
+
               <form action="/api/team/assignments/create" method="post" className="mt-6 space-y-5">
                 <div>
                   <label className="mb-2 block text-sm font-medium text-[#343631]">
@@ -441,7 +465,16 @@ export default async function TeamAssignmentsPage() {
                     name="dueAt"
                     className="w-full rounded-2xl border border-[#ddd4ca] bg-[#fcfaf8] px-4 py-4 text-[15px] text-[#1f1f1c] outline-none"
                   />
+                  <p className="mt-2 text-xs leading-6 text-[#777a75]">
+                    This should be converted to UTC when saved.
+                  </p>
                 </div>
+
+                <input
+                  type="hidden"
+                  name="creatorTimezone"
+                  value={Intl.DateTimeFormat().resolvedOptions().timeZone}
+                />
 
                 <button
                   type="submit"
@@ -462,7 +495,8 @@ export default async function TeamAssignmentsPage() {
                   Current team assignments
                 </h2>
                 <p className="mt-2 text-sm leading-7 text-[#5f625d]">
-                  View all assignments across the company and track completion status.
+                  View all assignments across the company, edit details, archive old items,
+                  and track completion status.
                 </p>
               </div>
 
@@ -524,16 +558,52 @@ export default async function TeamAssignmentsPage() {
                             ) : null}
                           </div>
 
-                          <div className="shrink-0">
-                            {assignment.completed_session_id ? (
-                              <Link
-                                href={`/session/${assignment.completed_session_id}/report`}
-                                className="inline-flex items-center gap-2 rounded-full border border-[#d8d1c8] bg-white px-4 py-2 text-sm font-medium text-[#2b2c2a] hover:bg-[#fff]"
-                              >
-                                View report
-                                <ChevronRight className="h-4 w-4" />
-                              </Link>
-                            ) : null}
+                          <div className="shrink-0 self-start">
+                            <RowActionMenu
+                              items={[
+                                {
+                                  type: 'link',
+                                  label: 'Edit',
+                                  href: `/team/assignments/${assignment.id}/edit`,
+                                  icon: 'edit',
+                                },
+                                ...(canArchiveAssignment(assignment)
+                                  ? [
+                                      {
+                                        type: 'form' as const,
+                                        label: 'Archive',
+                                        action: '/api/team/assignments/archive',
+                                        valueName: 'assignmentId',
+                                        value: assignment.id,
+                                        icon: 'archive' as const,
+                                      },
+                                    ]
+                                  : []),
+                                ...(canDeleteAssignment(assignment)
+                                  ? [
+                                      {
+                                        type: 'form' as const,
+                                        label: 'Delete',
+                                        action: '/api/team/assignments/delete',
+                                        valueName: 'assignmentId',
+                                        value: assignment.id,
+                                        icon: 'delete' as const,
+                                        danger: true,
+                                      },
+                                    ]
+                                  : []),
+                                ...(assignment.completed_session_id
+                                  ? [
+                                      {
+                                        type: 'link' as const,
+                                        label: 'View report',
+                                        href: `/session/${assignment.completed_session_id}/report`,
+                                        icon: 'report' as const,
+                                      },
+                                    ]
+                                  : []),
+                              ]}
+                            />
                           </div>
                         </div>
                       </div>

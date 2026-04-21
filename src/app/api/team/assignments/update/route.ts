@@ -21,6 +21,7 @@ export async function POST(request: Request) {
   try {
     const formData = await request.formData()
 
+    const assignmentId = String(formData.get('assignmentId') || '').trim()
     const assignedToUserId = String(formData.get('assignedToUserId') || '').trim()
     const scenarioId = String(formData.get('scenarioId') || '').trim()
     const title = String(formData.get('title') || '').trim()
@@ -28,7 +29,7 @@ export async function POST(request: Request) {
     const dueAtRaw = String(formData.get('dueAt') || '').trim()
     const creatorTimezone = String(formData.get('creatorTimezone') || '').trim()
 
-    if (!assignedToUserId || !scenarioId) {
+    if (!assignmentId || !assignedToUserId || !scenarioId) {
       return NextResponse.redirect(new URL('/team/assignments', request.url))
     }
 
@@ -55,6 +56,26 @@ export async function POST(request: Request) {
       return NextResponse.redirect(new URL('/team', request.url))
     }
 
+    const { data: existing, error: existingError } = await supabase
+      .from('team_roleplay_assignments')
+      .select('id, company_id, status, completed_session_id')
+      .eq('id', assignmentId)
+      .eq('company_id', membership.company_id)
+      .maybeSingle()
+
+    if (existingError || !existing) {
+      return NextResponse.redirect(new URL('/team/assignments', request.url))
+    }
+
+    const isLocked =
+      existing.status === 'completed' ||
+      existing.status === 'archived' ||
+      existing.status === 'cancelled'
+
+    if (isLocked) {
+      return NextResponse.redirect(new URL('/team/assignments', request.url))
+    }
+
     const { data: targetMember, error: targetMemberError } = await supabase
       .from('company_members')
       .select('user_id, company_id, status, role')
@@ -70,27 +91,26 @@ export async function POST(request: Request) {
 
     const dueAt = parseDueAtToUtc(dueAtRaw)
 
-    const insertPayload: Record<string, unknown> = {
-      company_id: membership.company_id,
+    const updatePayload: Record<string, unknown> = {
       assigned_to_user_id: assignedToUserId,
-      assigned_by_user_id: user.id,
       scenario_id: scenarioId,
       title: title || null,
       note: note || null,
       due_at: dueAt,
-      status: 'assigned',
     }
 
     if (creatorTimezone) {
-      insertPayload.creator_timezone = creatorTimezone
+      updatePayload.creator_timezone = creatorTimezone
     }
 
-    const { error: insertError } = await supabase
+    const { error: updateError } = await supabase
       .from('team_roleplay_assignments')
-      .insert(insertPayload)
+      .update(updatePayload)
+      .eq('id', assignmentId)
+      .eq('company_id', membership.company_id)
 
-    if (insertError) {
-      throw new Error(insertError.message)
+    if (updateError) {
+      throw new Error(updateError.message)
     }
 
     return NextResponse.redirect(new URL('/team/assignments', request.url))
@@ -98,7 +118,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error:
-          error instanceof Error ? error.message : 'Failed to create assignment',
+          error instanceof Error ? error.message : 'Failed to update assignment',
       },
       { status: 500 }
     )
