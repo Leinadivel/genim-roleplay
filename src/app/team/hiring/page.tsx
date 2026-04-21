@@ -5,11 +5,15 @@ import {
   ChevronRight,
   ClipboardCheck,
   ExternalLink,
+  FileEdit,
   LogOut,
   PlusCircle,
   Shield,
   Sparkles,
+  Trash2,
   Users,
+  Archive,
+  Clock3,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import CopyLinkButton from './copy-link-button'
@@ -82,10 +86,19 @@ function getStatusBadge(status: string) {
     case 'expired':
       return 'border-[#f0d7c8] bg-[#fff4ed] text-[#a2542f]'
     case 'cancelled':
+    case 'archived':
       return 'border-[#e6ddd2] bg-[#faf8f5] text-[#666864]'
     default:
       return 'border-[#efe1d5] bg-[#fff8f3] text-[#b35b33]'
   }
+}
+
+function canDeleteAssessment(assessment: AssessmentRow) {
+  return !assessment.completed_session_id && assessment.status === 'invited'
+}
+
+function canArchiveAssessment(assessment: AssessmentRow) {
+  return assessment.status !== 'archived' && assessment.status !== 'cancelled'
 }
 
 export default async function TeamHiringPage() {
@@ -244,7 +257,7 @@ export default async function TeamHiringPage() {
                 {formatStatus(membership.role)}
               </div>
               <div className="mt-1 text-sm text-[#666864]">
-                Owners, admins, and managers can create candidate assessments.
+                Owners, admins, and managers can create and manage candidate assessments.
               </div>
             </div>
           </div>
@@ -328,6 +341,15 @@ export default async function TeamHiringPage() {
                 an expiry time, then generate a secure assessment link.
               </p>
 
+              <div className="mt-4 rounded-[18px] border border-[#ece4da] bg-[#faf8f5] px-4 py-4 text-sm leading-7 text-[#5f625d]">
+                <div className="flex items-start gap-3">
+                  <Clock3 className="mt-1 h-4 w-4 shrink-0 text-[#1f4d38]" />
+                  <div>
+                    Candidates see expiry date and time in their own local time automatically if not same country.
+                  </div>
+                </div>
+              </div>
+
               <form action="/api/team/hiring/create" method="post" className="mt-6 space-y-5">
                 <div>
                   <label className="mb-2 block text-sm font-medium text-[#343631]">
@@ -406,7 +428,16 @@ export default async function TeamHiringPage() {
                     name="expiresAt"
                     className="w-full rounded-2xl border border-[#ddd4ca] bg-[#fcfaf8] px-4 py-4 text-[15px] text-[#1f1f1c] outline-none"
                   />
+                  <p className="mt-2 text-xs leading-6 text-[#777a75]">
+                    Expiry works across countries timezones.
+                  </p>
                 </div>
+
+                <input
+                  type="hidden"
+                  name="creatorTimezone"
+                  value={Intl.DateTimeFormat().resolvedOptions().timeZone}
+                />
 
                 <button
                   type="submit"
@@ -427,8 +458,8 @@ export default async function TeamHiringPage() {
                   Current hiring assessments
                 </h2>
                 <p className="mt-2 text-sm leading-7 text-[#5f625d]">
-                  Track every candidate assessment, copy the invite link, and
-                  open completed reports.
+                  Track every candidate assessment, copy the invite link, edit details,
+                  archive unused items, and open completed reports.
                 </p>
               </div>
 
@@ -456,6 +487,12 @@ export default async function TeamHiringPage() {
                               <div className="mt-1 text-sm text-[#666864]">
                                 {assessment.candidate_email}
                               </div>
+
+                              {assessment.title ? (
+                                <div className="mt-2 text-sm font-medium text-[#3c3f3a]">
+                                  {assessment.title}
+                                </div>
+                              ) : null}
 
                               <div className="mt-3 flex flex-wrap gap-2">
                                 <span
@@ -493,6 +530,40 @@ export default async function TeamHiringPage() {
                                 Open link
                                 <ExternalLink className="h-4 w-4" />
                               </Link>
+
+                              <Link
+                                href={`/team/hiring/${assessment.id}/edit`}
+                                className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-[#d8d1c8] bg-white px-4 py-2 text-sm font-medium text-[#2b2c2a] hover:bg-[#fff]"
+                              >
+                                <FileEdit className="h-4 w-4" />
+                                Edit
+                              </Link>
+
+                              {canArchiveAssessment(assessment) ? (
+                                <form action="/api/team/hiring/archive" method="post">
+                                  <input type="hidden" name="assessmentId" value={assessment.id} />
+                                  <button
+                                    type="submit"
+                                    className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-[#d8d1c8] bg-white px-4 py-2 text-sm font-medium text-[#2b2c2a] hover:bg-[#fff]"
+                                  >
+                                    <Archive className="h-4 w-4" />
+                                    Archive
+                                  </button>
+                                </form>
+                              ) : null}
+
+                              {canDeleteAssessment(assessment) ? (
+                                <form action="/api/team/hiring/delete" method="post">
+                                  <input type="hidden" name="assessmentId" value={assessment.id} />
+                                  <button
+                                    type="submit"
+                                    className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                    Delete
+                                  </button>
+                                </form>
+                              ) : null}
 
                               {assessment.completed_session_id ? (
                                 <Link

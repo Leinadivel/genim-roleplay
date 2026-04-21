@@ -880,81 +880,81 @@ export default function ScenariosPage() {
             </div>
 
             <div className="rounded-[24px] border border-[#e8ded3] bg-white p-5 shadow-[0_10px_30px_rgba(25,25,20,0.04)]">
-  <SectionHeader
-    title="Buyer role"
-    subtitle="Hover a category on desktop or tap one on mobile, then choose a buyer role below"
-  />
+              <SectionHeader
+                title="Buyer role"
+                subtitle="Hover a category on desktop or tap one on mobile, then choose a buyer role below"
+              />
 
-  <div className="mb-5">
-    <div className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-[#8a8d87]">
-      Categories
-    </div>
+              <div className="mb-5">
+                <div className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-[#8a8d87]">
+                  Categories
+                </div>
 
-    <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-      {BUYER_ROLE_CATEGORIES.map((category) => {
-        const active = activeBuyerRoleCategory.title === category.title
+                <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+                  {BUYER_ROLE_CATEGORIES.map((category) => {
+                    const active = activeBuyerRoleCategory.title === category.title
 
-        return (
-          <button
-            key={category.title}
-            type="button"
-            onMouseEnter={() => setHoveredBuyerRoleCategory(category.title)}
-            onFocus={() => setHoveredBuyerRoleCategory(category.title)}
-            onClick={() => setHoveredBuyerRoleCategory(category.title)}
-            className={`rounded-[16px] border px-4 py-4 text-left text-sm font-semibold transition ${
-              active
-                ? 'border-[#d6612d] bg-[#fcf3ee] text-[#a84922]'
-                : 'border-[#e9e0d6] bg-[#faf8f5] text-[#4d4f4a] hover:bg-white'
-            }`}
-          >
-            <span className="block leading-6">{category.title}</span>
-          </button>
-        )
-      })}
-    </div>
-  </div>
+                    return (
+                      <button
+                        key={category.title}
+                        type="button"
+                        onMouseEnter={() => setHoveredBuyerRoleCategory(category.title)}
+                        onFocus={() => setHoveredBuyerRoleCategory(category.title)}
+                        onClick={() => setHoveredBuyerRoleCategory(category.title)}
+                        className={`rounded-[16px] border px-4 py-4 text-left text-sm font-semibold transition ${
+                          active
+                            ? 'border-[#d6612d] bg-[#fcf3ee] text-[#a84922]'
+                            : 'border-[#e9e0d6] bg-[#faf8f5] text-[#4d4f4a] hover:bg-white'
+                        }`}
+                      >
+                        <span className="block leading-6">{category.title}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
 
-  <div className="rounded-[20px] border border-[#ece4da] bg-[#faf8f5] p-4">
-    <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-      <div>
-        <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#8a8d87]">
-          Roles in category
-        </div>
-        <div className="mt-1 text-base font-semibold text-[#1a1a17]">
-          {activeBuyerRoleCategory.title}
-        </div>
-      </div>
+              <div className="rounded-[20px] border border-[#ece4da] bg-[#faf8f5] p-4">
+                <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#8a8d87]">
+                      Roles in category
+                    </div>
+                    <div className="mt-1 text-base font-semibold text-[#1a1a17]">
+                      {activeBuyerRoleCategory.title}
+                    </div>
+                  </div>
 
-      <div className="inline-flex w-fit rounded-full border border-[#e7ddd3] bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
-        {activeBuyerRoleCategory.roles.length} roles
-      </div>
-    </div>
+                  <div className="inline-flex w-fit rounded-full border border-[#e7ddd3] bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
+                    {activeBuyerRoleCategory.roles.length} roles
+                  </div>
+                </div>
 
-    <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-5">
-      {activeBuyerRoleCategory.roles.map((role) => {
-        const active = role === selectedBuyerRole
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-5">
+                  {activeBuyerRoleCategory.roles.map((role) => {
+                    const active = role === selectedBuyerRole
 
-        return (
-          <button
-            key={role}
-            type="button"
-            onClick={() => setSelectedBuyerRole(role)}
-            className={`rounded-[16px] border px-3 py-3 text-left text-sm font-medium transition ${
-              active
-                ? 'border-[#1f4d38] bg-[#eef5f0] text-[#1f4d38]'
-                : 'border-[#e9e0d6] bg-white text-[#4d4f4a] hover:bg-[#fdfbf8]'
-            }`}
-          >
-            <div className="flex items-start gap-2">
-              <UserRound className="mt-0.5 h-4 w-4 shrink-0" />
-              <span className="leading-6">{role}</span>
+                    return (
+                      <button
+                        key={role}
+                        type="button"
+                        onClick={() => setSelectedBuyerRole(role)}
+                        className={`rounded-[16px] border px-3 py-3 text-left text-sm font-medium transition ${
+                          active
+                            ? 'border-[#1f4d38] bg-[#eef5f0] text-[#1f4d38]'
+                            : 'border-[#e9e0d6] bg-white text-[#4d4f4a] hover:bg-[#fdfbf8]'
+                        }`}
+                      >
+                        <div className="flex items-start gap-2">
+                          <UserRound className="mt-0.5 h-4 w-4 shrink-0" />
+                          <span className="leading-6">{role}</span>
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
             </div>
-          </button>
-        )
-      })}
-    </div>
-  </div>
-</div>
 
             <div className="grid gap-6 lg:grid-cols-2">
               <div className="rounded-[24px] border border-[#e8ded3] bg-white p-5 shadow-[0_10px_30px_rgba(25,25,20,0.04)]">

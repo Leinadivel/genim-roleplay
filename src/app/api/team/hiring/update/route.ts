@@ -1,4 +1,3 @@
-import { randomUUID } from 'crypto'
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
@@ -22,6 +21,7 @@ export async function POST(request: Request) {
   try {
     const formData = await request.formData()
 
+    const assessmentId = String(formData.get('assessmentId') || '').trim()
     const candidateName = String(formData.get('candidateName') || '').trim()
     const candidateEmail = String(formData.get('candidateEmail') || '')
       .trim()
@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     const expiresAtRaw = String(formData.get('expiresAt') || '').trim()
     const creatorTimezone = String(formData.get('creatorTimezone') || '').trim()
 
-    if (!candidateEmail || !scenarioId) {
+    if (!assessmentId || !candidateEmail || !scenarioId) {
       return NextResponse.redirect(new URL('/team/hiring', request.url))
     }
 
@@ -59,34 +59,54 @@ export async function POST(request: Request) {
       return NextResponse.redirect(new URL('/team', request.url))
     }
 
-    const accessToken =
-      randomUUID().replace(/-/g, '') + randomUUID().replace(/-/g, '')
+    // 🔒 Load assessment to validate ownership + lock state
+    const { data: existing, error: existingError } = await supabase
+      .from('candidate_roleplay_assessments')
+      .select(
+        'id, company_id, status, completed_session_id'
+      )
+      .eq('id', assessmentId)
+      .eq('company_id', membership.company_id)
+      .maybeSingle()
+
+    if (existingError || !existing) {
+      return NextResponse.redirect(new URL('/team/hiring', request.url))
+    }
+
+    const isLocked =
+      existing.status === 'completed' ||
+      existing.status === 'archived' ||
+      existing.status === 'cancelled'
+
+    if (isLocked) {
+      // silently block edits to protect data integrity
+      return NextResponse.redirect(new URL('/team/hiring', request.url))
+    }
 
     const expiresAt = parseExpiryToUtc(expiresAtRaw)
 
-    const insertPayload: Record<string, unknown> = {
-      company_id: membership.company_id,
-      created_by_user_id: user.id,
+    const updatePayload: Record<string, unknown> = {
       candidate_name: candidateName || null,
       candidate_email: candidateEmail,
       scenario_id: scenarioId,
       title: title || null,
       note: note || null,
-      access_token: accessToken,
-      status: 'invited',
       expires_at: expiresAt,
     }
 
+    // optional timezone tracking (safe if column exists)
     if (creatorTimezone) {
-      insertPayload.creator_timezone = creatorTimezone
+      updatePayload.creator_timezone = creatorTimezone
     }
 
-    const { error: insertError } = await supabase
+    const { error: updateError } = await supabase
       .from('candidate_roleplay_assessments')
-      .insert(insertPayload)
+      .update(updatePayload)
+      .eq('id', assessmentId)
+      .eq('company_id', membership.company_id)
 
-    if (insertError) {
-      throw new Error(insertError.message)
+    if (updateError) {
+      throw new Error(updateError.message)
     }
 
     return NextResponse.redirect(new URL('/team/hiring', request.url))
@@ -96,7 +116,7 @@ export async function POST(request: Request) {
         error:
           error instanceof Error
             ? error.message
-            : 'Failed to create candidate assessment',
+            : 'Failed to update candidate assessment',
       },
       { status: 500 }
     )
