@@ -139,6 +139,7 @@ function PricingCard({
   highlight = false,
   ctaLabel,
   ctaHref,
+  onCtaClick,
 }: {
   title: string
   price: string
@@ -148,10 +149,12 @@ function PricingCard({
   highlight?: boolean
   ctaLabel?: string
   ctaHref?: string
+  onCtaClick?: () => void
 }) {
   const buttonLabel = ctaLabel || 'Start free trial'
   const buttonHref = ctaHref || '/register'
   const isSalesCard = buttonLabel.toLowerCase().includes('demo')
+  const isActionButton = typeof onCtaClick === 'function'
 
   return (
     <div
@@ -212,6 +215,18 @@ function PricingCard({
           }`}
           showIcon={false}
         />
+      ) : isActionButton ? (
+        <button
+          type="button"
+          onClick={onCtaClick}
+          className={`mt-8 inline-flex w-full items-center justify-center rounded-full px-5 py-4 text-sm font-semibold transition ${
+            highlight
+              ? 'bg-[#d6612d] text-white hover:opacity-95'
+              : 'border border-[#d8d1c8] text-[#1f1f1c] hover:bg-[#faf7f3]'
+          }`}
+        >
+          {buttonLabel}
+        </button>
       ) : (
         <Link
           href={buttonHref}
@@ -232,6 +247,36 @@ function PricingSection() {
   const [billingCycle, setBillingCycle] = useState<'annual' | 'monthly'>('annual')
 
   const isAnnual = billingCycle === 'annual'
+  async function handleCheckout(
+    plan: 'pro_monthly' | 'pro_yearly' | 'advanced_monthly' | 'advanced_yearly'
+  ) {
+    try {
+      const response = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ plan }),
+      })
+
+      if (response.status === 401) {
+        // 🔥 user not logged in → redirect
+        window.location.href = `/register?plan=${plan}`
+        return
+      }
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to start checkout')
+      }
+
+      window.location.href = data.url
+    } catch (error) {
+      console.error(error)
+      alert(error instanceof Error ? error.message : 'Something went wrong')
+    }
+  }
 
   return (
     <section id="pricing" className="px-6 py-20 md:px-10">
@@ -297,8 +342,8 @@ function PricingSection() {
               'Live AI roleplays',
               'AI coaching',
             ]}
-            ctaLabel="Start free trial"
-            ctaHref="/register"
+            ctaLabel={isAnnual ? 'Get Pro Annual' : 'Get Pro Monthly'}
+            onCtaClick={() => handleCheckout(isAnnual ? 'pro_yearly' : 'pro_monthly')}
           />
 
           <PricingCard
@@ -314,8 +359,10 @@ function PricingSection() {
               'Unlimited scenarios',
             ]}
             highlight
-            ctaLabel="Start free trial"
-            ctaHref="/register"
+            ctaLabel={isAnnual ? 'Get Advanced Annual' : 'Get Advanced Monthly'}
+            onCtaClick={() =>
+              handleCheckout(isAnnual ? 'advanced_yearly' : 'advanced_monthly')
+            }
           />
 
           <PricingCard
