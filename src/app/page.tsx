@@ -380,7 +380,7 @@ function PricingSection() {
               'Custom enablement setup',
             ]}
             ctaLabel="Book Demo"
-            ctaHref="https://calendly.com/your-link"
+            ctaHref="/book-demo"
           />
         </div>
       </div>
@@ -458,11 +458,13 @@ export default function HomePage() {
                 <ArrowRight className="h-5 w-5" />
               </Link>
 
-             <DemoModalButton
-                calendlyUrl="https://calendly.com/your-link"
+              <Link
+                href="/book-demo"
                 className="inline-flex items-center gap-3 rounded-full border border-[#d8d1c8] bg-[#f7f3ee] px-8 py-5 text-xl font-semibold text-[#20211f] transition hover:bg-white"
-                label="Book a demo"
-              />
+              >
+                <ArrowRight className="h-5 w-5" />
+                Book a Demo
+              </Link>
             </div>
 
             <div className="mt-14 flex flex-wrap items-center gap-5">
