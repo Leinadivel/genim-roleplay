@@ -260,7 +260,6 @@ function PricingSection() {
       })
 
       if (response.status === 401) {
-        // 🔥 user not logged in → redirect
         window.location.href = `/register?plan=${plan}`
         return
       }
@@ -269,6 +268,10 @@ function PricingSection() {
 
       if (!response.ok) {
         throw new Error(data.error || 'Failed to start checkout')
+      }
+
+      if (!data.url) {
+        throw new Error('No checkout URL returned')
       }
 
       window.location.href = data.url

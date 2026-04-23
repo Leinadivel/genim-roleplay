@@ -31,7 +31,23 @@ function normalizeEmail(value: string | null | undefined) {
   return value?.trim().toLowerCase() ?? ''
 }
 
-export default async function PostLoginPage() {
+function isPaidPlan(value: string | null | undefined) {
+  return (
+    value === 'pro_monthly' ||
+    value === 'pro_yearly' ||
+    value === 'advanced_monthly' ||
+    value === 'advanced_yearly'
+  )
+}
+
+export default async function PostLoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ plan?: string }>
+}) {
+  const params = await searchParams
+  const selectedPlan = params.plan?.trim() || null
+
   const supabase = await createClient()
 
   const {
@@ -118,6 +134,8 @@ export default async function PostLoginPage() {
     activeMembership = membership
   }
 
+  const needsName = !profile.full_name || !profile.full_name.trim()
+
   if (activeMembership) {
     const nextProfileRole = mapMembershipRoleToProfileRole(activeMembership.role)
 
@@ -134,28 +152,41 @@ export default async function PostLoginPage() {
       throw new Error(`Failed to sync profile: ${syncProfileError.message}`)
     }
 
-    const needsName = !profile.full_name || !profile.full_name.trim()
-
     if (needsName) {
       redirect('/complete-profile')
     }
 
-    if (canAccessTeamWorkspace(activeMembership.role)) {
-      redirect('/team')
+    const defaultDestination = canAccessTeamWorkspace(activeMembership.role)
+      ? '/team'
+      : '/scenarios'
+
+    if (isPaidPlan(selectedPlan)) {
+      redirect(
+        `/billing/checkout-start?plan=${encodeURIComponent(
+          selectedPlan
+        )}&returnTo=${encodeURIComponent(defaultDestination)}`
+      )
     }
 
-    redirect('/scenarios')
+    redirect(defaultDestination)
   }
-
-  const needsName = !profile.full_name || !profile.full_name.trim()
 
   if (needsName) {
     redirect('/complete-profile')
   }
 
-  if (profile.account_type === 'team' && canAccessTeamWorkspace(profile.role)) {
-    redirect('/team')
+  const defaultDestination =
+    profile.account_type === 'team' && canAccessTeamWorkspace(profile.role)
+      ? '/team'
+      : '/scenarios'
+
+  if (isPaidPlan(selectedPlan)) {
+    redirect(
+      `/billing/checkout-start?plan=${encodeURIComponent(
+        selectedPlan
+      )}&returnTo=${encodeURIComponent(defaultDestination)}`
+    )
   }
 
-  redirect('/scenarios')
+  redirect(defaultDestination)
 }

@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import image from 'next/image'
-import { FormEvent, useState } from 'react'
+import { FormEvent, useMemo, useState } from 'react'
 import {
   ArrowRight,
   Briefcase,
@@ -20,6 +20,11 @@ type AccountType = 'individual' | 'team'
 
 export default function RegisterPage() {
   const [accountType, setAccountType] = useState<AccountType>('individual')
+  const selectedPlan = useMemo(() => {
+    if (typeof window === 'undefined') return ''
+    const params = new URLSearchParams(window.location.search)
+    return params.get('plan')?.trim() || ''
+  }, [])
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
@@ -44,11 +49,17 @@ export default function RegisterPage() {
         process.env.NEXT_PUBLIC_SITE_URL ||
         window.location.origin
 
+      const cleanEmail = email.trim().toLowerCase().replace(/\s+/g, '')
+        console.log('EMAIL RAW:', email)
+        console.log('EMAIL CLEAN:', cleanEmail)
+
       const { error } = await supabase.auth.signUp({
-        email,
+        email: cleanEmail,
         password,
         options: {
-          emailRedirectTo: `${baseUrl}/auth/callback?next=/post-login`,
+          emailRedirectTo: `${baseUrl}/auth/callback?next=${encodeURIComponent(
+            selectedPlan ? `/post-login?plan=${selectedPlan}` : '/post-login'
+          )}`,
           data: {
             full_name: fullName,
             phone,
