@@ -116,8 +116,10 @@ function PricingCard({
 
 export default function PricingClient({
   isLoggedIn,
+  limitReason,
 }: {
   isLoggedIn: boolean
+  limitReason: 'starter' | 'weekly' | null
 }) {
   const [billingCycle, setBillingCycle] = useState<BillingCycle>('annual')
   const isAnnual = billingCycle === 'annual'
@@ -169,6 +171,14 @@ export default function PricingClient({
             Choose the plan that fits your training volume today, 
             then upgrade as your roleplay needs grow. Annual billing is selected by default for the best value.
           </p>
+
+          {limitReason ? (
+            <div className="mx-auto mt-6 max-w-[760px] rounded-[22px] border border-[#efc7b7] bg-white px-5 py-4 text-sm leading-7 text-[#a84922] shadow-sm">
+              {limitReason === 'starter'
+                ? 'You have used all 5 free roleplays on the Starter plan. Upgrade to Pro or Advanced to continue practising.'
+                : 'You have reached your 10 roleplays per week limit on Pro You will continue next week. Switch to Advanced for unlimited roleplays.'}
+            </div>
+          ) : null}
 
           <div className="mt-9 flex justify-center">
             <div className="inline-flex items-center rounded-full border border-[#e5dbcf] bg-white p-1 shadow-sm">
