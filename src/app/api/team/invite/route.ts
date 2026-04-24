@@ -13,27 +13,23 @@ function normalizeRole(value: unknown) {
   return typeof value === 'string' ? value.trim().toLowerCase() : ''
 }
 
-function parseTeamSize(value: unknown): number | null {
-  if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
-    return value
-  }
-
-  if (typeof value === 'string') {
-    const parsed = Number.parseInt(value, 10)
-    if (Number.isFinite(parsed) && parsed > 0) {
-      return parsed
-    }
-  }
-
-  return null
-}
-
 function getBaseUrl() {
   return (
     process.env.NEXT_PUBLIC_SITE_URL ||
     process.env.NEXT_PUBLIC_APP_URL ||
     'http://localhost:3000'
   ).replace(/\/$/, '')
+}
+
+function isActiveTeamSubscription(subscription: {
+  status: string | null
+  current_period_end: string | null
+}) {
+  if (subscription.status !== 'active') return false
+
+  if (!subscription.current_period_end) return true
+
+  return new Date(subscription.current_period_end).getTime() > Date.now()
 }
 
 export async function POST(req: Request) {
@@ -58,10 +54,7 @@ export async function POST(req: Request) {
     const role = normalizeRole(body.role) || 'rep'
 
     if (!email) {
-      return NextResponse.json(
-        { error: 'Email is required' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Email is required' }, { status: 400 })
     }
 
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -93,10 +86,7 @@ export async function POST(req: Request) {
       .maybeSingle()
 
     if (membershipError) {
-      return NextResponse.json(
-        { error: membershipError.message },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: membershipError.message }, { status: 400 })
     }
 
     if (!membership?.company_id) {
@@ -116,7 +106,7 @@ export async function POST(req: Request) {
 
     const { data: company, error: companyError } = await supabase
       .from('companies')
-      .select('id, name, team_size')
+      .select('id, name')
       .eq('id', membership.company_id)
       .maybeSingle()
 
@@ -127,24 +117,47 @@ export async function POST(req: Request) {
       )
     }
 
-    const { count: existingMemberCount, error: countError } = await supabase
-      .from('company_members')
-      .select('*', { count: 'exact', head: true })
-      .eq('company_id', company.id)
+    const { data: teamSubscription, error: teamSubscriptionError } =
+      await supabase
+        .from('company_subscriptions')
+        .select('status, seat_limit, current_period_end')
+        .eq('company_id', company.id)
+        .maybeSingle()
 
-    if (countError) {
+    if (teamSubscriptionError) {
       return NextResponse.json(
-        { error: countError.message },
+        { error: teamSubscriptionError.message },
         { status: 400 }
       )
     }
 
-    const teamLimit = parseTeamSize(company.team_size)
-    if (teamLimit && (existingMemberCount ?? 0) >= teamLimit) {
+    if (!teamSubscription || !isActiveTeamSubscription(teamSubscription)) {
       return NextResponse.json(
         {
           error:
-            'This workspace has reached its current seat limit. Increase team capacity before inviting more members.',
+            'This company subscription is not active. Please complete team billing before inviting members.',
+        },
+        { status: 402 }
+      )
+    }
+
+    const seatLimit = teamSubscription.seat_limit
+
+    const { count: usedSeatCount, error: countError } = await supabase
+      .from('company_members')
+      .select('*', { count: 'exact', head: true })
+      .eq('company_id', company.id)
+      .in('status', ['active', 'pending', 'invited'])
+
+    if (countError) {
+      return NextResponse.json({ error: countError.message }, { status: 400 })
+    }
+
+    if ((usedSeatCount ?? 0) >= seatLimit) {
+      return NextResponse.json(
+        {
+          error:
+            'This company has reached its paid seat limit. Increase the company seat limit before inviting more members.',
         },
         { status: 400 }
       )
@@ -168,7 +181,10 @@ export async function POST(req: Request) {
 
     if (existingInvite) {
       return NextResponse.json(
-        { error: 'This email already exists in the workspace or has been invited.' },
+        {
+          error:
+            'This email already exists in the workspace or has been invited.',
+        },
         { status: 400 }
       )
     }
@@ -250,10 +266,7 @@ export async function POST(req: Request) {
       .insert(insertPayload)
 
     if (insertError) {
-      return NextResponse.json(
-        { error: insertError.message },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: insertError.message }, { status: 400 })
     }
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -272,13 +285,14 @@ export async function POST(req: Request) {
     const redirectTo = `${getBaseUrl()}/auth/callback?next=/post-login`
 
     if (existingProfile?.id) {
-      const { error: magicLinkError } = await adminSupabase.auth.admin.generateLink({
-        type: 'magiclink',
-        email,
-        options: {
-          redirectTo,
-        },
-      })
+      const { error: magicLinkError } =
+        await adminSupabase.auth.admin.generateLink({
+          type: 'magiclink',
+          email,
+          options: {
+            redirectTo,
+          },
+        })
 
       if (magicLinkError) {
         return NextResponse.json({
@@ -288,17 +302,15 @@ export async function POST(req: Request) {
         })
       }
     } else {
-      const { error: inviteError } = await adminSupabase.auth.admin.inviteUserByEmail(
-        email,
-        {
+      const { error: inviteError } =
+        await adminSupabase.auth.admin.inviteUserByEmail(email, {
           redirectTo,
           data: {
             invited_to_company: company.id,
             invited_role: role,
             account_type: 'team',
           },
-        }
-      )
+        })
 
       if (inviteError) {
         return NextResponse.json({

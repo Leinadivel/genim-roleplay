@@ -2,11 +2,9 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import {
   ArrowRight,
-  Building2,
   ChevronRight,
   ClipboardList,
   Clock3,
-  CreditCard,
   LogOut,
   Shield,
   Sparkles,
@@ -41,22 +39,22 @@ type SessionRow = {
   created_at: string
 }
 
-function parseTeamSize(
-  value: string | number | null | undefined
-): number | null {
-  if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
-    return value
-  }
+// function parseTeamSize(
+//   value: string | number | null | undefined
+// ): number | null {
+//   if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
+//     return value
+//   }
 
-  if (typeof value === 'string') {
-    const parsed = Number.parseInt(value, 10)
-    if (Number.isFinite(parsed) && parsed > 0) {
-      return parsed
-    }
-  }
+//   if (typeof value === 'string') {
+//     const parsed = Number.parseInt(value, 10)
+//     if (Number.isFinite(parsed) && parsed > 0) {
+//       return parsed
+//     }
+//   }
 
-  return null
-}
+//   return null
+// }
 
 function isInviteLikeStatus(status: string | null | undefined) {
   return status === 'pending' || status === 'invited'
@@ -149,6 +147,14 @@ export default async function TeamPage() {
         .eq('id', companyId)
         .maybeSingle()
     : { data: null, error: null }
+
+    const { data: companySubscription } = companyId
+      ? await supabase
+          .from('company_subscriptions')
+          .select('status, seat_limit, amount_due, currency, current_period_end')
+          .eq('company_id', companyId)
+          .maybeSingle()
+      : { data: null }
 
   if (
     !profile ||
@@ -351,7 +357,15 @@ export default async function TeamPage() {
         )
       : null
 
-  const teamLimit = parseTeamSize(company.team_size)
+  const hasActiveTeamSubscription =
+    companySubscription?.status === 'active' &&
+    (!companySubscription.current_period_end ||
+      new Date(companySubscription.current_period_end).getTime() > Date.now())
+
+  const teamLimit = hasActiveTeamSubscription
+    ? companySubscription.seat_limit
+    : null
+
   const usagePercent =
     teamLimit && teamLimit > 0
       ? Math.min(100, Math.round((activeMemberCount / teamLimit) * 100))
@@ -601,7 +615,12 @@ export default async function TeamPage() {
                 <div className="h-3 overflow-hidden rounded-full bg-[#efe6dc]">
                   <div
                     className="h-full rounded-full bg-[#1f4d38]"
-                    style={{ width: `${usagePercent ?? 18}%` }}
+                    style={{
+                      width:
+                        typeof usagePercent === 'number'
+                          ? `${usagePercent}%`
+                          : '0%',
+                    }}
                   />
                 </div>
 
@@ -715,12 +734,12 @@ export default async function TeamPage() {
                 </Link>
 
                 {canManageWorkspace ? (
-                  <button
-                    type="button"
+                  <Link
+                    href="/team/analytics"
                     className="inline-flex items-center gap-2 rounded-full border border-[#d8d1c8] bg-white px-5 py-3 text-sm font-medium text-[#2b2c2a]"
                   >
-                    Billing coming next
-                  </button>
+                    View Analytics
+                  </Link>
                 ) : null}
               </div>
             </div>
@@ -730,7 +749,7 @@ export default async function TeamPage() {
             <div className="mt-6">
               <TeamInvitePanel
                 members={members}
-                canInvite={canManageWorkspace}
+                canInvite={canManageWorkspace && hasActiveTeamSubscription}
               />
             </div>
           ) : null}
