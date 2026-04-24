@@ -160,7 +160,33 @@ export default async function SessionNewPage({
     redirect('/login')
   }
 
-  await enforceRoleplayLimit(user.id, assignmentId)
+  const { data: membership } = await supabase
+    .from('company_members')
+    .select('company_id, role, status')
+    .eq('user_id', user.id)
+    .eq('status', 'active')
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .maybeSingle()
+
+  if (membership?.company_id) {
+    const { data: teamSub } = await supabase
+      .from('company_subscriptions')
+      .select('status, current_period_end')
+      .eq('company_id', membership.company_id)
+      .maybeSingle()
+
+    const hasActiveTeamSubscription =
+      teamSub?.status === 'active' &&
+      (!teamSub.current_period_end ||
+        new Date(teamSub.current_period_end).getTime() > Date.now())
+
+    if (!hasActiveTeamSubscription) {
+      redirect('/team?billing_required=1')
+    }
+  } else {
+    await enforceRoleplayLimit(user.id, assignmentId)
+  }
 
   const result = await startSession({
     scenarioId,

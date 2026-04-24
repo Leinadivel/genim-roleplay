@@ -17,6 +17,16 @@ function parseDueAtToUtc(dueAtRaw: string): string | null {
   return parsed.toISOString()
 }
 
+function isActiveTeamSubscription(subscription: {
+  status: string | null
+  current_period_end: string | null
+}) {
+  if (subscription.status !== 'active') return false
+  if (!subscription.current_period_end) return true
+
+  return new Date(subscription.current_period_end).getTime() > Date.now()
+}
+
 export async function POST(request: Request) {
   try {
     const formData = await request.formData()
@@ -53,6 +63,17 @@ export async function POST(request: Request) {
 
     if (membershipError || !membership || !canManageAssignments(membership.role)) {
       return NextResponse.redirect(new URL('/team', request.url))
+    }
+
+    const { data: teamSubscription, error: teamSubscriptionError } =
+      await supabase
+        .from('company_subscriptions')
+        .select('status, current_period_end')
+        .eq('company_id', membership.company_id)
+        .maybeSingle()
+
+    if (teamSubscriptionError || !teamSubscription || !isActiveTeamSubscription(teamSubscription)) {
+      return NextResponse.redirect(new URL('/team?billing_required=1', request.url))
     }
 
     const { data: targetMember, error: targetMemberError } = await supabase
