@@ -7,6 +7,7 @@ import { getGenimAdmin } from '@/lib/genim-admin'
 export async function POST(request: Request) {
   const formData = await request.formData()
 
+  const requestId = String(formData.get('requestId') || '').trim()
   const companyId = String(formData.get('companyId') || '').trim()
   const billingEmail = String(formData.get('billingEmail') || '')
     .trim()
@@ -83,11 +84,6 @@ export async function POST(request: Request) {
   const amountInCents = Math.round(amount * 100)
   const pricePerSeat = amount / seatLimit
 
-  /**
-   * IMPORTANT:
-   * Create the invoice item FIRST as a pending item.
-   * Then create invoice and force pending invoice items to be included.
-   */
   const invoiceItem = await stripe.invoiceItems.create({
     customer: stripeCustomerId,
     amount: amountInCents,
@@ -174,6 +170,17 @@ export async function POST(request: Request) {
       { error: upsertError.message },
       { status: 500 }
     )
+  }
+
+  if (requestId) {
+    const { error: requestUpdateError } = await adminClient
+      .from('company_seat_requests')
+      .update({ status: 'invoiced' })
+      .eq('id', requestId)
+
+    if (requestUpdateError) {
+      console.error('Failed to mark seat request as invoiced:', requestUpdateError)
+    }
   }
 
   redirect('/admin/billing?sent=1')

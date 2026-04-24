@@ -4,7 +4,19 @@ import { CreditCard, LogOut } from 'lucide-react'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getGenimAdmin } from '@/lib/genim-admin'
 
-export default async function AdminBillingPage() {
+type AdminBillingPageProps = {
+  searchParams: Promise<{
+    companyId?: string
+    seatLimit?: string
+    requestId?: string
+    sent?: string
+  }>
+}
+
+export default async function AdminBillingPage({
+  searchParams,
+}: AdminBillingPageProps) {
+  const params = await searchParams
   const { user, admin } = await getGenimAdmin()
 
   if (!user) {
@@ -63,11 +75,20 @@ export default async function AdminBillingPage() {
             email. Once paid, Stripe will activate the company subscription.
           </p>
 
+          {params.sent === '1' ? (
+            <div className="mt-6 rounded-2xl border border-green-300 bg-green-50 px-4 py-3 text-sm text-green-700">
+              Invoice created and sent. The company subscription will activate
+              once payment is completed.
+            </div>
+          ) : null}
+
           <form
             action="/api/admin/billing/create-invoice"
             method="post"
             className="mt-8 grid gap-5"
           >
+            <input type="hidden" name="requestId" value={params.requestId || ''} />
+
             <div>
               <label className="mb-2 block text-sm font-medium">
                 Company
@@ -75,6 +96,7 @@ export default async function AdminBillingPage() {
               <select
                 name="companyId"
                 required
+                defaultValue={params.companyId || ''}
                 className="w-full rounded-2xl border border-[#ddd4ca] bg-[#fcfaf8] px-4 py-4 text-sm outline-none"
               >
                 <option value="">Select company</option>
@@ -109,6 +131,7 @@ export default async function AdminBillingPage() {
                   name="seatLimit"
                   min="1"
                   required
+                  defaultValue={params.seatLimit || ''}
                   placeholder="10"
                   className="w-full rounded-2xl border border-[#ddd4ca] bg-[#fcfaf8] px-4 py-4 text-sm outline-none"
                 />
