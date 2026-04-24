@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useMemo, useState } from 'react'
 import AssignedRoleplays from './assigned-roleplays'
 import DashboardLink from './dashboard-link'
+import CurrentPlanCard from './current-plan-card'
 import {
   AlertTriangle,
   ArrowRight,
@@ -761,22 +762,22 @@ export default function ScenariosPage() {
           </div>
 
           <div className="flex items-center gap-3">
-  <div className="hidden rounded-full border border-[#ddd4ca] bg-white px-4 py-2 text-sm text-[#555854] md:block">
-    Session builder
-  </div>
+            <div className="hidden rounded-full border border-[#ddd4ca] bg-white px-4 py-2 text-sm text-[#555854] md:block">
+              Session builder
+            </div>
 
-  <DashboardLink />
+            <DashboardLink />
 
-  <form action="/auth/signout" method="post">
-    <button
-      type="submit"
-      className="inline-flex items-center gap-2 rounded-full border border-[#d8d1c8] px-5 py-3 text-sm font-medium text-[#2b2c2a] transition hover:bg-white"
-    >
-      <LogOut className="h-4 w-4" />
-      Sign out
-    </button>
-  </form>
-</div>
+            <form action="/auth/signout" method="post">
+              <button
+                type="submit"
+                className="inline-flex items-center gap-2 rounded-full border border-[#d8d1c8] px-5 py-3 text-sm font-medium text-[#2b2c2a] transition hover:bg-white"
+              >
+                <LogOut className="h-4 w-4" />
+                Sign out
+              </button>
+            </form>
+          </div>
         </div>
       </header>
 
@@ -803,15 +804,7 @@ export default function ScenariosPage() {
               </p>
             </div>
 
-            <div className="rounded-[22px] border border-[#e2d8cd] bg-white px-5 py-4 shadow-[0_8px_24px_rgba(25,25,20,0.04)]">
-              <div className="flex items-center gap-2 text-lg font-semibold text-[#171714]">
-                <Headphones className="h-5 w-5 text-[#1f4d38]" />
-                Voice-first simulation
-              </div>
-              <div className="mt-1 text-sm text-[#666864]">
-                Fast setup, realistic roleplay
-              </div>
-            </div>
+            <CurrentPlanCard />
           </div>
         </div>
       </section>
