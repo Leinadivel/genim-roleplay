@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { getGenimAdmin } from '@/lib/genim-admin'
 
 type ActiveMembership = {
   id: string
@@ -56,6 +57,12 @@ export default async function PostLoginPage({
 
   if (!user) {
     redirect('/login')
+  }
+
+  const { admin } = await getGenimAdmin()
+
+  if (admin) {
+    redirect('/admin')
   }
 
   const {

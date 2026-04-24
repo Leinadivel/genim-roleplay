@@ -6,6 +6,17 @@ import { PRICE_TO_PLAN } from '@/lib/stripe/plan-map'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 
+function getInvoiceCompanyMetadata(invoice: Stripe.Invoice) {
+  const metadata = invoice.metadata ?? {}
+
+  return {
+    companyId: metadata.company_id || null,
+    seatLimit: metadata.seat_limit ? Number(metadata.seat_limit) : null,
+    amount: metadata.amount ? Number(metadata.amount) : null,
+    currentPeriodEnd: metadata.current_period_end || null,
+  }
+}
+
 function getCurrentPeriodEnd(subscription: Stripe.Subscription): string | null {
   const periodEndUnix = subscription.items.data[0]?.current_period_end ?? null
 
@@ -167,6 +178,39 @@ export async function POST(req: Request) {
           throw new Error(renewalUpdateError.message)
         }
       }
+
+      const companyInvoice = event.data.object as Stripe.Invoice
+      const companyMeta = getInvoiceCompanyMetadata(companyInvoice)
+
+      if (companyMeta.companyId) {
+        const { error: companySubError } = await supabase
+          .from('company_subscriptions')
+          .upsert(
+            {
+              company_id: companyMeta.companyId,
+              stripe_customer_id:
+                typeof companyInvoice.customer === 'string'
+                  ? companyInvoice.customer
+                  : null,
+              stripe_invoice_id: companyInvoice.id,
+              plan_name: 'team_custom',
+              status: 'active',
+              seat_limit: companyMeta.seatLimit ?? 1,
+              amount_due: companyMeta.amount ?? null,
+              currency: companyInvoice.currency || 'usd',
+              current_period_start: new Date().toISOString(),
+              current_period_end: companyMeta.currentPeriodEnd,
+            },
+            {
+              onConflict: 'company_id',
+            }
+          )
+
+        if (companySubError) {
+          console.error('Failed to activate company subscription:', companySubError)
+          throw new Error(companySubError.message)
+        }
+      }
     }
 
     if (event.type === 'invoice.payment_failed') {
@@ -187,6 +231,24 @@ export async function POST(req: Request) {
             failedPaymentUpdateError
           )
           throw new Error(failedPaymentUpdateError.message)
+        }
+      }
+
+      const companyInvoice = event.data.object as Stripe.Invoice
+      const companyMeta = getInvoiceCompanyMetadata(companyInvoice)
+
+      if (companyMeta.companyId) {
+        const { error: companyPastDueError } = await supabase
+          .from('company_subscriptions')
+          .update({
+            status: 'past_due',
+            stripe_invoice_id: companyInvoice.id,
+          })
+          .eq('company_id', companyMeta.companyId)
+
+        if (companyPastDueError) {
+          console.error('Failed to mark company subscription past due:', companyPastDueError)
+          throw new Error(companyPastDueError.message)
         }
       }
     }
