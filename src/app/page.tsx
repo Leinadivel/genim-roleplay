@@ -406,7 +406,7 @@ export default function HomePage() {
           <nav className="hidden items-center gap-10 md:flex">
             <NavLink href="#how-it-works">How it works</NavLink>
             <NavLink href="#features">Features</NavLink>
-            <NavLink href="#pricing">Pricing</NavLink>
+            <NavLink href="/pricing">Pricing</NavLink>
             <NavLink href="#teams">For teams</NavLink>
           </nav>
 

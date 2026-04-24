@@ -1,21 +1,24 @@
 import { headers } from 'next/headers'
 import { NextResponse } from 'next/server'
 import Stripe from 'stripe'
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { PRICE_TO_PLAN } from '@/lib/stripe/plan-map'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 
 function getCurrentPeriodEnd(subscription: Stripe.Subscription): string | null {
-  const periodEndUnix =
-    subscription.items.data[0]?.current_period_end ??
-    null
+  const periodEndUnix = subscription.items.data[0]?.current_period_end ?? null
 
   if (!periodEndUnix) {
     return null
   }
 
   return new Date(periodEndUnix * 1000).toISOString()
+}
+
+function getPlanKey(priceId: string | null): string {
+  if (!priceId) return 'starter'
+  return PRICE_TO_PLAN[priceId] ?? 'starter'
 }
 
 export async function POST(req: Request) {
@@ -39,7 +42,7 @@ export async function POST(req: Request) {
     return new NextResponse('Webhook Error', { status: 400 })
   }
 
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   try {
     if (event.type === 'checkout.session.completed') {
@@ -52,15 +55,20 @@ export async function POST(req: Request) {
         typeof session.subscription === 'string' ? session.subscription : null
 
       if (!userId || !subscriptionId) {
+        console.warn('Missing userId or subscriptionId in checkout session', {
+          sessionId: session.id,
+          userId,
+          subscriptionId,
+        })
+
         return NextResponse.json({ received: true })
       }
 
       const subscription = await stripe.subscriptions.retrieve(subscriptionId)
-
       const priceId = subscription.items.data[0]?.price?.id ?? null
-      const planKey = priceId ? PRICE_TO_PLAN[priceId] ?? 'starter' : 'starter'
+      const planKey = getPlanKey(priceId)
 
-      await supabase.from('subscriptions').upsert(
+      const { error: upsertError } = await supabase.from('subscriptions').upsert(
         {
           user_id: userId,
           stripe_customer_id: customerId,
@@ -74,15 +82,20 @@ export async function POST(req: Request) {
           onConflict: 'user_id',
         }
       )
+
+      if (upsertError) {
+        console.error('Failed to upsert subscription:', upsertError)
+        throw new Error(upsertError.message)
+      }
     }
 
     if (event.type === 'customer.subscription.updated') {
       const subscription = event.data.object as Stripe.Subscription
 
       const priceId = subscription.items.data[0]?.price?.id ?? null
-      const planKey = priceId ? PRICE_TO_PLAN[priceId] ?? 'starter' : 'starter'
+      const planKey = getPlanKey(priceId)
 
-      await supabase
+      const { error: updateError } = await supabase
         .from('subscriptions')
         .update({
           stripe_price_id: priceId,
@@ -91,18 +104,28 @@ export async function POST(req: Request) {
           current_period_end: getCurrentPeriodEnd(subscription),
         })
         .eq('stripe_subscription_id', subscription.id)
+
+      if (updateError) {
+        console.error('Failed to update subscription:', updateError)
+        throw new Error(updateError.message)
+      }
     }
 
     if (event.type === 'customer.subscription.deleted') {
       const subscription = event.data.object as Stripe.Subscription
 
-      await supabase
+      const { error: deleteUpdateError } = await supabase
         .from('subscriptions')
         .update({
           status: subscription.status,
           current_period_end: getCurrentPeriodEnd(subscription),
         })
         .eq('stripe_subscription_id', subscription.id)
+
+      if (deleteUpdateError) {
+        console.error('Failed to mark subscription deleted:', deleteUpdateError)
+        throw new Error(deleteUpdateError.message)
+      }
     }
 
     return NextResponse.json({ received: true })
