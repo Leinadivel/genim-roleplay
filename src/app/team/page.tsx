@@ -750,14 +750,12 @@ export default async function TeamPage() {
                   <ArrowRight className="h-4 w-4" />
                 </Link>
 
-                {canManageWorkspace ? (
-                  <Link
-                    href="/team/analytics"
-                    className="inline-flex items-center gap-2 rounded-full border border-[#d8d1c8] bg-white px-5 py-3 text-sm font-medium text-[#2b2c2a]"
-                  >
-                    View Analytics
-                  </Link>
-                ) : null}
+                <Link
+                  href="/team/request-seats"
+                  className="inline-flex items-center gap-2 rounded-full border border-[#d8d1c8] bg-white px-5 py-3 text-sm font-medium text-[#2b2c2a]"
+                >
+                  Request more seats
+                </Link>
               </div>
             </div>
           </div>
