@@ -21,6 +21,18 @@ function getPlanKey(priceId: string | null): string {
   return PRICE_TO_PLAN[priceId] ?? 'starter'
 }
 
+function getInvoiceSubscriptionId(invoice: Stripe.Invoice): string | null {
+  const invoiceWithSubscription = invoice as Stripe.Invoice & {
+    subscription?: string | Stripe.Subscription | null
+  }
+
+  const subscription = invoiceWithSubscription.subscription
+
+  if (!subscription) return null
+
+  return typeof subscription === 'string' ? subscription : subscription.id
+}
+
 export async function POST(req: Request) {
   const body = await req.text()
   const sig = (await headers()).get('stripe-signature')
@@ -125,6 +137,57 @@ export async function POST(req: Request) {
       if (deleteUpdateError) {
         console.error('Failed to mark subscription deleted:', deleteUpdateError)
         throw new Error(deleteUpdateError.message)
+      }
+    }
+
+    if (event.type === 'invoice.payment_succeeded') {
+      const invoice = event.data.object as Stripe.Invoice
+      const subscriptionId = getInvoiceSubscriptionId(invoice)
+
+      if (subscriptionId) {
+        const subscription = await stripe.subscriptions.retrieve(subscriptionId)
+        const priceId = subscription.items.data[0]?.price?.id ?? null
+        const planKey = getPlanKey(priceId)
+
+        const { error: renewalUpdateError } = await supabase
+          .from('subscriptions')
+          .update({
+            stripe_price_id: priceId,
+            plan_key: planKey,
+            status: subscription.status,
+            current_period_end: getCurrentPeriodEnd(subscription),
+          })
+          .eq('stripe_subscription_id', subscriptionId)
+
+        if (renewalUpdateError) {
+          console.error(
+            'Failed to update subscription after successful invoice:',
+            renewalUpdateError
+          )
+          throw new Error(renewalUpdateError.message)
+        }
+      }
+    }
+
+    if (event.type === 'invoice.payment_failed') {
+      const invoice = event.data.object as Stripe.Invoice
+      const subscriptionId = getInvoiceSubscriptionId(invoice)
+
+      if (subscriptionId) {
+        const { error: failedPaymentUpdateError } = await supabase
+          .from('subscriptions')
+          .update({
+            status: 'past_due',
+          })
+          .eq('stripe_subscription_id', subscriptionId)
+
+        if (failedPaymentUpdateError) {
+          console.error(
+            'Failed to mark subscription as past_due:',
+            failedPaymentUpdateError
+          )
+          throw new Error(failedPaymentUpdateError.message)
+        }
       }
     }
 

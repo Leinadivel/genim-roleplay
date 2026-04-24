@@ -48,21 +48,43 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const { data: existingSub, error: existingSubError } = await supabase
+      .from('subscriptions')
+      .select('stripe_subscription_id, status')
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    if (existingSubError) {
+      return NextResponse.json(
+        { error: existingSubError.message },
+        { status: 500 }
+      )
+    }
+
+    if (
+      existingSub?.stripe_subscription_id &&
+      existingSub.status === 'active'
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            'You already have an active subscription. Please use the switch or manage plan option when it is available.',
+        },
+        { status: 400 }
+      )
+    }
+
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
-
       line_items: [
         {
-          price: priceId!,
+          price: priceId,
           quantity: 1,
         },
       ],
-
       customer_email: user.email ?? undefined,
-
       success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/pricing?canceled=1`,
-
       metadata: {
         user_id: user.id,
         plan,
@@ -73,10 +95,7 @@ export async function POST(request: Request) {
   } catch (error) {
     return NextResponse.json(
       {
-        error:
-          error instanceof Error
-            ? error.message
-            : 'Checkout failed',
+        error: error instanceof Error ? error.message : 'Checkout failed',
       },
       { status: 500 }
     )
