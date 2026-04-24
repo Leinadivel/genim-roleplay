@@ -491,6 +491,23 @@ export default async function TeamPage() {
 
       <section className="px-6 py-8">
         <div className="mx-auto max-w-[1240px]">
+              {!hasActiveTeamSubscription ? (
+          <div className="mb-6 rounded-[28px] border border-[#f0d7c8] bg-[#fff4ed] p-6 shadow-[0_14px_40px_rgba(25,25,20,0.04)]">
+            <div className="text-sm font-semibold uppercase tracking-[0.12em] text-[#a2542f]">
+              Billing required
+            </div>
+
+            <h2 className="mt-3 text-2xl font-semibold text-[#1a1a17]">
+              Activate your team subscription
+            </h2>
+
+            <p className="mt-3 max-w-[820px] text-sm leading-8 text-[#6b4a38]">
+              Team invites, assignments, hiring assessments, and team roleplay access are
+              limited until the Genim invoice is paid. Please contact Genim support or your Genim account manager to receive and
+              complete your company invoice.
+            </p>
+          </div>
+        ) : null}
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
             <div className="rounded-[28px] border border-[#e8ded3] bg-white p-6 shadow-[0_14px_40px_rgba(25,25,20,0.05)]">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#f5ede6] text-[#d6612d]">
