@@ -228,7 +228,7 @@ export default async function DashboardPage() {
             <SessionsList sessions={recentSessions} />
           </div>
 
-          <div className="flex justify-center">
+          {/* <div className="flex justify-center">
             <Link
               href="/scenarios"
               className="inline-flex items-center gap-2 rounded-full bg-[#1f4d38] px-6 py-4 text-sm font-semibold text-white"
@@ -236,7 +236,7 @@ export default async function DashboardPage() {
               Start another roleplay
               <CalendarClock className="h-4 w-4" />
             </Link>
-          </div>
+          </div> */}
         </div>
       </section>
     </main>

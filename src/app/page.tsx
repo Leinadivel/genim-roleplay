@@ -437,7 +437,7 @@ export default function HomePage() {
               AI-powered sales training
             </div>
 
-            <h1 className="mt-8 text-[60px] font-semibold leading-[0.94] tracking-[-0.05em] text-[#121210] md:text-[88px] lg:text-[100px]">
+            <h1 className="mt-8 text-[60px] leading-[0.94] tracking-[-0.05em] text-[#121210] md:text-[88px] lg:text-[90px]">
               <span className="block">Practice selling.</span>
               <span className="block italic text-[#d6612d]">Close more</span>
               <span className="block text-[#1f4d38]">in real life.</span>

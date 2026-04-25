@@ -8,9 +8,13 @@ function canViewTeamDashboard(role: string | null) {
   return role === 'owner' || role === 'admin' || role === 'manager'
 }
 
+type DashboardState = {
+  isTeamMember: boolean
+  canViewTeam: boolean
+}
+
 export default function DashboardLink() {
-  const [href, setHref] = useState<string | null>(null)
-  const [label, setLabel] = useState('Dashboard')
+  const [state, setState] = useState<DashboardState | null>(null)
 
   useEffect(() => {
     let isMounted = true
@@ -24,7 +28,7 @@ export default function DashboardLink() {
         } = await supabase.auth.getUser()
 
         if (!user) {
-          if (isMounted) setHref(null)
+          if (isMounted) setState(null)
           return
         }
 
@@ -38,18 +42,17 @@ export default function DashboardLink() {
           .maybeSingle()
 
         if (isMounted) {
-          if (canViewTeamDashboard(membership?.role ?? null)) {
-            setHref('/team')
-            setLabel('Team dashboard')
-          } else {
-            setHref('/dashboard')
-            setLabel('My dashboard')
-          }
+          setState({
+            isTeamMember: Boolean(membership),
+            canViewTeam: canViewTeamDashboard(membership?.role ?? null),
+          })
         }
       } catch {
         if (isMounted) {
-          setHref('/dashboard')
-          setLabel('My dashboard')
+          setState({
+            isTeamMember: false,
+            canViewTeam: false,
+          })
         }
       }
     }
@@ -61,14 +64,25 @@ export default function DashboardLink() {
     }
   }, [])
 
-  if (!href) return null
+  if (!state) return null
 
   return (
-    <Link
-      href={href}
-      className="inline-flex items-center gap-2 rounded-full border border-[#d8d1c8] bg-white px-5 py-3 text-sm font-medium text-[#2b2c2a] transition hover:bg-[#faf7f3]"
-    >
-      {label}
-    </Link>
+    <>
+      {state.canViewTeam ? (
+        <Link
+          href="/team"
+          className="inline-flex items-center gap-2 rounded-full border border-[#d8d1c8] bg-white px-5 py-3 text-sm font-medium text-[#2b2c2a] transition hover:bg-[#faf7f3]"
+        >
+          Team dashboard
+        </Link>
+      ) : null}
+
+      <Link
+        href="/dashboard"
+        className="inline-flex items-center gap-2 rounded-full border border-[#d8d1c8] bg-white px-5 py-3 text-sm font-medium text-[#2b2c2a] transition hover:bg-[#faf7f3]"
+      >
+        My dashboard
+      </Link>
+    </>
   )
 }
