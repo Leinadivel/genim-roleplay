@@ -9,12 +9,13 @@ function canViewTeamDashboard(role: string | null) {
 }
 
 export default function DashboardLink() {
-  const [showLink, setShowLink] = useState(false)
+  const [href, setHref] = useState<string | null>(null)
+  const [label, setLabel] = useState('Dashboard')
 
   useEffect(() => {
     let isMounted = true
 
-    async function loadMembership() {
+    async function loadDashboardTarget() {
       try {
         const supabase = createClient()
 
@@ -23,11 +24,11 @@ export default function DashboardLink() {
         } = await supabase.auth.getUser()
 
         if (!user) {
-          if (isMounted) setShowLink(false)
+          if (isMounted) setHref(null)
           return
         }
 
-        const { data: membership, error } = await supabase
+        const { data: membership } = await supabase
           .from('company_members')
           .select('role, status')
           .eq('user_id', user.id)
@@ -36,34 +37,38 @@ export default function DashboardLink() {
           .limit(1)
           .maybeSingle()
 
-        if (error) {
-          if (isMounted) setShowLink(false)
-          return
-        }
-
         if (isMounted) {
-          setShowLink(canViewTeamDashboard(membership?.role ?? null))
+          if (canViewTeamDashboard(membership?.role ?? null)) {
+            setHref('/team')
+            setLabel('Team dashboard')
+          } else {
+            setHref('/dashboard')
+            setLabel('My dashboard')
+          }
         }
       } catch {
-        if (isMounted) setShowLink(false)
+        if (isMounted) {
+          setHref('/dashboard')
+          setLabel('My dashboard')
+        }
       }
     }
 
-    void loadMembership()
+    void loadDashboardTarget()
 
     return () => {
       isMounted = false
     }
   }, [])
 
-  if (!showLink) return null
+  if (!href) return null
 
   return (
     <Link
-      href="/team"
+      href={href}
       className="inline-flex items-center gap-2 rounded-full border border-[#d8d1c8] bg-white px-5 py-3 text-sm font-medium text-[#2b2c2a] transition hover:bg-[#faf7f3]"
     >
-      Back to dashboard
+      {label}
     </Link>
   )
 }
