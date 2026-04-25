@@ -32,6 +32,7 @@ export default function RegisterPage() {
   const [teamSize, setTeamSize] = useState('')
   const [jobTitle, setJobTitle] = useState('')
   const [password, setPassword] = useState('')
+  const [consentAccepted, setConsentAccepted] = useState(false)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -41,6 +42,12 @@ export default function RegisterPage() {
     setLoading(true)
     setError(null)
     setMessage(null)
+
+    if (!consentAccepted) {
+      setError('You must accept the consent terms before creating an account.')
+      setLoading(false)
+      return
+    }
 
     try {
       const supabase = createClient()
@@ -67,6 +74,8 @@ export default function RegisterPage() {
             account_type: accountType,
             company_name: accountType === 'team' ? companyName : null,
             team_size: accountType === 'team' ? teamSize : null,
+            consent_accepted: true,
+            consent_accepted_at: new Date().toISOString(),
           },
         },
       })
@@ -362,6 +371,30 @@ export default function RegisterPage() {
                     />
                   </div>
                 </div>
+
+                <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-[#e8ded3] bg-[#faf8f5] px-4 py-4">
+                  <input
+                    type="checkbox"
+                    checked={consentAccepted}
+                    onChange={(e) => setConsentAccepted(e.target.checked)}
+                    required
+                    className="mt-1 h-4 w-4 rounded border-[#cfc6bb] accent-[#d6612d]"
+                  />
+
+                  <span className="text-sm leading-7 text-[#5f625d]">
+                    I agree to Genim&apos;s{' '}
+                    <Link href="/terms" className="font-semibold text-[#d6612d] hover:underline">
+                      Terms of Service
+                    </Link>{' '}
+                    and{' '}
+                    <Link href="/privacy" className="font-semibold text-[#d6612d] hover:underline">
+                      Privacy Policy
+                    </Link>
+                    , and I consent to account creation, AI-powered analysis of my roleplay
+                    sessions, recording and transcription for feedback, and use of my data to
+                    improve my learning experience and platform quality.
+                  </span>
+                </label>
 
                 {error ? (
                   <div className="rounded-2xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">
