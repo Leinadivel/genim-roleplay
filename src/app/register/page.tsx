@@ -372,7 +372,7 @@ export default function RegisterPage() {
                   </div>
                 </div>
 
-                <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-[#e8ded3] bg-[#faf8f5] px-4 py-4">
+                <label className="flex cursor-pointer items-start gap-3 px-4 py-4">
                   <input
                     type="checkbox"
                     checked={consentAccepted}
