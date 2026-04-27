@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import TeamInvitePanel from './team-invite-panel'
+import CurrentPlanCard from '../scenarios/current-plan-card'
 
 type MemberRow = {
   id: string
@@ -464,27 +465,12 @@ export default async function TeamPage() {
 
               <p className="mt-4 max-w-[760px] text-base leading-8 text-[#5b5d59] md:text-lg">
                 Welcome back
-                {profile.full_name ? `, ${profile.full_name}` : ''}. You are in
-                the company workspace as a {memberRoleLabel.toLowerCase()}.
+                {profile.full_name ? `, ${profile.full_name}` : ''}. Manage your team invites, assessmnets <br />
+                and hiring all in one place.
               </p>
             </div>
-
-            <div className="rounded-[22px] border border-[#e2d8cd] bg-white px-5 py-4 shadow-[0_8px_24px_rgba(25,25,20,0.04)]">
-              <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
-                Access level
-              </div>
-              <div className="mt-2 flex items-center gap-2 text-lg font-semibold text-[#171714]">
-                <Shield className="h-5 w-5 text-[#1f4d38]" />
-                {memberRoleLabel}
-              </div>
-              <div className="mt-1 text-sm text-[#666864]">
-                {canManageWorkspace
-                  ? 'Can invite and manage workspace members.'
-                  : canViewTeamManagement
-                  ? 'Can view team structure and training workspace.'
-                  : 'Can access roleplays and training activity only.'}
-              </div>
-            </div>
+            
+            <CurrentPlanCard />
           </div>
         </div>
       </section>
@@ -580,17 +566,15 @@ export default async function TeamPage() {
                   <h2 className="mt-3 text-2xl font-semibold text-[#1a1a17]">
                     Team capacity
                   </h2>
-                  <p className="mt-3 text-sm leading-8 text-[#5f625d]">
-                    {canManageWorkspace
-                      ? 'This workspace is commercially ready once seats, member onboarding, and billing are connected.'
-                      : 'This workspace already tracks capacity, team makeup, and training access across the company.'}
-                  </p>
                 </div>
 
-                <div
-                  className={`rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] ${workspaceHealth.tone}`}
+                <div>
+                  <Link
+                  href="/team/request-seats"
+                  className="inline-flex items-center gap-2 rounded-full border border-[#d8d1c8] bg-[#1f4d38] px-5 py-3 text-sm font-semibold text-white hover:bg-[#eef5f0] hover:text-black"
                 >
-                  {workspaceHealth.label}
+                  Request more seats
+                </Link>
                 </div>
               </div>
 
@@ -684,12 +668,27 @@ export default async function TeamPage() {
             </div>
 
             <div className="rounded-[28px] border border-[#e8ded3] bg-white p-6 shadow-[0_14px_40px_rgba(25,25,20,0.05)]">
-              <div className="text-sm font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
-                Recent sessions across team
+              
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <div className="text-sm font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
+                    Recent sessions across team
+                  </div>
+                  <h2 className="mt-3 text-2xl font-semibold text-[#1a1a17]">
+                    Latest team activity
+                  </h2>
+                </div>
+
+                <div>
+                  <Link
+                  href="/scenarios"
+                  className="inline-flex items-center gap-2 rounded-full bg-[#d6612d] px-5 py-3 text-sm font-semibold text-white"
+                >
+                  Run roleplay
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+                </div>
               </div>
-              <h2 className="mt-3 text-2xl font-semibold text-[#1a1a17]">
-                Latest team activity
-              </h2>
 
               <div className="mt-5 space-y-3">
                 {recentSessions.length > 0 ? (
@@ -739,23 +738,6 @@ export default async function TeamPage() {
                     No team sessions yet.
                   </div>
                 )}
-              </div>
-
-              <div className="mt-6 flex flex-wrap gap-3">
-                <Link
-                  href="/scenarios"
-                  className="inline-flex items-center gap-2 rounded-full bg-[#d6612d] px-5 py-3 text-sm font-semibold text-white"
-                >
-                  Run roleplay
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-
-                <Link
-                  href="/team/request-seats"
-                  className="inline-flex items-center gap-2 rounded-full border border-[#d8d1c8] bg-white px-5 py-3 text-sm font-medium text-[#2b2c2a]"
-                >
-                  Request more seats
-                </Link>
               </div>
             </div>
           </div>

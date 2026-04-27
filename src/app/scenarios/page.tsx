@@ -804,7 +804,7 @@ export default function ScenariosPage() {
               </p>
             </div>
 
-            <CurrentPlanCard />
+            {/* <CurrentPlanCard /> */}
           </div>
         </div>
       </section>
