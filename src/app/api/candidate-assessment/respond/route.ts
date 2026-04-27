@@ -104,6 +104,8 @@ export async function POST(request: Request) {
           company_name,
           company_size,
           avatar_url,
+          gender,
+          voice_id,
           tone,
           background,
           hidden_pain_points,
@@ -123,6 +125,8 @@ export async function POST(request: Request) {
           company_name: personaRow.company_name,
           company_size: personaRow.company_size,
           avatar_url: personaRow.avatar_url,
+          gender: personaRow.gender,
+          voice_id: personaRow.voice_id,
           tone: personaRow.tone,
           background: personaRow.background,
           hidden_pain_points: Array.isArray(personaRow.hidden_pain_points)
