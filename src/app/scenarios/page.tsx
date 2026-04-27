@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useMemo, useState } from 'react'
 import AssignedRoleplays from './assigned-roleplays'
 import DashboardLink from './dashboard-link'
+import CurrentPlanCard from './current-plan-card'
 import {
   AlertTriangle,
   ArrowRight,
@@ -809,7 +810,7 @@ export default function ScenariosPage() {
               </p>
             </div>
 
-            {/* <CurrentPlanCard /> */}
+            <CurrentPlanCard />
           </div>
         </div>
       </section>

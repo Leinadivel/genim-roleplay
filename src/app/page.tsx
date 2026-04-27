@@ -153,7 +153,14 @@ export default function HomePage() {
             <NavLink href="#teams">For teams</NavLink>
           </nav>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 md:gap-3">
+            <Link
+              href="/login"
+              className="inline-flex rounded-full px-4 py-2 text-sm font-medium text-[#41433f] md:hidden"
+            >
+              Log in
+            </Link>
+
             <Link
               href="/login"
               className="hidden rounded-full px-5 py-3 text-sm font-medium text-[#41433f] transition hover:text-black md:inline-flex"
@@ -163,7 +170,7 @@ export default function HomePage() {
 
             <Link
               href="/register"
-              className="inline-flex rounded-full bg-[#d6612d] px-7 py-3 text-base font-semibold text-white shadow-sm transition hover:opacity-95"
+              className="inline-flex rounded-full bg-[#d6612d] px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-95 md:px-7 md:py-3 md:text-base"
             >
               Start free
             </Link>

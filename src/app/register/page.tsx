@@ -174,12 +174,14 @@ export default function RegisterPage() {
         <section className="flex items-center justify-center px-6 py-10 md:px-10">
           <div className="w-full max-w-[720px]">
             <div className="mb-8 lg:hidden">
-              <Link
-                href="/"
-                className="text-[28px] font-semibold tracking-[-0.04em]"
-              >
-                <span className="text-[#1b1b18]">Gen</span>
-                <span className="italic text-[#d6612d]">im</span>
+              <Link href="/" className="flex items-center pr-4 md:pr-6">
+                <div className="flex h-10 items-center overflow-hidden">
+                  <img
+                    src="/images/logo.png"
+                    alt="Genim Logo"
+                    className="h-[200px] w-auto max-w-none object-contain"
+                  />
+                </div>
               </Link>
             </div>
 

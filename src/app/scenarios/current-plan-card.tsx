@@ -107,43 +107,59 @@ export default function CurrentPlanCard() {
   }, [])
 
   if (team) {
-    const active = isActiveTeamSubscription(team)
+  const active = isActiveTeamSubscription(team)
+  const role = team.role?.toLowerCase()
 
-    return (
-      <div className="rounded-[24px] border border-[#e8ded3] bg-white p-5 shadow-[0_10px_30px_rgba(25,25,20,0.04)]">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <div className="text-sm font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
-              Team access
-            </div>
+  const isOwner = role === 'owner'
+  const isAdmin = role === 'admin'
+  const isRep = role === 'rep'
 
-            <div className="mt-2 flex items-center gap-2 text-2xl font-semibold text-[#181815]">
-              <Building2 className="h-5 w-5 text-[#1f4d38]" />
-              {team.companyName || 'Team workspace'}
-            </div>
+  return (
+    <div className="rounded-[24px] border border-[#e8ded3] bg-white p-5 shadow-[0_10px_30px_rgba(25,25,20,0.04)]">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <div className="text-sm font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
+            Team access
+          </div>
 
-            <p className="mt-2 flex items-center gap-2 text-sm text-[#666864]">
-              <UserRound className="h-4 w-4 text-[#d6612d]" />
-              {formatRole(team.role)} · {active ? 'Active team plan' : 'Billing required'}
-            </p>
+          <div className="mt-2 flex items-center gap-2 text-2xl font-semibold text-[#181815]">
+            <Building2 className="h-5 w-5 text-[#1f4d38]" />
+            {team.companyName || 'Team workspace'}
+          </div>
 
+          <p className="mt-2 flex items-center gap-2 text-sm text-[#666864]">
+            <UserRound className="h-4 w-4 text-[#d6612d]" />
+            {formatRole(team.role)} ·{' '}
+            {active ? 'Active team plan' : 'Billing required'}
+          </p>
+
+          {(isOwner || isAdmin) && (
             <p className="mt-2 text-sm text-[#666864]">
               Plan period:{' '}
               <span className="font-medium text-[#1f1f1c]">
                 {formatDate(team.currentPeriodEnd)}
               </span>
             </p>
-          </div>
+          )}
 
+          {isRep && (
+            <p className="mt-2 text-sm text-[#666864]">
+              You are part of this team workspace.
+            </p>
+          )}
+        </div>
+
+        {(isOwner || isAdmin) && (
           <button
             className="inline-flex shrink-0 rounded-full bg-[#1f4d38] px-5 py-3 text-sm font-semibold text-white"
           >
             Team dashboard
           </button>
-        </div>
+        )}
       </div>
-    )
-  }
+    </div>
+  )
+}
 
   return (
     <div className="rounded-[24px] border border-[#e8ded3] bg-white p-5 shadow-[0_10px_30px_rgba(25,25,20,0.04)]">
