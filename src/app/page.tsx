@@ -550,6 +550,8 @@ export default function HomePage() {
 
               <div className="mt-8 grid gap-4 md:grid-cols-2">
                 {[
+                  'Standardized candidate assessment',
+                  'Data-driving hiring decisions',
                   'Shared scenario library',
                   'Consistent rep coaching',
                   'Manager visibility into performance',
@@ -566,10 +568,10 @@ export default function HomePage() {
 
               <div className="mt-10 flex flex-wrap gap-4">
                 <Link
-                  href="/register"
+                  href="/book-demo"
                   className="inline-flex items-center gap-2 rounded-full bg-[#d6612d] px-7 py-4 text-sm font-semibold text-white"
                 >
-                  Start free
+                  Book demo
                   <ArrowRight className="h-4 w-4" />
                 </Link>
 
@@ -590,12 +592,16 @@ export default function HomePage() {
               <div className="mt-6 space-y-5">
                 {[
                   {
-                    title: 'Better readiness before live calls',
-                    body: 'Reps can rehearse difficult conversations before they happen with real prospects.',
+                    title: 'Stronger hiring decisions',
+                    body: 'Teams can assess candidates through real sales scenarios—not just interviews—so they hire reps who can actually sell, not just talk about it.',
                   },
                   {
-                    title: 'More consistent coaching',
-                    body: 'Feedback becomes structured instead of depending entirely on manager time and memory.',
+                    title: 'Reduced hiring risks',
+                    body: 'Identify top performers early and filter out weak candidates before they impact pipeline, time, and revenue.',
+                  },
+                  {
+                    title: 'Better readiness before live calls',
+                    body: 'Reps can rehearse difficult conversations before they happen with real prospects.',
                   },
                   {
                     title: 'Faster rep improvement',
