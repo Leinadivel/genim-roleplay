@@ -45,6 +45,8 @@ export async function GET(request: Request) {
               company_name: buyerPersona.company_name,
               company_size: buyerPersona.company_size,
               avatar_url: buyerPersona.avatar_url,
+              gender: buyerPersona.gender,
+              voice_id: buyerPersona.voice_id,
             }
           : null,
       },

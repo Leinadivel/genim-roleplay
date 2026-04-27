@@ -12,6 +12,9 @@ type SessionNewPageProps = {
     selectedRoleplayType?: string
     selectedBuyerMood?: BuyerMood
     selectedBuyerRole?: string
+    selectedBuyerName?: string
+    selectedBuyerCompany?: string
+    selectedBuyerAvatar?: string
     selectedDealSize?: string
     selectedPainLevel?: string
     selectedCompanyStage?: string
@@ -134,6 +137,9 @@ export default async function SessionNewPage({
   const selectedIndustry = params.selectedIndustry?.trim() || null
   const selectedRoleplayType = params.selectedRoleplayType?.trim() || null
   const selectedBuyerRole = params.selectedBuyerRole?.trim() || null
+  const selectedBuyerName = params.selectedBuyerName?.trim() || null
+  const selectedBuyerCompany = params.selectedBuyerCompany?.trim() || null
+  const selectedBuyerAvatar = params.selectedBuyerAvatar?.trim() || null
   const selectedDealSize = params.selectedDealSize?.trim() || null
   const selectedPainLevel = params.selectedPainLevel?.trim() || null
   const selectedCompanyStage = params.selectedCompanyStage?.trim() || null
@@ -196,6 +202,9 @@ export default async function SessionNewPage({
     selectedRoleplayType,
     selectedBuyerMood,
     selectedBuyerRole,
+    selectedBuyerName,
+    selectedBuyerCompany,
+    selectedBuyerAvatar,
     selectedDealSize,
     selectedPainLevel,
     selectedCompanyStage,

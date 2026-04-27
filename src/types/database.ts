@@ -282,6 +282,7 @@ export type Database = {
           company_size: string | null
           avatar_url: string | null
           gender: 'male' | 'female' | null
+          voice_id: string | null
           industry: string | null
           buyer_role: string | null
           buyer_mood: 'nice' | 'less_rude' | 'rude' | null
@@ -308,6 +309,7 @@ export type Database = {
           company_name?: string | null
           company_size?: string | null
           avatar_url?: string | null
+          voice_id?: string | null
           gender?: 'male' | 'female' | null
           industry?: string | null
           buyer_role?: string | null
@@ -335,6 +337,7 @@ export type Database = {
           company_name?: string | null
           company_size?: string | null
           avatar_url?: string | null
+          voice_id?: string | null
           gender?: 'male' | 'female' | null
           industry?: string | null
           buyer_role?: string | null

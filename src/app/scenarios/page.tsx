@@ -736,7 +736,13 @@ export default function ScenariosPage() {
         selectedPainLevel
       )}&selectedCompanyStage=${encodeURIComponent(
         selectedCompanyStage
-      )}&selectedTimePressure=${encodeURIComponent(selectedTimePressure)}`
+      )}&selectedTimePressure=${encodeURIComponent(
+        selectedTimePressure
+      )}&selectedBuyerName=${encodeURIComponent(
+        personaPreview.name
+      )}&selectedBuyerCompany=${encodeURIComponent(
+        personaPreview.company
+      )}&selectedBuyerAvatar=${encodeURIComponent(personaPreview.avatar)}`
 
       window.location.href = url
     } finally {

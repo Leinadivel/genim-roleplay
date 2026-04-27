@@ -60,6 +60,149 @@ function isUuid(value: string): boolean {
   )
 }
 
+async function getBuyerPersonaForSelectedRole(input: {
+  selectedBuyerRole: string | null
+  selectedBuyerName: string | null
+  selectedBuyerCompany: string | null
+  selectedBuyerAvatar: string | null
+  selectedIndustry: string | null
+  selectedBuyerMood: string | null
+}) {
+  if (!input.selectedBuyerRole) return null
+
+  const supabase = await createClient()
+
+  if (input.selectedBuyerName) {
+    const { data: exactPersona, error: exactPersonaError } = await supabase
+      .from('buyer_personas')
+      .select('id')
+      .eq('name', input.selectedBuyerName)
+      .eq('buyer_role', input.selectedBuyerRole)
+      .eq('is_active', true)
+      .maybeSingle()
+
+    if (exactPersonaError) {
+      throw new Error(
+        `Failed to load exact buyer persona: ${exactPersonaError.message}`
+      )
+    }
+
+    if (exactPersona?.id) {
+      return exactPersona.id
+    }
+  }
+
+  if (input.selectedBuyerRole) {
+    const { data: rolePersona, error: rolePersonaError } = await supabase
+      .from('buyer_personas')
+      .select('id')
+      .eq('buyer_role', input.selectedBuyerRole)
+      .eq('is_active', true)
+      .order('priority', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    if (rolePersonaError) {
+      throw new Error(
+        `Failed to load role-based buyer persona: ${rolePersonaError.message}`
+      )
+    }
+
+    if (rolePersona?.id) {
+      return rolePersona.id
+    }
+  }
+
+  const firstName = input.selectedBuyerName?.trim().split(/\s+/)[0]?.toLowerCase()
+  const gender =
+    input.selectedBuyerAvatar?.includes('/women/') ||
+    [
+      'maya',
+      'rachel',
+      'emily',
+      'sarah',
+      'lena',
+      'aisha',
+      'priya',
+      'sophia',
+      'tara',
+      'nina',
+      'helen',
+      'claire',
+      'mia',
+      'grace',
+      'naomi',
+      'bianca',
+      'elena',
+      'anita',
+      'sophie',
+      'victoria',
+      'monica',
+      'ivy',
+      'laura',
+      'nadia',
+      'carmen',
+      'olivia',
+      'leah',
+      'hannah',
+      'molly',
+      'jasmine',
+      'tina',
+      'amara',
+      'renee',
+      'celeste',
+      'paige',
+      'ariana',
+      'melissa',
+      'joanna',
+      'isabel',
+      'natalie',
+      'claire',
+      'julia',
+      'megan',
+    ].includes(firstName || '')
+      ? 'female'
+      : 'male'
+
+  const voiceId = gender === 'female' ? 'nova' : 'onyx'
+
+  const { data: createdPersona, error: createPersonaError } = await supabase
+    .from('buyer_personas')
+    .insert({
+      scenario_id: null,
+      name: input.selectedBuyerName || input.selectedBuyerRole,
+      title: input.selectedBuyerRole,
+      company_name: input.selectedBuyerCompany || 'Buyer company',
+      company_size: null,
+      avatar_url: input.selectedBuyerAvatar,
+      buyer_role: input.selectedBuyerRole,
+      industry: input.selectedIndustry,
+      buyer_mood: input.selectedBuyerMood,
+      gender,
+      voice_id: voiceId,
+      tone: input.selectedBuyerMood || 'professional',
+      background: `${input.selectedBuyerName || 'This buyer'} is a ${input.selectedBuyerRole} at ${
+        input.selectedBuyerCompany || 'their company'
+      }.`,
+      hidden_pain_points: [],
+      common_objections: [],
+      goals: [],
+      constraints: [],
+      is_active: true,
+      priority: 50,
+    })
+    .select('id')
+    .single()
+
+  if (createPersonaError) {
+    throw new Error(
+      `Failed to create buyer persona from selected role: ${createPersonaError.message}`
+    )
+  }
+
+  return createdPersona.id
+}
+
 export async function startSession(
   input: StartSessionInput
 ): Promise<StartSessionResult> {
@@ -161,21 +304,15 @@ export async function startSession(
     }
 
     buyerPersonaId = assignedPersonaCheck?.id ?? null
-  } else if (scenarioBundle.buyerPersona?.id) {
-    const { data: personaCheck, error: personaCheckError } = await supabase
-      .from('buyer_personas')
-      .select('id')
-      .eq('id', scenarioBundle.buyerPersona.id)
-      .eq('is_active', true)
-      .maybeSingle()
-
-    if (personaCheckError) {
-      throw new Error(
-        `Failed to validate buyer persona: ${personaCheckError.message}`
-      )
-    }
-
-    buyerPersonaId = personaCheck?.id ?? null
+  } else {
+    buyerPersonaId = await getBuyerPersonaForSelectedRole({
+      selectedBuyerRole: input.selectedBuyerRole ?? null,
+      selectedBuyerName: input.selectedBuyerName ?? null,
+      selectedBuyerCompany: input.selectedBuyerCompany ?? null,
+      selectedBuyerAvatar: input.selectedBuyerAvatar ?? null,
+      selectedIndustry: input.selectedIndustry ?? null,
+      selectedBuyerMood: input.selectedBuyerMood ?? null,
+    })
   }
 
   const { data: session, error: sessionError } = await supabase

@@ -323,12 +323,14 @@ export type ScenarioListItem = {
 
 export type BuyerPersona = {
   id: string
-  scenario_id: string
+  scenario_id: string | null
   name: string
   title: string | null
   company_name: string | null
   company_size: string | null
   avatar_url: string | null
+  gender: 'male' | 'female' | null
+  voice_id: string | null
   tone: string | null
   background: string | null
   hidden_pain_points: string[]
@@ -420,6 +422,9 @@ export type StartSessionInput = {
   selectedRoleplayType?: string | null
   selectedBuyerMood?: BuyerMood | null
   selectedBuyerRole?: string | null
+  selectedBuyerName?: string | null
+  selectedBuyerCompany?: string | null
+  selectedBuyerAvatar?: string | null
   selectedDealSize?: string | null
   selectedPainLevel?: string | null
   selectedCompanyStage?: string | null

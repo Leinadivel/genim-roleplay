@@ -50,6 +50,8 @@ function mapBuyerPersona(row: BuyerPersonaRow): BuyerPersona {
     company_name: row.company_name,
     company_size: row.company_size,
     avatar_url: row.avatar_url,
+    gender: row.gender,
+    voice_id: row.voice_id,
     tone: row.tone,
     background: row.background,
     hidden_pain_points: toStringArray(row.hidden_pain_points),

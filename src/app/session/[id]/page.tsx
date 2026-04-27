@@ -28,6 +28,8 @@ type BuyerPersonaMeta = {
   company_name: string | null
   company_size: string | null
   avatar_url: string | null
+  gender: string | null
+  voice_id: string | null
 }
 
 type SessionMeta = {
@@ -324,7 +326,12 @@ export default function SessionPage() {
       const response = await fetch('/api/voice/speak', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text }),
+        body: JSON.stringify({
+          text,
+          gender: sessionMeta?.buyer_persona?.gender ?? null,
+          voiceId: sessionMeta?.buyer_persona?.voice_id ?? null,
+          buyerName: sessionMeta?.buyer_persona?.name ?? null,
+        }),
       })
 
       if (!response.ok) {

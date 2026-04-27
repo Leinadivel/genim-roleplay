@@ -38,7 +38,7 @@ export async function POST(request: Request) {
 
     const scenarioBundle = {
       ...baseScenarioBundle,
-      buyerPersona: buyerPersona ?? baseScenarioBundle.buyerPersona,
+      buyerPersona,
     }
 
     const nextTurnIndex =
