@@ -4,7 +4,6 @@ import Link from 'next/link'
 import { useMemo, useState } from 'react'
 import AssignedRoleplays from './assigned-roleplays'
 import DashboardLink from './dashboard-link'
-import CurrentPlanCard from './current-plan-card'
 import {
   AlertTriangle,
   ArrowRight,
@@ -891,8 +890,6 @@ export default function ScenariosPage() {
                       <button
                         key={category.title}
                         type="button"
-                        onMouseEnter={() => setHoveredBuyerRoleCategory(category.title)}
-                        onFocus={() => setHoveredBuyerRoleCategory(category.title)}
                         onClick={() => setHoveredBuyerRoleCategory(category.title)}
                         className={`rounded-[16px] border px-4 py-4 text-left text-sm font-semibold transition ${
                           active

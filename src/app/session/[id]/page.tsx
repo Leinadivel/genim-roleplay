@@ -11,6 +11,7 @@ import {
   Send,
   Square,
   Volume2,
+  Waves,
   X,
 } from 'lucide-react'
 
@@ -102,10 +103,70 @@ function formatTimePressure(value: string | null) {
   }
 }
 
+function getTimeLimitSeconds(value: string | null) {
+  switch (value) {
+    case '5_min':
+      return 5 * 60
+    case '15_min':
+      return 15 * 60
+    case '30_min':
+      return 30 * 60
+    default:
+      return null
+  }
+}
+
+function formatTimer(seconds: number) {
+  const mins = Math.floor(seconds / 60)
+  const secs = seconds % 60
+
+  return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
+}
+
 function getInitials(name: string | null | undefined) {
   if (!name) return 'AI'
   const parts = name.trim().split(/\s+/).slice(0, 2)
   return parts.map((part) => part[0]?.toUpperCase() ?? '').join('') || 'AI'
+}
+
+function VoiceWave({
+  active,
+  label,
+  tone = 'green',
+}: {
+  active: boolean
+  label: string
+  tone?: 'green' | 'orange'
+}) {
+  const barColor = tone === 'green' ? 'bg-[#1f4d38]' : 'bg-[#d6612d]'
+
+  return (
+    <div className="rounded-[24px] border border-[#ece4da] bg-white p-5">
+      <div className="mb-4 flex items-center justify-between">
+        <div className="text-sm font-semibold text-[#1a1a17]">{label}</div>
+        <div className="text-xs font-medium text-[#7d7f7a]">
+          {active ? 'Active' : 'Idle'}
+        </div>
+      </div>
+
+      <div className="flex h-20 items-center justify-center gap-1.5">
+        {[24, 42, 64, 36, 58, 76, 44, 28, 52, 68, 38, 26].map(
+          (height, index) => (
+            <span
+              key={index}
+              className={`w-2 rounded-full ${barColor} ${
+                active ? 'animate-pulse opacity-100' : 'opacity-25'
+              }`}
+              style={{
+                height: active ? `${height}px` : `${Math.max(12, height / 3)}px`,
+                animationDelay: `${index * 80}ms`,
+              }}
+            />
+          )
+        )}
+      </div>
+    </div>
+  )
 }
 
 export default function SessionPage() {
@@ -127,6 +188,8 @@ export default function SessionPage() {
   const [isRinging, setIsRinging] = useState(false)
 
   const [isListening, setIsListening] = useState(false)
+  const [showTranscript, setShowTranscript] = useState(false)
+  const [elapsedSeconds, setElapsedSeconds] = useState(0)
   const [speechBaseText, setSpeechBaseText] = useState('')
   const [speechTranscript, setSpeechTranscript] = useState('')
 
@@ -143,6 +206,26 @@ export default function SessionPage() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, aiTyping, aiSpeaking])
+
+  const timeLimitSeconds = useMemo(
+    () => getTimeLimitSeconds(sessionMeta?.selected_time_pressure || null),
+    [sessionMeta?.selected_time_pressure]
+  )
+
+  const remainingSeconds =
+    timeLimitSeconds !== null
+      ? Math.max(timeLimitSeconds - elapsedSeconds, 0)
+      : null
+
+  useEffect(() => {
+    if (!callReady || isRinging || completing) return
+
+    const interval = window.setInterval(() => {
+      setElapsedSeconds((current) => current + 1)
+    }, 1000)
+
+    return () => window.clearInterval(interval)
+  }, [callReady, isRinging, completing])
 
   useEffect(() => {
     return () => {
@@ -747,17 +830,23 @@ export default function SessionPage() {
         </aside>
 
         <section className="rounded-[28px] border border-[#e8ded3] bg-white p-5 shadow-[0_14px_40px_rgba(25,25,20,0.05)]">
-          <div className="mb-4 flex items-center justify-between gap-4">
+          <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
               <h2 className="text-lg font-semibold text-[#181815]">
-                Conversation
+                Voice roleplay
               </h2>
               <p className="text-sm text-[#666864]">
-                The buyer responds based on your setup.
+                Speak naturally. Genim stores the transcript in the background.
               </p>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="rounded-full bg-[#f7f3ee] px-3 py-1 text-xs font-medium text-[#5f625d]">
+                {remainingSeconds !== null
+                  ? `Time left: ${formatTimer(remainingSeconds)}`
+                  : `Elapsed: ${formatTimer(elapsedSeconds)}`}
+              </div>
+
               {aiSpeaking ? (
                 <div className="inline-flex items-center gap-2 rounded-full bg-[#eef5f0] px-3 py-1 text-xs font-medium text-[#1f4d38]">
                   <Volume2 className="h-3.5 w-3.5" />
@@ -771,21 +860,17 @@ export default function SessionPage() {
                   Listening
                 </div>
               ) : null}
-
-              <div className="rounded-full bg-[#f7f3ee] px-3 py-1 text-xs font-medium text-[#5f625d]">
-                {messages.length} messages
-              </div>
             </div>
           </div>
 
-          <div className="min-h-[520px] max-h-[620px] overflow-y-auto rounded-[20px] border border-[#efe6dc] bg-[#fcfaf8] p-4">
+          <div className="rounded-[24px] border border-[#efe6dc] bg-[#fcfaf8] p-5">
             {loading ? (
-              <div className="flex items-center gap-2 text-sm text-[#666864]">
+              <div className="flex min-h-[420px] items-center justify-center gap-2 text-sm text-[#666864]">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Loading conversation...
+                Loading call...
               </div>
             ) : isRinging ? (
-              <div className="flex min-h-[440px] items-center justify-center">
+              <div className="flex min-h-[420px] items-center justify-center">
                 <div className="rounded-[22px] border border-[#eadfd4] bg-white px-8 py-8 text-center shadow-sm">
                   <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#fff3ed] text-[#d6612d]">
                     <PhoneCall className="h-6 w-6" />
@@ -798,91 +883,104 @@ export default function SessionPage() {
                   </div>
                 </div>
               </div>
-            ) : messages.length === 0 ? (
-              <div className="rounded-[16px] border border-dashed border-[#ddd4ca] bg-white px-4 py-4 text-sm text-[#666864]">
-                {callReady && sessionMeta?.buyer_persona?.name
-                  ? `Start the roleplay by greeting ${sessionMeta.buyer_persona.name} or sending your first message.`
-                  : 'Start the roleplay by sending your first message.'}
-              </div>
             ) : (
-              <div className="space-y-4">
-                {messages.map((message) => (
-                  <div
-                    key={message.id}
-                    className={`flex ${
-                      message.speaker === 'user'
-                        ? 'justify-end'
-                        : 'justify-start'
+              <div className="space-y-5">
+                <div className="grid gap-5 md:grid-cols-2">
+                  <VoiceWave
+                    active={isListening}
+                    label="You"
+                    tone="orange"
+                  />
+
+                  <VoiceWave
+                    active={aiTyping || aiSpeaking}
+                    label={sessionMeta?.buyer_persona?.name || 'AI buyer'}
+                    tone="green"
+                  />
+                </div>
+
+                <div className="rounded-[24px] border border-[#ece4da] bg-white p-6 text-center">
+                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#f7ede6] text-[#d6612d]">
+                    <Waves className="h-7 w-7" />
+                  </div>
+
+                  <h3 className="mt-4 text-2xl font-semibold text-[#181815]">
+                    {callReady ? 'Call is live' : 'Preparing call'}
+                  </h3>
+
+                  <p className="mx-auto mt-2 max-w-[520px] text-sm leading-7 text-[#666864]">
+                    Tap the microphone, speak your response, and Genim will send it to
+                    the AI buyer. The buyer replies with voice while your transcript is
+                    saved for the final report.
+                  </p>
+
+                  {input ? (
+                    <div className="mt-5 rounded-[18px] border border-[#ece4da] bg-[#faf8f5] px-4 py-3 text-left text-sm leading-7 text-[#4f514d]">
+                      {input}
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="flex flex-col gap-3 md:flex-row">
+                  <button
+                    type="button"
+                    onClick={handleMicClick}
+                    disabled={micDisabled && !isListening}
+                    className={`inline-flex flex-1 items-center justify-center gap-2 rounded-full px-6 py-4 text-sm font-semibold shadow-sm transition disabled:opacity-50 ${
+                      isListening
+                        ? 'bg-red-500 text-white'
+                        : 'bg-[#d6612d] text-white hover:opacity-95'
                     }`}
                   >
-                    <div
-                      className={`max-w-[80%] rounded-[18px] px-4 py-3 text-sm leading-7 shadow-sm ${
-                        message.speaker === 'user'
-                          ? 'bg-[#d6612d] text-white'
-                          : 'border border-[#ece4da] bg-white text-[#232320]'
-                      }`}
-                    >
-                      {message.message_text}
-                    </div>
-                  </div>
-                ))}
+                    <Mic className="h-4 w-4" />
+                    {isListening ? 'Stop listening' : 'Speak'}
+                  </button>
 
-                {aiTyping ? (
-                  <div className="flex justify-start">
-                    <div className="rounded-[18px] border border-[#ece4da] bg-white px-4 py-3 text-sm text-[#555854] shadow-sm">
-                      Buyer is typing...
-                    </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowTranscript((current) => !current)}
+                    className="inline-flex items-center justify-center rounded-full border border-[#d8d1c8] bg-white px-6 py-4 text-sm font-semibold text-[#2b2c2a]"
+                  >
+                    {showTranscript ? 'Hide transcript' : 'Show transcript'}
+                  </button>
+                </div>
+
+                {showTranscript ? (
+                  <div className="max-h-[320px] overflow-y-auto rounded-[20px] border border-[#efe6dc] bg-white p-4">
+                    {messages.length === 0 ? (
+                      <div className="text-sm text-[#666864]">
+                        No transcript yet.
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {messages.map((message) => (
+                          <div
+                            key={message.id}
+                            className={`flex ${
+                              message.speaker === 'user'
+                                ? 'justify-end'
+                                : 'justify-start'
+                            }`}
+                          >
+                            <div
+                              className={`max-w-[80%] rounded-[18px] px-4 py-3 text-sm leading-7 shadow-sm ${
+                                message.speaker === 'user'
+                                  ? 'bg-[#d6612d] text-white'
+                                  : 'border border-[#ece4da] bg-[#faf8f5] text-[#232320]'
+                              }`}
+                            >
+                              {message.message_text}
+                            </div>
+                          </div>
+                        ))}
+
+                        <div ref={bottomRef} />
+                      </div>
+                    )}
                   </div>
                 ) : null}
-
-                <div ref={bottomRef} />
               </div>
             )}
-          </div>
-
-          <div className="mt-5 flex items-center gap-3">
-            <input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={
-                callReady && sessionMeta?.buyer_persona?.name
-                  ? `Say something like "Hi ${sessionMeta.buyer_persona.name}..."`
-                  : 'Type or speak what the seller would say...'
-              }
-              disabled={sending || aiTyping || aiSpeaking || !callReady}
-              className="flex-1 rounded-full border border-[#d6cdc2] bg-white px-5 py-3 text-sm text-[#1f1f1c] shadow-sm placeholder:text-[#8d908a] focus:border-[#d6612d] focus:outline-none"
-            />
-
-            <button
-              type="button"
-              onClick={handleMicClick}
-              disabled={micDisabled && !isListening}
-              className={`inline-flex items-center justify-center rounded-full border px-4 py-3 shadow-sm transition disabled:opacity-50 ${
-                isListening
-                  ? 'border-red-500 bg-red-500 text-white'
-                  : 'border-[#d6cdc2] bg-white text-[#2b2c2a] hover:bg-[#faf7f3]'
-              }`}
-            >
-              {isListening ? (
-                <span className="text-xs font-semibold">Stop</span>
-              ) : (
-                <Mic className="h-4 w-4" />
-              )}
-            </button>
-
-            <button
-              type="button"
-              onClick={handleSend}
-              disabled={sendDisabled}
-              className="inline-flex items-center justify-center rounded-full bg-[#d6612d] px-4 py-3 text-white shadow-md hover:opacity-95 disabled:opacity-50"
-            >
-              {sending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Send className="h-4 w-4" />
-              )}
-            </button>
           </div>
         </section>
       </div>
