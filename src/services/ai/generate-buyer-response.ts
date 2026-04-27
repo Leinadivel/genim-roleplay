@@ -213,6 +213,42 @@ function getBuyerRoleInstruction(buyerRole: string | null): string {
   }
 }
 
+function getBuyerRoleSpeechStyle(buyerRole: string | null): string {
+  switch (buyerRole) {
+    case 'Chief Technology Officer':
+    case 'Head of Engineering':
+    case 'VP of Engineering':
+      return 'Use slightly technical language. Ask about integration, systems, and implementation. Be precise and direct.'
+
+    case 'Chief Finance Officer':
+    case 'VP of Finance':
+    case 'Finance Manager':
+    case 'Finance Lead':
+      return 'Speak in a financially cautious tone. Ask about ROI, cost, risk, and justification. Keep responses short and analytical.'
+
+    case 'Head of Sales':
+    case 'VP of Sales':
+    case 'Sales Manager':
+      return 'Be commercially sharp. Focus on pipeline, targets, team performance, and results. Challenge anything that sounds vague.'
+
+    case 'Head of Customer Success':
+    case 'VP of Customer Success':
+    case 'Customer Success Manager':
+      return 'Focus on retention, adoption, and customer outcomes. Ask how this impacts customer experience.'
+
+    case 'Chief Marketing Officer':
+    case 'Head of Marketing':
+      return 'Think in terms of growth, campaigns, and ROI. Be curious but challenge generic messaging.'
+
+    case 'Chief Operations Officer':
+    case 'Head of Operations':
+      return 'Be process-driven. Ask how this affects workflows, efficiency, and execution.'
+
+    default:
+      return 'Speak like a realistic business professional with clear priorities and limited patience.'
+  }
+}
+
 function getDealSizeInstruction(dealSize: string | null): string {
   switch (dealSize) {
     case '$3k':
@@ -382,6 +418,10 @@ ${getMoodInstruction(context.selectedBuyerMood)}
 
 === BUYER-ROLE BEHAVIOUR ===
 ${getBuyerRoleInstruction(context.selectedBuyerRole)}
+
+=== SPEECH STYLE ===
+${getBuyerRoleSpeechStyle(context.selectedBuyerRole)}
+Your tone, wording, and questioning style must reflect this.
 Your authority level, priorities, objections, and language should match this buyer role.
 Do not announce your buyer role unnaturally. Just behave like that person.
 
