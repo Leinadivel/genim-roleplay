@@ -124,23 +124,15 @@ export default function CurrentPlanCard() {
 
             <p className="mt-2 flex items-center gap-2 text-sm text-[#666864]">
               <UserRound className="h-4 w-4 text-[#d6612d]" />
-              {formatRole(team.role)} · {active ? 'Active team plan' : 'Billing required'}
-            </p>
-
-            <p className="mt-2 text-sm text-[#666864]">
-              Plan period:{' '}
-              <span className="font-medium text-[#1f1f1c]">
-                {formatDate(team.currentPeriodEnd)}
-              </span>
+              {formatRole(team.role)} · {active ? 'Active team' : 'Billing required'}
             </p>
           </div>
 
-          <Link
-            href="/team"
-            className="inline-flex shrink-0 rounded-full bg-[#1f4d38] px-5 py-3 text-sm font-semibold text-white transition hover:opacity-95"
+          <button
+            className="inline-flex shrink-0 rounded-full bg-[#1f4d38] px-5 py-3 text-sm font-semibold text-white transition"
           >
-            Team dashboard
-          </Link>
+            Team member
+          </button>
         </div>
       </div>
     )
