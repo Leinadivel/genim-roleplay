@@ -2,6 +2,8 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
+import FAQ from '@/components/faq'
+import { GENIM_FAQ } from '@/lib/faq'
 import {
   ArrowRight,
   BarChart3,
@@ -16,7 +18,6 @@ import {
   Users,
   AudioWaveform,
 } from 'lucide-react'
-import DemoModalButton from '@/components/demo-modal-button'
 
 function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
   return (
@@ -127,264 +128,6 @@ function StepCard({
       <h3 className="mt-5 text-xl font-semibold text-[#1c1c19]">{title}</h3>
       <p className="mt-3 text-[15px] leading-7 text-[#5f625d]">{description}</p>
     </div>
-  )
-}
-
-function PricingCard({
-  title,
-  price,
-  priceNote,
-  description,
-  features,
-  highlight = false,
-  ctaLabel,
-  ctaHref,
-  onCtaClick,
-}: {
-  title: string
-  price: string
-  priceNote?: string
-  description: string
-  features: string[]
-  highlight?: boolean
-  ctaLabel?: string
-  ctaHref?: string
-  onCtaClick?: () => void
-}) {
-  const buttonLabel = ctaLabel || 'Start free trial'
-  const buttonHref = ctaHref || '/register'
-  const isSalesCard = buttonLabel.toLowerCase().includes('demo')
-  const isActionButton = typeof onCtaClick === 'function'
-
-  return (
-    <div
-      className={`relative rounded-[30px] border p-7 ${
-        highlight
-          ? 'border-[#d6612d] bg-white shadow-[0_18px_50px_rgba(214,97,45,0.12)]'
-          : 'border-[#e8ded3] bg-white'
-      }`}
-    >
-      {isSalesCard ? (
-        <div className="absolute -top-3 left-6">
-          <span className="rounded-full bg-[#1f4d38] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-white shadow-sm">
-            Talk to sales
-          </span>
-        </div>
-      ) : null}
-
-      <div className="flex items-center justify-between gap-4">
-        <h3 className="text-2xl font-semibold text-[#181815]">{title}</h3>
-        {highlight ? (
-          <span className="rounded-full bg-[#f7ede6] px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-[#d6612d]">
-            Popular
-          </span>
-        ) : null}
-      </div>
-
-      <p className="mt-3 text-[15px] leading-7 text-[#63655f]">
-        {description}
-      </p>
-
-      <div className="mt-6 text-5xl font-semibold tracking-[-0.04em] text-[#181815]">
-        {price}
-      </div>
-
-      <div className="mt-1 min-h-[24px] text-sm text-[#666864]">
-        {priceNote || '\u00A0'}
-      </div>
-
-      <div className="mt-8 space-y-4">
-        {features.map((feature) => (
-          <div key={feature} className="flex items-start gap-3">
-            <CheckCircle2 className="mt-0.5 h-5 w-5 text-[#1f4d38]" />
-            <span className="text-[15px] leading-7 text-[#4f514d]">
-              {feature}
-            </span>
-          </div>
-        ))}
-      </div>
-
-      {isSalesCard ? (
-        <DemoModalButton
-          calendlyUrl={buttonHref}
-          label={buttonLabel}
-          className={`mt-8 inline-flex w-full items-center justify-center rounded-full px-5 py-4 text-sm font-semibold transition ${
-            highlight
-              ? 'bg-[#d6612d] text-white hover:opacity-95'
-              : 'border border-[#d8d1c8] text-[#1f1f1c] hover:bg-[#faf7f3]'
-          }`}
-          showIcon={false}
-        />
-      ) : isActionButton ? (
-        <button
-          type="button"
-          onClick={onCtaClick}
-          className={`mt-8 inline-flex w-full items-center justify-center rounded-full px-5 py-4 text-sm font-semibold transition ${
-            highlight
-              ? 'bg-[#d6612d] text-white hover:opacity-95'
-              : 'border border-[#d8d1c8] text-[#1f1f1c] hover:bg-[#faf7f3]'
-          }`}
-        >
-          {buttonLabel}
-        </button>
-      ) : (
-        <Link
-          href={buttonHref}
-          className={`mt-8 inline-flex w-full items-center justify-center rounded-full px-5 py-4 text-sm font-semibold transition ${
-            highlight
-              ? 'bg-[#d6612d] text-white hover:opacity-95'
-              : 'border border-[#d8d1c8] text-[#1f1f1c] hover:bg-[#faf7f3]'
-          }`}
-        >
-          {buttonLabel}
-        </Link>
-      )}
-    </div>
-  )
-}
-
-function PricingSection() {
-  const [billingCycle, setBillingCycle] = useState<'annual' | 'monthly'>('annual')
-
-  const isAnnual = billingCycle === 'annual'
-  async function handleCheckout(
-    plan: 'pro_monthly' | 'pro_yearly' | 'advanced_monthly' | 'advanced_yearly'
-  ) {
-    try {
-      const response = await fetch('/api/stripe/checkout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ plan }),
-      })
-
-      if (response.status === 401) {
-        window.location.href = `/register?plan=${plan}`
-        return
-      }
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to start checkout')
-      }
-
-      if (!data.url) {
-        throw new Error('No checkout URL returned')
-      }
-
-      window.location.href = data.url
-    } catch (error) {
-      console.error(error)
-      alert(error instanceof Error ? error.message : 'Something went wrong')
-    }
-  }
-
-  return (
-    <section id="pricing" className="px-6 py-20 md:px-10">
-      <div className="mx-auto max-w-[1400px]">
-        <SectionTitle
-          badge="Pricing"
-          title="Simple pricing for reps and teams"
-          description="Choose the plan that fits your training volume today, then upgrade as your roleplay needs grow. Annual billing is selected by default for the best value."
-        />
-
-        <div className="mt-10 flex justify-center">
-          <div className="inline-flex items-center rounded-full border border-[#e5dbcf] bg-white p-1 shadow-sm">
-            <button
-              type="button"
-              onClick={() => setBillingCycle('monthly')}
-              className={`rounded-full px-5 py-2.5 text-sm font-semibold transition ${
-                !isAnnual
-                  ? 'bg-[#1f4d38] text-white'
-                  : 'text-[#5f625d] hover:text-[#1f1f1c]'
-              }`}
-            >
-              Monthly
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setBillingCycle('annual')}
-              className={`rounded-full px-5 py-2.5 text-sm font-semibold transition ${
-                isAnnual
-                  ? 'bg-[#d6612d] text-white'
-                  : 'text-[#5f625d] hover:text-[#1f1f1c]'
-              }`}
-            >
-              Annual
-            </button>
-          </div>
-        </div>
-
-        <div className="mt-14 grid gap-6 lg:grid-cols-4">
-          <PricingCard
-            title="Starter"
-            price="$0"
-            priceNote="5 roleplays total"
-            description="For first-time users who want to experience the platform before committing to regular practice."
-            features={[
-              '5 roleplays total',
-              'Live AI roleplays',
-              'Basic AI coaching',
-            ]}
-            ctaLabel="Start free"
-            ctaHref="/register"
-          />
-
-          <PricingCard
-            title="Pro"
-            price={isAnnual ? '$10' : '$13'}
-            priceNote={
-              isAnnual ? 'per month, billed annually' : 'per month, billed monthly'
-            }
-            description="For reps who want consistent practice, stronger objection handling, and ongoing coaching."
-            features={[
-              '10 roleplays per week',
-              'Live AI roleplays',
-              'AI coaching',
-            ]}
-            ctaLabel={isAnnual ? 'Get Pro Annual' : 'Get Pro Monthly'}
-            onCtaClick={() => handleCheckout(isAnnual ? 'pro_yearly' : 'pro_monthly')}
-          />
-
-          <PricingCard
-            title="Advanced"
-            price={isAnnual ? '$20' : '$25'}
-            priceNote={
-              isAnnual ? 'per month, billed annually' : 'per month, billed monthly'
-            }
-            description="For serious reps who want unlimited practice and everything included in Pro and more."
-            features={[
-              'Everything in Pro',
-              'Unlimited roleplays',
-              'Unlimited scenarios',
-            ]}
-            highlight
-            ctaLabel={isAnnual ? 'Get Advanced Annual' : 'Get Advanced Monthly'}
-            onCtaClick={() =>
-              handleCheckout(isAnnual ? 'advanced_yearly' : 'advanced_monthly')
-            }
-          />
-
-          <PricingCard
-            title="Teams"
-            price="Custom"
-            priceNote="Custom pricing for team rollout"
-            description="For sales teams that want manager visibility, structured coaching, and scalable enablement."
-            features={[
-              'Multi-rep training workflows',
-              'Manager reporting direction',
-              'Team scenario rollout',
-              'Custom enablement setup',
-            ]}
-            ctaLabel="Book Demo"
-            ctaHref="/book-demo"
-          />
-        </div>
-      </div>
-    </section>
   )
 }
 
@@ -560,18 +303,6 @@ export default function HomePage() {
                       </div>
                     </div>
                   </div>
-
-                  {/* <div className="mt-6 rounded-[22px] border border-[#e7ddd3] bg-white p-5">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8a8d87]">
-                      How it feels
-                    </p>
-
-                    <p className="mt-3 text-[17px] leading-[1.7] text-[#2a2a27]">
-                      “Hi David Emmanuel — I know you probably get a lot of these calls,
-                      so I’ll be brief. We help sales leaders cut reporting delays and
-                      improve rep execution without changing their full workflow.”
-                    </p>
-                  </div> */}
 
                   <div className="mt-6 grid grid-cols-3 gap-3">
                     <div className="rounded-[18px] border border-[#eadfd4] bg-white px-4 py-3">
@@ -797,8 +528,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      <PricingSection />
-
       <section id="teams" className="px-6 py-20 md:px-10">
         <div className="mx-auto max-w-[1400px] rounded-[36px] border border-[#e4d9cf] bg-white p-8 shadow-[0_16px_50px_rgba(28,28,20,0.05)] md:p-12">
           <div className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
@@ -887,6 +616,29 @@ export default function HomePage() {
                 ))}
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="faq" className="px-6 py-20 md:px-10">
+        <div className="mx-auto max-w-[1100px]">
+          <div className="text-center">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#efc7b7] bg-[#f7ede6] px-4 py-2 text-sm font-medium text-[#d6612d]">
+              <span className="h-2.5 w-2.5 rounded-full bg-[#e1805c]" />
+              FAQ
+            </div>
+
+            <h2 className="mt-5 text-4xl font-semibold tracking-[-0.03em] text-[#171714] md:text-5xl">
+              Common questions
+            </h2>
+
+            <p className="mt-4 text-lg leading-8 text-[#5b5d59]">
+              Everything you need to know before getting started with Genim.
+            </p>
+          </div>
+
+          <div className="mt-10">
+            <FAQ items={GENIM_FAQ} />
           </div>
         </div>
       </section>

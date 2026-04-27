@@ -2,6 +2,8 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
+import FAQ from '@/components/faq'
+import { GENIM_FAQ } from '@/lib/faq'
 import {
   ArrowLeft,
   ArrowRight,
@@ -321,6 +323,29 @@ export default function PricingClient({
               and hiring assessment use cases.
             </p>
           </div>
+        </div>
+      </section>
+
+      <section id="faq" className="px-6 py-20 md:px-10">
+        <div className="mx-auto max-w-[1100px]">
+            <div className="text-center">
+              <div className="inline-flex items-center gap-2 rounded-full border border-[#efc7b7] bg-[#f7ede6] px-4 py-2 text-sm font-medium text-[#d6612d]">
+                <span className="h-2.5 w-2.5 rounded-full bg-[#e1805c]" />
+                  FAQ
+              </div>
+      
+              <h2 className="mt-5 text-4xl font-semibold tracking-[-0.03em] text-[#171714] md:text-5xl">
+                Common questions
+              </h2>
+      
+              <p className="mt-4 text-lg leading-8 text-[#5b5d59]">
+                Everything you need to know before getting started with Genim.
+              </p>
+            </div>
+      
+            <div className="mt-10">
+                  <FAQ items={GENIM_FAQ} />
+            </div>
         </div>
       </section>
     </main>
