@@ -309,20 +309,18 @@ export default function ReportPage() {
               Session report
             </div>
 
-            <h1 className="mt-5 text-4xl font-semibold tracking-[-0.04em] text-[#171714] md:text-6xl">
+            <h1 className="mt-5 text-4xl font-semibold tracking-[-0.04em] text-[#171714] md:text-4xl">
               Performance review
             </h1>
 
-            <p className="mt-4 max-w-[720px] text-base leading-8 text-[#5b5d59] md:text-lg">
+            <p className="mt-4 max-w-[720px] text-base leading-8 text-[#5b5d59] md:text-md">
               Review the session outcome, identify what worked, and see where
               the seller needs sharper execution.
             </p>
 
-            {/* 🔥 PERSONA BLOCK */}
             {state.evaluation?.buyerPersona && (
               <div className="mt-6 flex items-center gap-4 rounded-[20px] border border-[#e6ddd2] bg-white px-5 py-4 shadow-[0_10px_30px_rgba(0,0,0,0.04)]">
                 
-                {/* Avatar */}
                 <div className="relative h-14 w-14 shrink-0">
                   {state.evaluation.buyerPersona.avatar_url ? (
                     <img
@@ -340,11 +338,9 @@ export default function ReportPage() {
                     </div>
                   )}
 
-                  {/* live indicator */}
                   <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white bg-green-500" />
                 </div>
 
-                {/* Persona Info */}
                 <div>
                   <div className="text-sm font-semibold text-[#1a1a17]">
                     {state.evaluation.buyerPersona.name}

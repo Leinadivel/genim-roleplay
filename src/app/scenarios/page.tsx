@@ -796,7 +796,7 @@ export default function ScenariosPage() {
                 Roleplay setup
               </div>
 
-              <h1 className="mt-5 text-4xl font-semibold leading-[1] tracking-[-0.04em] text-[#141412] md:text-6xl">
+              <h1 className="mt-5 text-4xl font-semibold leading-[1] tracking-[-0.04em] text-[#141412]">
                 Configure the roleplay
                 <span className="mt-2 block italic text-[#d6612d]">
                   on one screen.

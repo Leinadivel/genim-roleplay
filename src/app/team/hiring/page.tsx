@@ -239,7 +239,7 @@ export default async function TeamHiringPage() {
                 Hiring assessments
               </div>
 
-              <h1 className="mt-5 text-4xl font-semibold tracking-[-0.04em] text-[#171714] md:text-6xl">
+              <h1 className="mt-5 text-4xl font-semibold tracking-[-0.04em] text-[#171714] md:text-3xl">
                 Evaluate sales candidates with roleplay
               </h1>
 
@@ -334,7 +334,7 @@ export default async function TeamHiringPage() {
               <div className="text-sm font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
                 Create assessment
               </div>
-              <h2 className="mt-3 text-2xl font-semibold text-[#1a1a17]">
+              <h2 className="mt-3 text-xl font-semibold text-[#1a1a17]">
                 Generate candidate roleplay link
               </h2>
               <p className="mt-3 text-sm leading-8 text-[#5f625d]">
@@ -455,7 +455,7 @@ export default async function TeamHiringPage() {
                 <div className="text-sm font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
                   Candidate list
                 </div>
-                <h2 className="mt-2 text-2xl font-semibold text-[#1a1a17]">
+                <h2 className="mt-2 text-xl font-semibold text-[#1a1a17]">
                   Current hiring assessments
                 </h2>
                 <p className="mt-2 text-sm leading-7 text-[#5f625d]">

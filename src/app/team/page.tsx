@@ -459,11 +459,11 @@ export default async function TeamPage() {
                 Team workspace
               </div>
 
-              <h1 className="mt-5 text-4xl font-semibold tracking-[-0.04em] text-[#171714] md:text-6xl">
+              <h1 className="mt-5 text-4xl font-semibold tracking-[-0.04em] text-[#171714] md:text-4xl">
                 {company.name}
               </h1>
 
-              <p className="mt-4 max-w-[760px] text-base leading-8 text-[#5b5d59] md:text-lg">
+              <p className="mt-4 max-w-[760px] text-base leading-8 text-[#5b5d59]">
                 Welcome back
                 {profile.full_name ? `, ${profile.full_name}` : ''}. Manage your team invites, assessmnets <br />
                 and hiring all in one place.
@@ -563,7 +563,7 @@ export default async function TeamPage() {
                   <div className="text-sm font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
                     Seat planning
                   </div>
-                  <h2 className="mt-3 text-2xl font-semibold text-[#1a1a17]">
+                  <h2 className="mt-3 text-xl font-semibold text-[#1a1a17]">
                     Team capacity
                   </h2>
                 </div>
@@ -672,9 +672,9 @@ export default async function TeamPage() {
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <div className="text-sm font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
-                    Recent sessions across team
+                    Recent sessions
                   </div>
-                  <h2 className="mt-3 text-2xl font-semibold text-[#1a1a17]">
+                  <h2 className="mt-3 text-xl font-semibold text-[#1a1a17]">
                     Latest team activity
                   </h2>
                 </div>

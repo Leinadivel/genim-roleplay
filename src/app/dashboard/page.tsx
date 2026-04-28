@@ -130,11 +130,11 @@ export default async function DashboardPage() {
             Individual dashboard
           </div>
 
-          <h1 className="mt-5 text-4xl font-semibold tracking-[-0.04em] text-[#171714] md:text-6xl">
+          <h1 className="mt-5 text-4xl font-semibold tracking-[-0.04em] text-[#171714] md:text-4xl">
             Track your sales practice progress
           </h1>
 
-          <p className="mt-4 max-w-[820px] text-base leading-8 text-[#5b5d59] md:text-lg">
+          <p className="mt-4 max-w-[820px] text-base leading-8 text-[#5b5d59] md:text-md">
             Review previous roleplays, monitor your score trend, and revisit
             reports from completed sessions.
           </p>
@@ -149,7 +149,7 @@ export default async function DashboardPage() {
               <div className="mt-5 text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
                 Total sessions
               </div>
-              <div className="mt-2 text-3xl font-semibold">{totalSessions}</div>
+              <div className="mt-2 text-2xl font-semibold">{totalSessions}</div>
             </div>
 
             <div className="rounded-[28px] border border-[#e8ded3] bg-white p-6 shadow-[0_14px_40px_rgba(25,25,20,0.05)]">
@@ -157,7 +157,7 @@ export default async function DashboardPage() {
               <div className="mt-5 text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
                 Completed
               </div>
-              <div className="mt-2 text-3xl font-semibold">{completedSessions}</div>
+              <div className="mt-2 text-2xl font-semibold">{completedSessions}</div>
             </div>
 
             <div className="rounded-[28px] border border-[#e8ded3] bg-white p-6 shadow-[0_14px_40px_rgba(25,25,20,0.05)]">
@@ -165,7 +165,7 @@ export default async function DashboardPage() {
               <div className="mt-5 text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
                 Average score
               </div>
-              <div className="mt-2 text-3xl font-semibold">
+              <div className="mt-2 text-2xl font-semibold">
                 {formatScore(averageScore)}
               </div>
             </div>
@@ -175,38 +175,62 @@ export default async function DashboardPage() {
               <div className="mt-5 text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
                 Best score
               </div>
-              <div className="mt-2 text-3xl font-semibold">
+              <div className="mt-2 text-2xl font-semibold">
                 {formatScore(bestScore)}
               </div>
             </div>
           </div>
 
           <div className="rounded-[28px] border border-[#e8ded3] bg-white p-6 shadow-[0_14px_40px_rgba(25,25,20,0.05)]">
-            <h2 className="text-2xl font-semibold text-[#1a1a17]">
+            <h2 className="text-xl font-semibold text-[#1a1a17]">
               Progress trend
             </h2>
             <p className="mt-2 text-sm text-[#666864]">
               Your last scored roleplay sessions.
             </p>
 
-            <div className="mt-8 flex h-[260px] items-end gap-3 border-b border-[#e8ded3]">
+            <div className="mt-8 overflow-x-auto">
               {chartSessions.length > 0 ? (
-                chartSessions.map((session, index) => (
-                  <div key={session.id} className="flex flex-1 flex-col items-center gap-2">
-                    <div className="text-xs font-semibold text-[#5f625d]">
-                      {session.overall_score}%
-                    </div>
-                    <div
-                      className="w-full rounded-t-2xl bg-[#d6612d]"
-                      style={{
-                        height: `${Math.max(session.overall_score ?? 0, 6)}%`,
-                      }}
-                    />
-                    <div className="text-xs text-[#7d7f7a]">#{index + 1}</div>
+                <div className="relative h-[300px] min-w-[620px] rounded-[24px] border border-[#ece4da] bg-[#fcfaf8] px-6 pb-10 pt-8">
+                  {/* Y-axis guide lines */}
+                  <div className="absolute inset-x-6 top-8 border-t border-dashed border-[#e3d8cd]" />
+                  <div className="absolute inset-x-6 top-[35%] border-t border-dashed border-[#e3d8cd]" />
+                  <div className="absolute inset-x-6 top-[62%] border-t border-dashed border-[#e3d8cd]" />
+                  <div className="absolute inset-x-6 bottom-10 border-t border-[#d9cec3]" />
+
+                  <div className="relative flex h-full items-end gap-4">
+                    {chartSessions.map((session, index) => {
+                      const score = session.overall_score ?? 0
+                      const height = Math.max(score, 6)
+
+                      return (
+                        <div
+                          key={session.id}
+                          className="group flex flex-1 flex-col items-center justify-end gap-2"
+                        >
+                          <div className="text-xs font-semibold text-[#1f4d38]">
+                            {score}%
+                          </div>
+
+                          <div className="relative flex h-[210px] w-full items-end justify-center">
+                            <div
+                              className="w-full max-w-[56px] rounded-t-[18px] bg-[linear-gradient(180deg,#d6612d_0%,#f0a077_100%)] shadow-[0_10px_22px_rgba(214,97,45,0.22)] transition-all group-hover:opacity-90"
+                              style={{
+                                height: `${height}%`,
+                              }}
+                            />
+                          </div>
+
+                          <div className="text-xs font-medium text-[#7d7f7a]">
+                            #{index + 1}
+                          </div>
+                        </div>
+                      )
+                    })}
                   </div>
-                ))
+                </div>
               ) : (
-                <div className="flex h-full w-full items-center justify-center text-sm text-[#666864]">
+                <div className="flex h-[260px] w-full items-center justify-center rounded-[24px] border border-dashed border-[#ddd4ca] bg-[#fcfaf8] text-sm text-[#666864]">
                   Complete scored sessions to see your progress graph.
                 </div>
               )}
@@ -216,7 +240,7 @@ export default async function DashboardPage() {
           <div className="rounded-[28px] border border-[#e8ded3] bg-white p-6 shadow-[0_14px_40px_rgba(25,25,20,0.05)]">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <h2 className="text-2xl font-semibold text-[#1a1a17]">
+                <h2 className="text-xl font-semibold text-[#1a1a17]">
                   Previous sessions
                 </h2>
                 <p className="mt-2 text-sm text-[#666864]">

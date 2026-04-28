@@ -169,7 +169,7 @@ export default function CurrentPlanCard() {
             Your plan
           </div>
 
-          <div className="mt-2 flex items-center gap-2 text-2xl font-semibold text-[#181815]">
+          <div className="mt-2 flex items-center gap-2 text-xl font-semibold text-[#181815]">
             {loading ? (
               <>
                 <Loader2 className="h-5 w-5 animate-spin" />

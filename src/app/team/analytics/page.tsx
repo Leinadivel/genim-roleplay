@@ -303,11 +303,11 @@ export default async function TeamAnalyticsPage() {
             Team analytics
           </div>
 
-          <h1 className="mt-5 text-4xl font-semibold tracking-[-0.04em] text-[#171714] md:text-6xl">
+          <h1 className="mt-5 text-4xl font-semibold tracking-[-0.04em] text-[#171714] md:text-4xl">
             {company.name}
           </h1>
 
-          <p className="mt-4 max-w-[780px] text-base leading-8 text-[#5b5d59] md:text-lg">
+          <p className="mt-4 max-w-[480px] text-base leading-8 text-[#5b5d59] md:text-md">
             Review team activity, training consistency, session outcomes, and
             open individual rep performance details.
           </p>
@@ -383,7 +383,7 @@ export default async function TeamAnalyticsPage() {
               <div className="text-sm font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
                 Full team breakdown
               </div>
-              <h2 className="mt-2 text-2xl font-semibold text-[#1a1a17]">
+              <h2 className="mt-2 text-xl font-semibold text-[#1a1a17]">
                 Rep performance and activity
               </h2>
               <p className="mt-2 text-sm leading-7 text-[#5f625d]">

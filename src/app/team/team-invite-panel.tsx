@@ -148,7 +148,7 @@ export default function TeamInvitePanel({
             <div className="text-sm font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
               Invite team members
             </div>
-            <h2 className="mt-3 text-2xl font-semibold text-[#1a1a17]">
+            <h2 className="mt-3 text-xl font-semibold text-[#1a1a17]">
               Add people to your workspace
             </h2>
             <p className="mt-3 text-sm leading-8 text-[#5f625d]">
@@ -300,10 +300,12 @@ export default function TeamInvitePanel({
         </div>
 
         <div className="mt-6 overflow-hidden rounded-[20px] border border-[#ece4da]">
-          <div className="hidden grid-cols-[1.6fr_0.9fr_0.9fr] gap-4 border-b border-[#ece4da] bg-[#faf8f5] px-4 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a] md:grid">
+          <div className="hidden grid-cols-[1.2fr_1.5fr_0.8fr_0.8fr_0.8fr] gap-4 border-b border-[#ece4da] bg-[#faf8f5] px-4 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a] md:grid">
+            <div>Name</div>
             <div>Email</div>
             <div>Role</div>
             <div>Status</div>
+            <div>Actions</div>
           </div>
 
           {members.length > 0 ? (
@@ -312,9 +314,15 @@ export default function TeamInvitePanel({
                 {members.map((member) => (
                   <div
                     key={member.id}
-                    className="grid grid-cols-[1.6fr_0.9fr_0.9fr] gap-4 border-b border-[#f1e9e0] px-4 py-4 text-sm text-[#2b2c2a] last:border-b-0"
+                    className="grid grid-cols-[1.2fr_1.5fr_0.8fr_0.8fr_0.8fr] gap-4 border-b border-[#f1e9e0] px-4 py-4 text-sm text-[#2b2c2a] last:border-b-0"
                   >
-                    <div className="min-w-0 truncate">{member.email || '—'}</div>
+                    <div className="min-w-0 truncate">
+                      {member.email?.split('@')[0] || '—'}
+                    </div>
+
+                    <div className="min-w-0 truncate">
+                      {member.email || '—'}
+                    </div>
 
                     <div>
                       <span
@@ -335,6 +343,25 @@ export default function TeamInvitePanel({
                         {formatStatus(member.status)}
                       </span>
                     </div>
+
+                    <div className="flex items-center gap-2">
+                      <a
+                        href={`/team/members/${member.id}/edit`}
+                        className="rounded-full border border-[#d8d1c8] bg-white px-3 py-1.5 text-xs font-semibold text-[#2b2c2a] hover:bg-[#faf7f3]"
+                      >
+                        Edit
+                      </a>
+
+                      <form action="/api/team/members/delete" method="post">
+                        <input type="hidden" name="memberId" value={member.id} />
+                        <button
+                          type="submit"
+                          className="rounded-full border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100"
+                        >
+                          Delete
+                        </button>
+                      </form>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -345,32 +372,49 @@ export default function TeamInvitePanel({
                     key={member.id}
                     className="rounded-[18px] border border-[#ece4da] bg-[#faf8f5] px-4 py-4"
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="text-sm font-semibold text-[#1b1b18]">
-                          {member.email || '—'}
-                        </div>
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          <span
-                            className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${getRoleBadgeClasses(
-                              member.role
-                            )}`}
-                          >
-                            {formatRole(member.role)}
-                          </span>
-                          <span
-                            className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${getStatusBadgeClasses(
-                              member.status
-                            )}`}
-                          >
-                            {formatStatus(member.status)}
-                          </span>
-                        </div>
-                      </div>
+                    <div className="text-sm font-semibold text-[#1b1b18]">
+                      {member.email?.split('@')[0] || '—'}
+                    </div>
 
-                      {member.status === 'active' ? (
-                        <UserCheck className="h-5 w-5 shrink-0 text-[#1f4d38]" />
-                      ) : null}
+                    <div className="mt-1 text-sm text-[#666864]">
+                      {member.email || '—'}
+                    </div>
+
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <span
+                        className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${getRoleBadgeClasses(
+                          member.role
+                        )}`}
+                      >
+                        {formatRole(member.role)}
+                      </span>
+
+                      <span
+                        className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${getStatusBadgeClasses(
+                          member.status
+                        )}`}
+                      >
+                        {formatStatus(member.status)}
+                      </span>
+                    </div>
+
+                    <div className="mt-4 flex gap-2">
+                      <a
+                        href={`/team/members/${member.id}/edit`}
+                        className="flex-1 rounded-full border border-[#d8d1c8] bg-white px-4 py-2 text-center text-xs font-semibold text-[#2b2c2a]"
+                      >
+                        Edit
+                      </a>
+
+                      <form action="/api/team/members/delete" method="post" className="flex-1">
+                        <input type="hidden" name="memberId" value={member.id} />
+                        <button
+                          type="submit"
+                          className="w-full rounded-full border border-red-200 bg-red-50 px-4 py-2 text-xs font-semibold text-red-700"
+                        >
+                          Delete
+                        </button>
+                      </form>
                     </div>
                   </div>
                 ))}

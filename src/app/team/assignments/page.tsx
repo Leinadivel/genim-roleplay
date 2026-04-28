@@ -304,7 +304,7 @@ export default async function TeamAssignmentsPage() {
                 Team assignments
               </div>
 
-              <h1 className="mt-5 text-4xl font-semibold tracking-[-0.04em] text-[#171714] md:text-6xl">
+              <h1 className="mt-5 text-4xl font-semibold tracking-[-0.04em] text-[#171714]">
                 Assign roleplays to your reps
               </h1>
 
@@ -314,7 +314,7 @@ export default async function TeamAssignmentsPage() {
               </p>
             </div>
 
-            <div className="rounded-[22px] border border-[#e2d8cd] bg-white px-5 py-4 shadow-[0_8px_24px_rgba(25,25,20,0.04)]">
+            {/* <div className="rounded-[22px] border border-[#e2d8cd] bg-white px-5 py-4 shadow-[0_8px_24px_rgba(25,25,20,0.04)]">
               <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
                 Access level
               </div>
@@ -325,7 +325,7 @@ export default async function TeamAssignmentsPage() {
               <div className="mt-1 text-sm text-[#666864]">
                 Owners, admins, and managers can assign and manage roleplays.
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
       </section>
@@ -399,7 +399,7 @@ export default async function TeamAssignmentsPage() {
               <div className="text-sm font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
                 Create assignment
               </div>
-              <h2 className="mt-3 text-2xl font-semibold text-[#1a1a17]">
+              <h2 className="mt-3 text-xl font-semibold text-[#1a1a17]">
                 Assign a new roleplay
               </h2>
               <p className="mt-3 text-sm leading-8 text-[#5f625d]">
@@ -660,7 +660,7 @@ export default async function TeamAssignmentsPage() {
                 <div className="text-sm font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
                   Assignment list
                 </div>
-                <h2 className="mt-2 text-2xl font-semibold text-[#1a1a17]">
+                <h2 className="mt-2 text-xl font-semibold text-[#1a1a17]">
                   Current team assignments
                 </h2>
                 <p className="mt-2 text-sm leading-7 text-[#5f625d]">
