@@ -15,6 +15,16 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import RowActionMenu from '../../../components/row-action-menu'
+import {
+  BUYER_MOOD_OPTIONS,
+  INDUSTRY_OPTIONS,
+  ROLEPLAY_TYPE_OPTIONS,
+  DEAL_SIZE_OPTIONS,
+  PAIN_LEVEL_OPTIONS,
+  COMPANY_STAGE_OPTIONS,
+  TIME_PRESSURE_OPTIONS,
+  BUYER_ROLE_OPTIONS,
+} from '@/types/roleplay'
 
 type CompanyMemberRow = {
   id: string
@@ -54,6 +64,14 @@ type AssignmentRow = {
   completed_session_id: string | null
   created_at: string
   updated_at: string
+  selected_industry: string | null
+  selected_buyer_mood: string | null
+  selected_buyer_role: string | null
+  selected_deal_size: string | null
+  selected_pain_level: string | null
+  selected_company_stage: string | null
+  selected_time_pressure: string | null
+  selected_roleplay_type: string | null
 }
 
 function canManageAssignments(role: string | null) {
@@ -376,8 +394,8 @@ export default async function TeamAssignmentsPage() {
             </div>
           </div>
 
-          <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-            <div className="rounded-[28px] border border-[#e8ded3] bg-white p-6 shadow-[0_14px_40px_rgba(25,25,20,0.05)]">
+          <div className="grid gap-6 xl:grid-cols-12">
+            <div className="xl:col-span-7 rounded-[28px] border border-[#e8ded3] bg-white p-6 shadow-[0_14px_40px_rgba(25,25,20,0.05)]">
               <div className="text-sm font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
                 Create assignment
               </div>
@@ -389,10 +407,10 @@ export default async function TeamAssignmentsPage() {
                 then create the assignment.
               </p>
 
-              <div className="mt-4 rounded-[18px] border border-[#ece4da] bg-[#faf8f5] px-4 py-4 text-sm leading-7 text-[#5f625d]">
+              {/* <div className="mt-4 rounded-[18px] border border-[#ece4da] bg-[#faf8f5] px-4 py-4 text-sm leading-7 text-[#5f625d]">
                 Due dates should be stored in UTC so assignments still expire correctly
                 when managers and reps are in different countries.
-              </div>
+              </div> */}
 
               <form action="/api/team/assignments/create" method="post" className="mt-6 space-y-5">
                 <div>
@@ -413,6 +431,157 @@ export default async function TeamAssignmentsPage() {
                   </select>
                 </div>
 
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-[#343631]">
+                      Industry
+                    </label>
+                    <select
+                      name="selectedIndustry"
+                      required
+                      className="w-full rounded-2xl border border-[#ddd4ca] bg-[#fcfaf8] px-4 py-4 text-[15px] text-[#1f1f1c] outline-none"
+                    >
+                      <option value="">Select industry</option>
+                      {INDUSTRY_OPTIONS.map((industry) => (
+                        <option key={industry} value={industry}>
+                          {industry}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-[#343631]">
+                      Buyer mood
+                    </label>
+                    <select
+                      name="selectedBuyerMood"
+                      required
+                      className="w-full rounded-2xl border border-[#ddd4ca] bg-[#fcfaf8] px-4 py-4 text-[15px] text-[#1f1f1c] outline-none"
+                    >
+                      <option value="">Select mood</option>
+                      {BUYER_MOOD_OPTIONS.map((mood) => (
+                        <option key={mood.value} value={mood.value}>
+                          {mood.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-[#343631]">
+                      Buyer role
+                    </label>
+                    <select
+                      name="selectedBuyerRole"
+                      required
+                      className="w-full rounded-2xl border border-[#ddd4ca] bg-[#fcfaf8] px-4 py-4 text-[15px] text-[#1f1f1c] outline-none"
+                    >
+                      <option value="">Select buyer role</option>
+                      {BUYER_ROLE_OPTIONS.map((role) => (
+                        <option key={role} value={role}>
+                          {role}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-[#343631]">
+                      Deal size <span className="text-[#8a8d87]">(optional)</span>
+                    </label>
+                    <select
+                      name="selectedDealSize"
+                      className="w-full rounded-2xl border border-[#ddd4ca] bg-[#fcfaf8] px-4 py-4 text-[15px] text-[#1f1f1c] outline-none"
+                    >
+                      <option value="">Select deal size</option>
+                      {DEAL_SIZE_OPTIONS.map((dealSize) => (
+                        <option key={dealSize} value={dealSize}>
+                          {dealSize}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-[#343631]">
+                      Pain level
+                    </label>
+                    <select
+                      name="selectedPainLevel"
+                      required
+                      className="w-full rounded-2xl border border-[#ddd4ca] bg-[#fcfaf8] px-4 py-4 text-[15px] text-[#1f1f1c] outline-none"
+                    >
+                      <option value="">Select pain level</option>
+                      {PAIN_LEVEL_OPTIONS.map((pain) => (
+                        <option key={pain.value} value={pain.value}>
+                          {pain.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-[#343631]">
+                      Company stage
+                    </label>
+                    <select
+                      name="selectedCompanyStage"
+                      required
+                      className="w-full rounded-2xl border border-[#ddd4ca] bg-[#fcfaf8] px-4 py-4 text-[15px] text-[#1f1f1c] outline-none"
+                    >
+                      <option value="">Select company stage</option>
+                      {COMPANY_STAGE_OPTIONS.map((stage) => (
+                        <option key={stage} value={stage}>
+                          {stage}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-[#343631]">
+                      Time pressure
+                    </label>
+                    <select
+                      name="selectedTimePressure"
+                      required
+                      className="w-full rounded-2xl border border-[#ddd4ca] bg-[#fcfaf8] px-4 py-4 text-[15px] text-[#1f1f1c] outline-none"
+                    >
+                      <option value="">Select time pressure</option>
+                      {TIME_PRESSURE_OPTIONS.map((time) => (
+                        <option key={time.value} value={time.value}>
+                          {time.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-[#343631]">
+                      Roleplay type
+                    </label>
+                    <select
+                      name="selectedRoleplayType"
+                      required
+                      className="w-full rounded-2xl border border-[#ddd4ca] bg-[#fcfaf8] px-4 py-4 text-[15px] text-[#1f1f1c] outline-none"
+                    >
+                      <option value="">Select roleplay type</option>
+                      {ROLEPLAY_TYPE_OPTIONS.map((type) => (
+                        <option key={type} value={type}>
+                          {type}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
                 <div>
                   <label className="mb-2 block text-sm font-medium text-[#343631]">
                     Scenario
@@ -422,7 +591,7 @@ export default async function TeamAssignmentsPage() {
                     required
                     className="w-full rounded-2xl border border-[#ddd4ca] bg-[#fcfaf8] px-4 py-4 text-[15px] text-[#1f1f1c] outline-none"
                   >
-                    <option value="">Select a scenario</option>
+                    <option value="">Select scenario</option>
                     {scenarioList.map((scenario) => (
                       <option key={scenario.id} value={scenario.id}>
                         {scenario.title} {scenario.industry ? `• ${scenario.industry}` : ''} •{' '}
@@ -486,7 +655,7 @@ export default async function TeamAssignmentsPage() {
               </form>
             </div>
 
-            <div className="rounded-[28px] border border-[#e8ded3] bg-white shadow-[0_14px_40px_rgba(25,25,20,0.05)]">
+            <div className="xl:col-span-5 rounded-[28px] border border-[#e8ded3] bg-white shadow-[0_14px_40px_rgba(25,25,20,0.05)]">
               <div className="border-b border-[#ece4da] px-6 py-5">
                 <div className="text-sm font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
                   Assignment list
@@ -534,6 +703,56 @@ export default async function TeamAssignmentsPage() {
                               <span className="inline-flex rounded-full border border-[#ece4da] bg-white px-3 py-1 text-xs font-medium text-[#555854]">
                                 Due: {formatDateTime(assignment.due_at)}
                               </span>
+                            </div>
+
+                            <div className="mt-3 flex flex-wrap gap-2">
+                              {assignment.selected_industry ? (
+                                <span className="inline-flex rounded-full border border-[#ece4da] bg-white px-3 py-1 text-xs font-medium text-[#555854]">
+                                  {assignment.selected_industry}
+                                </span>
+                              ) : null}
+
+                              {assignment.selected_roleplay_type ? (
+                                <span className="inline-flex rounded-full border border-[#d7e6dc] bg-[#eef5f0] px-3 py-1 text-xs font-semibold text-[#1f4d38]">
+                                  {assignment.selected_roleplay_type}
+                                </span>
+                              ) : null}
+
+                              {assignment.selected_buyer_mood ? (
+                                <span className="inline-flex rounded-full border border-[#efe1d5] bg-[#fff8f3] px-3 py-1 text-xs font-medium text-[#a2542f]">
+                                  Mood: {formatStatus(assignment.selected_buyer_mood)}
+                                </span>
+                              ) : null}
+
+                              {assignment.selected_buyer_role ? (
+                                <span className="inline-flex rounded-full border border-[#ece4da] bg-white px-3 py-1 text-xs font-medium text-[#555854]">
+                                  {assignment.selected_buyer_role}
+                                </span>
+                              ) : null}
+
+                              {assignment.selected_deal_size ? (
+                                <span className="inline-flex rounded-full border border-[#ece4da] bg-white px-3 py-1 text-xs font-medium text-[#555854]">
+                                  Deal: {assignment.selected_deal_size}
+                                </span>
+                              ) : null}
+
+                              {assignment.selected_pain_level ? (
+                                <span className="inline-flex rounded-full border border-[#f0d7c8] bg-[#fff4ed] px-3 py-1 text-xs font-medium text-[#a2542f]">
+                                  Pain: {formatStatus(assignment.selected_pain_level)}
+                                </span>
+                              ) : null}
+
+                              {assignment.selected_company_stage ? (
+                                <span className="inline-flex rounded-full border border-[#ece4da] bg-white px-3 py-1 text-xs font-medium text-[#555854]">
+                                  {assignment.selected_company_stage}
+                                </span>
+                              ) : null}
+
+                              {assignment.selected_time_pressure ? (
+                                <span className="inline-flex rounded-full border border-[#dbe5f6] bg-[#eef4ff] px-3 py-1 text-xs font-medium text-[#355c9a]">
+                                  Time: {formatStatus(assignment.selected_time_pressure)}
+                                </span>
+                              ) : null}
                             </div>
 
                             <div className="mt-4 space-y-1 text-sm text-[#555854]">
