@@ -8,12 +8,20 @@ import {
   Loader2,
   Mic,
   PhoneCall,
-  Send,
   Square,
   Volume2,
   Waves,
   X,
 } from 'lucide-react'
+
+type SpeechRecognitionConstructor = new () => SpeechRecognition
+
+declare global {
+  interface Window {
+    SpeechRecognition?: SpeechRecognitionConstructor
+    webkitSpeechRecognition?: SpeechRecognitionConstructor
+  }
+}
 
 type ChatMessage = {
   id: string
@@ -190,16 +198,17 @@ export default function SessionPage() {
   const [isRinging, setIsRinging] = useState(false)
 
   const [isListening, setIsListening] = useState(false)
-  const [showTranscript, setShowTranscript] = useState(false)
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
-  const [speechBaseText, setSpeechBaseText] = useState('')
-  const [speechTranscript, setSpeechTranscript] = useState('')
+  const [, setSpeechBaseText] = useState('')
+  const [, setSpeechTranscript] = useState('')
 
   const recognitionRef = useRef<SpeechRecognition | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const ringAudioRef = useRef<HTMLAudioElement | null>(null)
   const ringStartedRef = useRef(false)
   const bottomRef = useRef<HTMLDivElement | null>(null)
+  const keepMicActiveRef = useRef(false)
+  const silenceTimerRef = useRef<number | null>(null)
 
   const speechBaseTextRef = useRef('')
   const speechTranscriptRef = useRef('')
@@ -231,6 +240,13 @@ export default function SessionPage() {
 
   useEffect(() => {
     return () => {
+      keepMicActiveRef.current = false
+
+      if (silenceTimerRef.current) {
+        window.clearTimeout(silenceTimerRef.current)
+        silenceTimerRef.current = null
+      }
+
       recognitionRef.current?.stop()
 
       if (audioRef.current) {
@@ -320,6 +336,8 @@ export default function SessionPage() {
   }, [sessionMeta])
 
   async function speakBuyerText(text: string) {
+    recognitionRef.current?.stop()
+    setIsListening(false)
     try {
       setAiSpeaking(true)
 
@@ -373,6 +391,11 @@ export default function SessionPage() {
       })
     } finally {
       setAiSpeaking(false)
+      if (keepMicActiveRef.current) {
+        window.setTimeout(() => {
+          handleMicClick()
+        }, 500)
+      }
     }
   }
 
@@ -501,6 +524,14 @@ export default function SessionPage() {
 
   function handleMicClick() {
     if (isListening) {
+      keepMicActiveRef.current = false
+      autoSendAfterSpeechRef.current = false
+
+      if (silenceTimerRef.current) {
+        window.clearTimeout(silenceTimerRef.current)
+        silenceTimerRef.current = null
+      }
+
       recognitionRef.current?.stop()
       setIsListening(false)
       return
@@ -516,100 +547,128 @@ export default function SessionPage() {
       return
     }
 
-    const recognition = new SpeechRecognitionAPI()
+    keepMicActiveRef.current = true
 
-    recognition.lang = 'en-US'
-    recognition.continuous = false
-    recognition.interimResults = true
-    ;(
-      recognition as SpeechRecognition & { maxAlternatives?: number }
-    ).maxAlternatives = 1
+    function startRecognition() {
+      if (!keepMicActiveRef.current) return
+      if (aiTyping || aiSpeaking || sending || !callReady) return
+      if (!SpeechRecognitionAPI) return
 
-    recognition.onstart = () => {
-      const base = input.trim()
-      setIsListening(true)
-      setError(null)
-      setSpeechBaseText(base)
-      setSpeechTranscript('')
-      speechBaseTextRef.current = base
-      speechTranscriptRef.current = ''
-      autoSendAfterSpeechRef.current = true
-    }
+      const recognition = new SpeechRecognitionAPI()
 
-    recognition.onend = () => {
-      setIsListening(false)
+      recognition.lang = 'en-US'
+      recognition.continuous = true
+      recognition.interimResults = true
+      ;(
+        recognition as SpeechRecognition & { maxAlternatives?: number }
+      ).maxAlternatives = 1
 
-      const finalInput = [
-        speechBaseTextRef.current,
-        speechTranscriptRef.current,
-      ]
-        .filter(Boolean)
-        .join(' ')
-        .trim()
+      recognition.onstart = () => {
+        setIsListening(true)
+        setError(null)
 
-      if (
-        autoSendAfterSpeechRef.current &&
-        finalInput &&
-        !sending &&
-        !aiTyping &&
-        !aiSpeaking
-      ) {
-        autoSendAfterSpeechRef.current = false
-        void sendCurrentInput(finalInput)
-      } else {
-        autoSendAfterSpeechRef.current = false
-      }
-    }
-
-    recognition.onerror = (event) => {
-      console.error('Speech recognition error:', event.error, event.message)
-
-      if (event.error === 'not-allowed') {
-        setError(
-          'Microphone permission was denied. Please allow microphone access in your browser settings.'
-        )
-      } else if (event.error === 'no-speech') {
-        setError('No speech was detected. Please try again and speak clearly.')
-      } else if (event.error === 'audio-capture') {
-        setError(
-          'No microphone was found. Please check your audio input device.'
-        )
-      } else {
-        setError(`Voice recognition failed: ${event.error}`)
+        const base = input.trim()
+        setSpeechBaseText(base)
+        setSpeechTranscript('')
+        speechBaseTextRef.current = base
+        speechTranscriptRef.current = ''
+        autoSendAfterSpeechRef.current = true
       }
 
-      autoSendAfterSpeechRef.current = false
-      setIsListening(false)
-    }
+      recognition.onend = () => {
+        if (!keepMicActiveRef.current) {
+          setIsListening(false)
+          return
+        }
 
-    recognition.onresult = (event) => {
-      let finalTranscript = ''
-      let interimTranscript = ''
+        window.setTimeout(() => {
+          startRecognition()
+        }, 350)
+      }
 
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const chunk = event.results[i][0].transcript
+      recognition.onerror = (event) => {
+        console.error('Speech recognition error:', event.error, event.message)
 
-        if (event.results[i].isFinal) {
-          finalTranscript += chunk
-        } else {
-          interimTranscript += chunk
+        if (event.error === 'not-allowed') {
+          keepMicActiveRef.current = false
+          setIsListening(false)
+          setError(
+            'Microphone permission was denied. Please allow microphone access in your browser settings.'
+          )
+          return
+        }
+
+        if (event.error === 'audio-capture') {
+          keepMicActiveRef.current = false
+          setIsListening(false)
+          setError('No microphone was found. Please check your audio input device.')
+          return
+        }
+
+        if (event.error !== 'no-speech') {
+          setError(`Voice recognition failed: ${event.error}`)
         }
       }
 
-      const committedTranscript = `${speechTranscriptRef.current}${finalTranscript}`.trim()
-      const visibleTranscript = `${committedTranscript} ${interimTranscript}`.trim()
-      const nextValue = [speechBaseTextRef.current, visibleTranscript]
-        .filter(Boolean)
-        .join(' ')
-        .trim()
+      recognition.onresult = (event) => {
+        let finalTranscript = ''
+        let interimTranscript = ''
 
-      speechTranscriptRef.current = committedTranscript
-      setSpeechTranscript(committedTranscript)
-      setInput(nextValue)
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const chunk = event.results[i][0].transcript
+
+          if (event.results[i].isFinal) {
+            finalTranscript += chunk
+          } else {
+            interimTranscript += chunk
+          }
+        }
+
+        const committedTranscript =
+          `${speechTranscriptRef.current} ${finalTranscript}`.trim()
+
+        const visibleTranscript =
+          `${committedTranscript} ${interimTranscript}`.trim()
+
+        const nextValue = [speechBaseTextRef.current, visibleTranscript]
+          .filter(Boolean)
+          .join(' ')
+          .trim()
+
+        speechTranscriptRef.current = committedTranscript
+        setSpeechTranscript(committedTranscript)
+        setInput(nextValue)
+
+        if (silenceTimerRef.current) {
+          window.clearTimeout(silenceTimerRef.current)
+        }
+
+        silenceTimerRef.current = window.setTimeout(() => {
+          const finalInput = [
+            speechBaseTextRef.current,
+            speechTranscriptRef.current,
+          ]
+            .filter(Boolean)
+            .join(' ')
+            .trim()
+
+          if (
+            finalInput &&
+            keepMicActiveRef.current &&
+            !sending &&
+            !aiTyping &&
+            !aiSpeaking
+          ) {
+            void sendCurrentInput(finalInput)
+          }
+        }, 1800)
+      }
+
+      recognitionRef.current = recognition
+      recognition.start()
     }
 
-    recognitionRef.current = recognition
-    recognition.start()
+    startRecognition()
   }
 
   const moodLabel = useMemo(() => {
@@ -848,7 +907,7 @@ export default function SessionPage() {
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <div className="rounded-full bg-[#f7f3ee] px-3 py-1 text-xs font-medium text-[#5f625d]">
+              <div className="rounded-full border border-[#d6612d] bg-[#fff3ed] px-5 py-2 text-base font-bold text-[#a84922] shadow-sm">
                 {remainingSeconds !== null
                   ? `Time left: ${formatTimer(remainingSeconds)}`
                   : `Elapsed: ${formatTimer(elapsedSeconds)}`}
@@ -940,19 +999,19 @@ export default function SessionPage() {
                     }`}
                   >
                     <Mic className="h-4 w-4" />
-                    {isListening ? 'Stop listening' : 'Speak'}
+                    {isListening ? 'End microphone' : 'Start microphone'}
                   </button>
 
-                  <button
+                  {/* <button
                     type="button"
                     onClick={() => setShowTranscript((current) => !current)}
                     className="inline-flex items-center justify-center rounded-full border border-[#d8d1c8] bg-white px-6 py-4 text-sm font-semibold text-[#2b2c2a]"
                   >
                     {showTranscript ? 'Hide transcript' : 'Show transcript'}
-                  </button>
+                  </button> */}
                 </div>
 
-                {showTranscript ? (
+                {/* {showTranscript ? (
                   <div className="max-h-[320px] overflow-y-auto rounded-[20px] border border-[#efe6dc] bg-white p-4">
                     {messages.length === 0 ? (
                       <div className="text-sm text-[#666864]">
@@ -985,7 +1044,7 @@ export default function SessionPage() {
                       </div>
                     )}
                   </div>
-                ) : null}
+                ) : null} */}
               </div>
             )}
           </div>

@@ -36,7 +36,7 @@ export async function GET(request: Request) {
         selected_pain_level: session.selected_pain_level,
         selected_company_stage: session.selected_company_stage,
         selected_time_pressure: session.selected_time_pressure,
-        should_ring_first: isBookedCallType(session.selected_roleplay_type),
+        should_ring_first: true,
         buyer_persona: buyerPersona
           ? {
               id: buyerPersona.id,
