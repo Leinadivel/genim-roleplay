@@ -46,7 +46,7 @@ function PricingCard({
 }) {
   return (
     <div
-      className={`relative rounded-[32px] border bg-white p-7 shadow-[0_14px_40px_rgba(25,25,20,0.05)] ${
+      className={`relative h-fit self-start rounded-[32px] border bg-white p-7 shadow-[0_14px_40px_rgba(25,25,20,0.05)] ${
         highlight
           ? 'border-[#d6612d] shadow-[0_22px_60px_rgba(214,97,45,0.14)]'
           : 'border-[#e8ded3]'
@@ -69,7 +69,7 @@ function PricingCard({
           <h2 className="text-2xl font-semibold tracking-[-0.03em] text-[#181815]">
             {title}
           </h2>
-          <p className="mt-3 text-[15px] leading-7 text-[#63655f]">
+          <p className="mt-2 text-[14px] leading-6 text-[#63655f]">
             {description}
           </p>
         </div>
@@ -82,7 +82,7 @@ function PricingCard({
       </div>
 
       <div className="mt-7">
-        <div className="text-5xl font-semibold tracking-[-0.05em] text-[#181815]">
+        <div className="text-4xl font-semibold tracking-[-0.04em] text-[#181815]">
           {price}
         </div>
         <div className="mt-2 min-h-[24px] text-sm text-[#666864]">
@@ -90,7 +90,7 @@ function PricingCard({
         </div>
       </div>
 
-      <div className="mt-8 space-y-4">
+      <div className="mt-6 space-y-2.5">
         {features.map((feature) => (
           <div key={feature} className="flex items-start gap-3">
             <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-[#1f4d38]" />
@@ -163,15 +163,13 @@ export default function PricingClient({
             Genim pricing
           </div>
 
-          <h1 className="mt-6 text-4xl font-semibold tracking-[-0.04em] text-[#171714] md:text-6xl">
+          <h1 className="mt-6 text-4xl font-semibold tracking-[-0.04em] text-[#171714]">
             Choose the plan that fits your sales practice
           </h1>
 
           <p className="mx-auto mt-5 max-w-[820px] text-base leading-8 text-[#5b5d59] md:text-lg">
-            Start free, then upgrade when you are ready for more roleplays,
-            deeper practice, and consistent AI coaching. 
-            Choose the plan that fits your training volume today, 
-            then upgrade as your roleplay needs grow. Annual billing is selected by default for the best value.
+            Start free and upgrade anytime for deeper roleplays, advanced practice, 
+            and ongoing AI coaching—choose the plan that matches your goals today and scale as you grow.
           </p>
 
           {limitReason ? (
@@ -213,16 +211,17 @@ export default function PricingClient({
       </section>
 
       <section className="px-6 py-12 md:px-10 md:py-16">
-        <div className="mx-auto grid max-w-[1400px] gap-6 lg:grid-cols-4">
+        <div className="mx-auto grid max-w-[1400px] items-start gap-6 lg:grid-cols-4">
           <PricingCard
             title="Starter"
-            price="Free"
+            price="$0"
             priceNote="5 roleplays total"
             description="For first-time users who want to experience Genim before committing to regular sales practice."
             features={[
               '5 roleplays total',
               'Live AI roleplays',
               'Basic AI coaching',
+              'Scorecards',
               'Good for testing the platform',
             ]}
             ctaLabel="Start free"
@@ -231,7 +230,6 @@ export default function PricingClient({
 
           <PricingCard
             title="Pro"
-            badge={isAnnual ? 'Best value' : undefined}
             price={isAnnual ? '$10' : '$13'}
             priceNote={
               isAnnual ? 'per month, billed annually' : 'per month, billed monthly'
@@ -239,9 +237,12 @@ export default function PricingClient({
             description="For reps who want consistent practice, stronger objection handling, and ongoing coaching."
             features={[
               '10 roleplays per week',
+              '3 scenarios',
+              '5 buyer personas',
               'Live AI roleplays',
-              'AI coaching',
-              'Ideal for consistent weekly practice',
+              'Basic AI coaching',
+              'Scorecards',
+              'Analytics',
             ]}
             planKey={proPlan}
             ctaLabel={isAnnual ? 'Get Pro Annual' : 'Get Pro Monthly'}
@@ -255,11 +256,13 @@ export default function PricingClient({
             priceNote={
               isAnnual ? 'per month, billed annually' : 'per month, billed monthly'
             }
-            description="For serious reps who want unlimited repetition, deeper practice, and everything included in Pro."
+            description="For serious reps who want unlimited repetition, and deeper practice."
             features={[
               'Everything in Pro',
+              'Advanced AI coaching',
               'Unlimited roleplays',
               'Unlimited scenarios',
+              'Unlimited buyer personas',
               'Built for high-frequency practice',
             ]}
             highlight
@@ -274,10 +277,15 @@ export default function PricingClient({
             priceNote="Built around your team needs"
             description="For sales teams that need manager visibility, structured training, and scalable enablement workflows."
             features={[
-              'Team roleplay workflows',
+              'Unlimited roleplays',
+              'Unlimited scenarios',
+              'Advanced AI coaching',
+              'Customize rubric & ICP',
               'Hiring assessment support',
-              'Manager reporting direction',
-              'Custom rollout and enablement setup',
+              'Analytics & reporting',
+              'Custom rollout and enablement',
+              'Team roleplay assignment',
+              'Advanced user management',
             ]}
             ctaLabel="Book Demo"
             ctaHref="/book-demo"
