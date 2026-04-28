@@ -92,9 +92,9 @@ function PricingCard({
 
       <div className="mt-6 space-y-2.5">
         {features.map((feature) => (
-          <div key={feature} className="flex items-start gap-3">
+          <div key={feature} className="flex items-start gap-2.5">
             <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-[#1f4d38]" />
-            <span className="text-[15px] leading-7 text-[#4f514d]">
+            <span className="text-[14px] leading-6 text-[#4f514d]">
               {feature}
             </span>
           </div>
@@ -103,7 +103,7 @@ function PricingCard({
 
       <Link
         href={ctaHref}
-        className={`mt-8 inline-flex w-full items-center justify-center gap-2 rounded-full px-5 py-4 text-sm font-semibold transition ${
+        className={`mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold transition ${
           highlight
             ? 'bg-[#d6612d] text-white hover:opacity-95'
             : 'border border-[#d8d1c8] text-[#1f1f1c] hover:bg-[#faf7f3]'
