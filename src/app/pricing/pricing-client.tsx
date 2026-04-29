@@ -246,7 +246,13 @@ export default function PricingClient({
             ]}
             planKey={proPlan}
             ctaLabel={isAnnual ? 'Get Pro Annual' : 'Get Pro Monthly'}
-            ctaHref={`/billing/checkout-start?plan=${proPlan}&returnTo=/scenarios`}
+            ctaHref={
+              isLoggedIn
+                ? `/billing/checkout-start?plan=${proPlan}&returnTo=/scenarios`
+                : `/register?plan=${proPlan}&returnTo=${encodeURIComponent(
+                    `/billing/checkout-start?plan=${proPlan}&returnTo=/scenarios`
+                  )}`
+            }
           />
 
           <PricingCard
@@ -268,7 +274,13 @@ export default function PricingClient({
             highlight
             planKey={advancedPlan}
             ctaLabel={isAnnual ? 'Get Advanced Annual' : 'Get Advanced Monthly'}
-            ctaHref={`/billing/checkout-start?plan=${advancedPlan}&returnTo=/scenarios`}
+            ctaHref={
+              isLoggedIn
+                ? `/billing/checkout-start?plan=${advancedPlan}&returnTo=/scenarios`
+                : `/register?plan=${advancedPlan}&returnTo=${encodeURIComponent(
+                    `/billing/checkout-start?plan=${advancedPlan}&returnTo=/scenarios`
+                  )}`
+            }
           />
 
           <PricingCard

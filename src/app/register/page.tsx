@@ -20,10 +20,20 @@ type AccountType = 'individual' | 'team'
 
 export default function RegisterPage() {
   const [accountType, setAccountType] = useState<AccountType>('individual')
-  const selectedPlan = useMemo(() => {
-    if (typeof window === 'undefined') return ''
+  const { selectedPlan, returnTo } = useMemo(() => {
+    if (typeof window === 'undefined') {
+      return {
+        selectedPlan: '',
+        returnTo: '',
+      }
+    }
+
     const params = new URLSearchParams(window.location.search)
-    return params.get('plan')?.trim() || ''
+
+    return {
+      selectedPlan: params.get('plan')?.trim() || '',
+      returnTo: params.get('returnTo')?.trim() || '',
+    }
   }, [])
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
@@ -65,7 +75,7 @@ export default function RegisterPage() {
         password,
         options: {
           emailRedirectTo: `${baseUrl}/auth/callback?next=${encodeURIComponent(
-            selectedPlan ? `/post-login?plan=${selectedPlan}` : '/post-login'
+            returnTo || (selectedPlan ? `/post-login?plan=${selectedPlan}` : '/post-login')
           )}`,
           data: {
             full_name: fullName,
