@@ -215,8 +215,14 @@ export default function SessionPage() {
   const autoSendAfterSpeechRef = useRef(false)
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages, aiTyping, aiSpeaking])
+    if (!bottomRef.current) return
+    if (messages.length === 0) return
+
+    bottomRef.current.scrollIntoView({
+      behavior: 'smooth',
+      block: 'nearest',
+    })
+  }, [messages.length])
 
   const timeLimitSeconds = useMemo(
     () => getTimeLimitSeconds(sessionMeta?.selected_time_pressure || null),

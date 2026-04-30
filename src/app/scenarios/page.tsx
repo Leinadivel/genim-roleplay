@@ -754,30 +754,36 @@ export default function ScenariosPage() {
   return (
     <main className="min-h-screen bg-[#f7f3ee] text-[#1f1f1c]">
       <header className="border-b border-[#e6ddd2] bg-[#f7f3ee]">
-        <div className="mx-auto flex max-w-[1440px] items-center justify-between px-6 py-5 md:px-8">
-          <div className="flex items-center gap-4">
-            <Link href="/" className="flex items-center pr-4 md:pr-6">
-              <div className="flex h-10 items-center overflow-hidden">
+        <div className="mx-auto flex max-w-[1440px] flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between md:px-8 md:py-5">
+          <div className="flex w-full items-center justify-between sm:w-auto">
+            <Link href="/" className="flex items-center">
+              <div className="flex h-9 items-center overflow-hidden md:h-10">
                 <img
                   src="/images/logo.png"
                   alt="Genim Logo"
-                  className="h-[200px] w-auto max-w-none object-contain"
+                  className="h-[110px] w-auto max-w-none object-contain md:h-[150px]"
                 />
               </div>
             </Link>
+
+            <div className="sm:hidden">
+              <DashboardLink />
+            </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:items-center sm:gap-3">
             <div className="hidden rounded-full border border-[#ddd4ca] bg-white px-4 py-2 text-sm text-[#555854] md:block">
               Session builder
             </div>
 
-            <DashboardLink />
+            <div className="hidden sm:block">
+              <DashboardLink />
+            </div>
 
-            <form action="/auth/signout" method="post">
+            <form action="/auth/signout" method="post" className="col-span-2 sm:col-span-1">
               <button
                 type="submit"
-                className="inline-flex items-center gap-2 rounded-full border border-[#d8d1c8] px-5 py-3 text-sm font-medium text-[#2b2c2a] transition hover:bg-white"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-[#d8d1c8] bg-white px-4 py-3 text-sm font-medium text-[#2b2c2a] transition hover:bg-[#faf7f3] sm:w-auto sm:px-5"
               >
                 <LogOut className="h-4 w-4" />
                 Sign out
