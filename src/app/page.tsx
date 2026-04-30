@@ -18,6 +18,7 @@ import {
   Users,
   AudioWaveform,
 } from 'lucide-react'
+import { Menu, X } from 'lucide-react'
 
 function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
   return (
@@ -132,6 +133,8 @@ function StepCard({
 }
 
 export default function HomePage() {
+  const [menuOpen, setMenuOpen] = useState(false)
+
   return (
     <main className="min-h-screen bg-[#f7f3ee] text-[#1f1f1c]">
       <header className="sticky top-0 z-50 border-b border-[#e6ddd2]/90 bg-[#f7f3ee]/90 backdrop-blur">
@@ -141,7 +144,7 @@ export default function HomePage() {
               <img
                 src="/images/logo.png"
                 alt="Genim Logo"
-                className="h-[200px] w-auto max-w-none object-contain"
+                className="h-[110px] md:h-[160px] w-auto max-w-none object-contain"
               />
             </div>
           </Link>
@@ -156,27 +159,64 @@ export default function HomePage() {
           <div className="flex items-center gap-2 md:gap-3">
             <Link
               href="/login"
-              className="inline-flex rounded-full px-4 py-2 text-sm font-medium text-[#41433f] md:hidden"
-            >
-              Log in
-            </Link>
-
-            <Link
-              href="/login"
               className="hidden rounded-full px-5 py-3 text-sm font-medium text-[#41433f] transition hover:text-black md:inline-flex"
             >
               Log in
             </Link>
 
             <Link
-              href="/register"
+              href="/book-demo"
               className="inline-flex rounded-full bg-[#d6612d] px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-95 md:px-7 md:py-3 md:text-base"
             >
-              Start free
+              Book Demo
             </Link>
+            <button
+              onClick={() => setMenuOpen(true)}
+              className="inline-flex items-center justify-center rounded-full border border-[#e6ddd2] p-2 md:hidden"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
           </div>
         </div>
       </header>
+
+      {menuOpen && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm md:hidden">
+          <div className="absolute right-0 top-0 h-full w-[85%] max-w-sm bg-white shadow-xl p-6">
+            
+            <div className="flex items-center justify-between">
+              <span className="text-lg font-semibold">Menu</span>
+              <button onClick={() => setMenuOpen(false)}>
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+
+            <div className="mt-8 flex flex-col gap-6 text-lg">
+              <a href="#how-it-works" onClick={() => setMenuOpen(false)}>How it works</a>
+              <a href="#features" onClick={() => setMenuOpen(false)}>Features</a>
+              <a href="#teams" onClick={() => setMenuOpen(false)}>For teams</a>
+              <a href="/pricing" onClick={() => setMenuOpen(false)}>Pricing</a>
+              <a href="#faq" onClick={() => setMenuOpen(false)}>FAQ</a>
+            </div>
+
+            <div className="mt-10 flex flex-col gap-4">
+              <Link
+                href="/login"
+                className="w-full rounded-full border border-[#d8d1c8] px-5 py-3 text-center font-medium"
+              >
+                Log in
+              </Link>
+
+              <Link
+                href="/register"
+                className="w-full rounded-full bg-[#d6612d] px-5 py-3 text-center font-semibold text-white"
+              >
+                Start free
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
 
       <section className="relative overflow-hidden">
         <div className="absolute right-0 top-0 h-[620px] w-[45%] bg-[radial-gradient(circle_at_top_left,_rgba(223,122,72,0.18),_transparent_60%)]" />
@@ -187,19 +227,19 @@ export default function HomePage() {
               AI-powered sales training
             </div>
 
-            <h1 className="mt-8 text-[60px] leading-[0.94] tracking-[-0.05em] text-[#121210] md:text-[88px] lg:text-[90px]">
+            <h1 className="mt-6 text-[44px] leading-[1] tracking-[-0.05em] text-[#121210] sm:text-[60px] md:text-[78px] lg:text-[90px]">
               <span className="block">Practice selling.</span>
               <span className="block italic text-[#d6612d]">Close more</span>
               <span className="block text-[#1f4d38]">in real life.</span>
             </h1>
 
-            <p className="mt-8 max-w-[740px] text-[22px] leading-[1.7] text-[#4e504c]">
+            <p className="mt-6 text-[18px] leading-8 text-[#4e504c] md:mt-8 md:text-[22px] md:leading-[1.7]">
               Genim puts your reps in realistic sales conversations with AI
               buyers who object, challenge, stall, and push back — so when the
               real conversation happens, they know exactly how to respond.
             </p>
 
-            <div className="mt-10 flex flex-wrap items-center gap-4">
+            <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center">
               <Link
                 href="/register"
                 className="inline-flex items-center gap-3 rounded-full bg-[#d6612d] px-8 py-5 text-xl font-semibold text-white shadow-sm transition hover:opacity-95"
@@ -233,7 +273,7 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <p className="text-[28px] font-semibold tracking-[-0.02em] text-[#232320]">
+              <p className="text-xl md:text-[28px] font-semibold tracking-[-0.02em] text-[#232320]">
                 2,400+ reps{' '}
                 <span className="font-normal text-[#666864]">
                   already training on Genim
@@ -263,15 +303,15 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <div className="relative p-7 md:p-8">
-                <div className="rounded-[28px] border border-[#ece4da] bg-[#fcfaf8] p-6 shadow-[0_12px_40px_rgba(31,31,28,0.04)]">
-                  <div className="flex items-start gap-5">
+              <div className="relative p-4 sm:p-6 md:p-8">
+               <div className="rounded-[28px] border border-[#ece4da] bg-[#fcfaf8] p-4 shadow-[0_12px_40px_rgba(31,31,28,0.04)] sm:p-6">
+                  <div className="flex flex-col items-center gap-5 text-center sm:flex-row sm:items-start sm:text-left">
                     <div className="relative shrink-0">
                       <div className="rounded-full bg-white p-1.5 shadow-[0_12px_30px_rgba(31,77,56,0.14)]">
                         <img
                           src="https://randomuser.me/api/portraits/men/32.jpg"
                           alt="David Emmanuel"
-                          className="h-24 w-24 rounded-full object-cover"
+                          className="h-28 w-28 rounded-full object-cover sm:h-24 sm:w-24"
                         />
                       </div>
 
@@ -280,12 +320,12 @@ export default function HomePage() {
                       </div>
                     </div>
 
-                    <div className="min-w-0 flex-1">
+                   <div className="min-w-0 flex-1">
                       <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8a8d87]">
                         Featured buyer
                       </p>
 
-                      <h3 className="mt-2 text-[30px] font-semibold leading-none tracking-[-0.04em] text-[#181815]">
+                      <h3 className="mt-2 text-[28px] font-semibold leading-tight tracking-[-0.04em] text-[#181815] sm:text-[30px] sm:leading-none">
                         David Cole
                       </h3>
 
@@ -297,7 +337,7 @@ export default function HomePage() {
                         Northstar Revenue Systems
                       </p>
 
-                      <div className="mt-4 flex flex-wrap gap-2">
+                      <div className="mt-4 flex flex-wrap justify-center gap-2 sm:justify-start">
                         <span className="rounded-full border border-[#e8ddd2] bg-white px-3 py-1.5 text-xs font-medium text-[#4d4f4a]">
                           SaaS
                         </span>
@@ -311,7 +351,7 @@ export default function HomePage() {
                     </div>
                   </div>
 
-                  <div className="mt-6 grid grid-cols-3 gap-3">
+                  <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
                     <div className="rounded-[18px] border border-[#eadfd4] bg-white px-4 py-3">
                       <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8a8d87]">
                         Priority
