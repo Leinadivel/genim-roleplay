@@ -151,20 +151,20 @@ function VoiceWave({
   const barColor = tone === 'green' ? 'bg-[#1f4d38]' : 'bg-[#d6612d]'
 
   return (
-    <div className="rounded-[24px] border border-[#ece4da] bg-white p-5">
-      <div className="mb-4 flex items-center justify-between">
+    <div className="rounded-[20px] border border-[#ece4da] bg-white p-3 md:rounded-[24px] md:p-5">
+      <div className="mb-2 flex items-center justify-between md:mb-4">
         <div className="text-sm font-semibold text-[#1a1a17]">{label}</div>
         <div className="text-xs font-medium text-[#7d7f7a]">
           {active ? 'Active' : 'Idle'}
         </div>
       </div>
 
-      <div className="flex h-20 items-center justify-center gap-1.5">
+      <div className="flex h-10 items-center justify-center gap-1 md:h-20 md:gap-1.5">
         {[24, 42, 64, 36, 58, 76, 44, 28, 52, 68, 38, 26].map(
           (height, index) => (
             <span
               key={index}
-              className={`w-2 rounded-full ${barColor} ${
+              className={`w-1.5 rounded-full md:w-2 ${barColor} ${
                 active ? 'animate-pulse opacity-100' : 'opacity-25'
               }`}
               style={{
@@ -688,20 +688,20 @@ export default function SessionPage() {
   return (
   <main className="min-h-screen bg-[#f7f3ee] text-[#1f1f1c]">
     <header className="border-b border-[#e6ddd2] bg-[#f7f3ee]">
-      <div className="mx-auto flex max-w-[1440px] items-center justify-between px-6 py-5 md:px-8">
+      <div className="mx-auto flex max-w-[1440px] flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between md:px-8 md:py-5">
         <Link
           href="/scenarios"
-          className="inline-flex items-center gap-2 rounded-full border border-[#d8d1c8] bg-white px-4 py-2 text-sm font-medium text-[#2b2c2a] shadow-sm hover:bg-[#faf7f3]"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-[#d8d1c8] bg-white px-4 py-2 text-sm font-medium text-[#2b2c2a] shadow-sm hover:bg-[#faf7f3] sm:w-auto"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to scenarios
         </Link>
 
-        <div className="flex items-center gap-3">
+        <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:items-center sm:gap-3">
           <button
             type="button"
             onClick={handleCancelRoleplay}
-            className="inline-flex items-center gap-2 rounded-full border border-[#d8d1c8] bg-white px-4 py-2 text-sm font-medium text-[#2b2c2a] shadow-sm hover:bg-[#faf7f3]"
+            className="inline-flex items-center justify-center gap-2 rounded-full border border-[#d8d1c8] bg-white px-3 py-2 text-xs font-medium text-[#2b2c2a] shadow-sm hover:bg-[#faf7f3] sm:px-4 sm:text-sm"
           >
             <X className="h-4 w-4" />
             Cancel roleplay
@@ -711,7 +711,7 @@ export default function SessionPage() {
             type="button"
             onClick={handleCompleteSession}
             disabled={completing}
-            className="inline-flex items-center gap-2 rounded-full bg-[#1f4d38] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-95 disabled:opacity-50"
+            className="inline-flex items-center justify-center gap-2 rounded-full bg-[#1f4d38] px-3 py-2 text-xs font-semibold text-white shadow-sm hover:opacity-95 disabled:opacity-50 sm:px-4 sm:text-sm"
           >
             {completing ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -724,15 +724,15 @@ export default function SessionPage() {
       </div>
     </header>
 
-    <div className="mx-auto max-w-[1440px] px-6 py-8 md:px-8">
-      <div className="mb-6">
+    <div className="mx-auto max-w-[1440px] px-4 py-4 md:px-8 md:py-8">
+      <div className="mb-3 md:mb-6">
         <p className="text-sm font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
           Live roleplay
         </p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-[-0.03em] text-[#171714]">
+        <h1 className="mt-1 text-2xl font-semibold tracking-[-0.03em] text-[#171714] md:mt-2 md:text-3xl">
           AI Sales Roleplay Session
         </h1>
-        <p className="mt-2 text-sm leading-7 text-[#5f625d]">
+        <p className="mt-1 text-sm leading-6 text-[#5f625d] md:mt-2 md:leading-7">
           Speak naturally, handle objections, and practise your flow.
         </p>
       </div>
@@ -744,7 +744,7 @@ export default function SessionPage() {
       ) : null}
 
       <div className="grid gap-6 xl:grid-cols-[0.4fr_0.6fr]">
-        <aside className="space-y-6">
+        <aside className="order-2 space-y-6 xl:order-1">
           <div className="overflow-hidden rounded-[28px] border border-[#e8ded3] bg-white shadow-[0_14px_40px_rgba(25,25,20,0.05)]">
             <div className="bg-[linear-gradient(135deg,#f7ede6_0%,#eef5f0_100%)] px-6 py-6">
               <div className="flex items-start gap-4">
@@ -895,7 +895,7 @@ export default function SessionPage() {
           </div>
         </aside>
 
-        <section className="rounded-[28px] border border-[#e8ded3] bg-white p-5 shadow-[0_14px_40px_rgba(25,25,20,0.05)]">
+        <section className="order-1 rounded-[28px] border border-[#e8ded3] bg-white p-4 shadow-[0_14px_40px_rgba(25,25,20,0.05)] xl:order-2 xl:p-5">
           <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
               <h2 className="text-lg font-semibold text-[#181815]">
@@ -907,7 +907,7 @@ export default function SessionPage() {
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <div className="rounded-full border border-[#d6612d] bg-[#fff3ed] px-5 py-2 text-base font-bold text-[#a84922] shadow-sm">
+              <div className="w-full rounded-full border border-[#d6612d] bg-[#fff3ed] px-5 py-3 text-center text-base font-bold text-[#a84922] shadow-sm md:w-auto md:py-2">
                 {remainingSeconds !== null
                   ? `Time left: ${formatTimer(remainingSeconds)}`
                   : `Elapsed: ${formatTimer(elapsedSeconds)}`}
@@ -929,14 +929,14 @@ export default function SessionPage() {
             </div>
           </div>
 
-          <div className="rounded-[24px] border border-[#efe6dc] bg-[#fcfaf8] p-5">
+          <div className="rounded-[24px] border border-[#efe6dc] bg-[#fcfaf8] p-3 md:p-5">
             {loading ? (
-              <div className="flex min-h-[420px] items-center justify-center gap-2 text-sm text-[#666864]">
+              <div className="flex min-h-[260px] items-center justify-center gap-2 text-sm text-[#666864] md:min-h-[420px]">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 Loading call...
               </div>
             ) : isRinging ? (
-              <div className="flex min-h-[420px] items-center justify-center">
+              <div className="flex min-h-[260px] items-center justify-center md:min-h-[420px]">
                 <div className="rounded-[22px] border border-[#eadfd4] bg-white px-8 py-8 text-center shadow-sm">
                   <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#fff3ed] text-[#d6612d]">
                     <PhoneCall className="h-6 w-6" />
@@ -951,33 +951,39 @@ export default function SessionPage() {
               </div>
             ) : (
               <div className="space-y-5">
-                <div className="grid gap-5 md:grid-cols-2">
-                  <VoiceWave
-                    active={isListening}
-                    label="You"
-                    tone="orange"
-                  />
+                <div className="space-y-3">
+                  <div className="flex justify-start">
+                    <div className="w-[82%] max-w-[360px]">
+                      <VoiceWave
+                        active={aiTyping || aiSpeaking}
+                        label={sessionMeta?.buyer_persona?.name || 'AI buyer'}
+                        tone="green"
+                      />
+                    </div>
+                  </div>
 
-                  <VoiceWave
-                    active={aiTyping || aiSpeaking}
-                    label={sessionMeta?.buyer_persona?.name || 'AI buyer'}
-                    tone="green"
-                  />
+                  <div className="flex justify-end">
+                    <div className="w-[82%] max-w-[360px]">
+                      <VoiceWave
+                        active={isListening}
+                        label="You"
+                        tone="orange"
+                      />
+                    </div>
+                  </div>
                 </div>
 
-                <div className="rounded-[24px] border border-[#ece4da] bg-white p-6 text-center">
-                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#f7ede6] text-[#d6612d]">
+                <div className="rounded-[22px] border border-[#ece4da] bg-white p-4 text-center md:rounded-[24px] md:p-6">
+                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#f7ede6] text-[#d6612d] md:h-16 md:w-16">
                     <Waves className="h-7 w-7" />
                   </div>
 
-                  <h3 className="mt-4 text-2xl font-semibold text-[#181815]">
+                  <h3 className="mt-3 text-xl font-semibold text-[#181815] md:mt-4 md:text-2xl">
                     {callReady ? 'Call is live' : 'Preparing call'}
                   </h3>
 
                   <p className="mx-auto mt-2 max-w-[520px] text-sm leading-7 text-[#666864]">
-                    Tap the microphone, speak your response, and Genim will send it to
-                    the AI buyer. The buyer replies with voice while your transcript is
-                    saved for the final report.
+                    Tap the microphone to start speaking.
                   </p>
 
                   {input ? (
@@ -992,14 +998,14 @@ export default function SessionPage() {
                     type="button"
                     onClick={handleMicClick}
                     disabled={micDisabled && !isListening}
-                    className={`inline-flex flex-1 items-center justify-center gap-2 rounded-full px-6 py-4 text-sm font-semibold shadow-sm transition disabled:opacity-50 ${
+                    className={`inline-flex flex-1 items-center justify-center gap-3 rounded-full px-6 py-5 text-base font-bold shadow-sm transition disabled:opacity-50 md:py-4 md:text-sm ${
                       isListening
                         ? 'bg-red-500 text-white'
                         : 'bg-[#d6612d] text-white hover:opacity-95'
                     }`}
                   >
                     <Mic className="h-4 w-4" />
-                    {isListening ? 'End microphone' : 'Start microphone'}
+                    {isListening ? 'Stop speaking' : callReady ? 'Tap to start speaking' : 'Waiting for call...'}
                   </button>
 
                   {/* <button
