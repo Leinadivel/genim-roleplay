@@ -13,9 +13,18 @@ type EvaluationPayload = {
 function clampScore(value: unknown) {
   const score = typeof value === 'number' ? value : Number(value)
 
-  if (!Number.isFinite(score)) return 50
+  if (!Number.isFinite(score)) return 0
 
   return Math.max(0, Math.min(100, Math.round(score)))
+}
+
+function getSellerMessages(
+  messages: { speaker: string; message_text: string }[]
+) {
+  return messages.filter(
+    (message) =>
+      message.speaker === 'user' && message.message_text.trim().length > 0
+  )
 }
 
 export async function POST(req: Request) {
@@ -51,6 +60,81 @@ export async function POST(req: Request) {
     }
 
     const messages = await getSessionMessages(sessionId)
+    const sellerMessages = getSellerMessages(messages)
+
+    if (sellerMessages.length === 0) {
+      const emptyFeedback =
+        'No seller response was recorded, so this session cannot be evaluated as a completed roleplay.'
+
+      const { error: updateError } = await supabase
+        .from('roleplay_sessions')
+        .update({
+          overall_score: 0,
+          strengths: [],
+          improvements: [
+            'Start the conversation before ending the roleplay.',
+            'Use the microphone or text box to give at least one seller response.',
+          ],
+          summary: emptyFeedback,
+          status: 'evaluated',
+        })
+        .eq('id', sessionId)
+
+      if (updateError) {
+        throw new Error(updateError.message)
+      }
+
+      return NextResponse.json({
+        evaluation: {
+          score: 0,
+          strengths: [],
+          improvements: [
+            'Start the conversation before ending the roleplay.',
+            'Use the microphone or text box to give at least one seller response.',
+          ],
+          feedback: emptyFeedback,
+        },
+      })
+    }
+
+    const sellerWordCount = sellerMessages
+      .map((message) => message.message_text.trim().split(/\s+/).length)
+      .reduce((sum, count) => sum + count, 0)
+
+    if (sellerWordCount < 8) {
+      const shortFeedback =
+        'The seller response was too short to evaluate meaningfully. A complete roleplay needs enough conversation to judge opening, discovery, objection handling, value communication, and next-step control.'
+
+      const { error: updateError } = await supabase
+        .from('roleplay_sessions')
+        .update({
+          overall_score: 15,
+          strengths: [],
+          improvements: [
+            'Give a fuller seller response before ending the session.',
+            'Ask questions, communicate value, and attempt to secure a next step.',
+          ],
+          summary: shortFeedback,
+          status: 'evaluated',
+        })
+        .eq('id', sessionId)
+
+      if (updateError) {
+        throw new Error(updateError.message)
+      }
+
+      return NextResponse.json({
+        evaluation: {
+          score: 15,
+          strengths: [],
+          improvements: [
+            'Give a fuller seller response before ending the session.',
+            'Ask questions, communicate value, and attempt to secure a next step.',
+          ],
+          feedback: shortFeedback,
+        },
+      })
+    }
 
     const transcript =
       messages.map((m) => `${m.speaker}: ${m.message_text}`).join('\n') || ''
@@ -64,17 +148,19 @@ export async function POST(req: Request) {
           role: 'system',
           content: `You are a strict but fair sales roleplay evaluator.
 
-You must evaluate the seller based on the selected roleplay type, objective, and actual outcome.
+Evaluate ONLY the seller, not the AI buyer.
 
-Critical scoring rules:
+Hard scoring rules:
+- If the seller gave no meaningful response, the score must be 0 to 15.
+- If the seller only gave a very short response, the score must stay below 30.
+- Do not reward the seller for buyer messages.
+- Do not invent success. Only score based on what the seller actually said.
 - If the selected roleplay type is Cold Call and the seller successfully books a meeting, demo, follow-up, or clear next step, the score should usually be 70 or above.
-- Do not give a very low score if the seller achieved the main objective.
 - A score below 30 should only happen if the seller barely engaged, was incoherent, ignored the buyer, or failed the conversation completely.
 - Reward clear next steps, booked meetings, buyer engagement, relevant value communication, confident opening, and strong listening.
 - Penalize weak discovery, generic pitching, poor objection handling, unclear value, or no next step.
-- Be realistic, not overly harsh.
 
-Return JSON ONLY in this format:
+Return JSON ONLY:
 {
   "score": number,
   "strengths": ["string"],
@@ -95,12 +181,15 @@ Pain level: ${session.selected_pain_level ?? 'Not specified'}
 Company stage: ${session.selected_company_stage ?? 'Not specified'}
 Time pressure: ${session.selected_time_pressure ?? 'Not specified'}
 
+Seller message count: ${sellerMessages.length}
+Seller word count: ${sellerWordCount}
+
 Transcript:
 ${transcript}
 `,
         },
       ],
-      temperature: 0.4,
+      temperature: 0.2,
     })
 
     const raw = completion.choices[0]?.message?.content || '{}'

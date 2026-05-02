@@ -219,7 +219,7 @@ export default function SessionPage() {
     if (messages.length === 0) return
 
     bottomRef.current.scrollIntoView({
-      behavior: 'smooth',
+      behavior: 'auto',
       block: 'nearest',
     })
   }, [messages.length])
@@ -397,17 +397,23 @@ export default function SessionPage() {
       })
     } finally {
       setAiSpeaking(false)
-      if (keepMicActiveRef.current) {
-        window.setTimeout(() => {
-          handleMicClick()
-        }, 500)
-      }
     }
   }
 
   async function sendCurrentInput(textOverride?: string) {
     const messageText = (textOverride ?? input).trim()
     if (!messageText || sending || aiTyping || aiSpeaking || !callReady) return
+
+    keepMicActiveRef.current = false
+    autoSendAfterSpeechRef.current = false
+
+    if (silenceTimerRef.current) {
+      window.clearTimeout(silenceTimerRef.current)
+      silenceTimerRef.current = null
+    }
+
+    recognitionRef.current?.stop()
+    setIsListening(false)
 
     try {
       setSending(true)
@@ -474,7 +480,17 @@ export default function SessionPage() {
     await sendCurrentInput()
   }
 
+  const hasSellerMessages = messages.some(
+    (message) =>
+      message.speaker === 'user' && message.message_text.trim().length > 0
+  )
+
   async function handleCompleteSession() {
+    if (!hasSellerMessages) {
+      setError('You need to speak or type at least one seller response before ending the session.')
+      return
+    }
+
     try {
       setCompleting(true)
       setError(null)
@@ -508,7 +524,7 @@ export default function SessionPage() {
     }
   }
 
-  function handleCancelRoleplay() {
+  async function handleCancelRoleplay() {
     recognitionRef.current?.stop()
 
     if (audioRef.current) {
@@ -523,9 +539,19 @@ export default function SessionPage() {
       'Cancel this roleplay and go back to scenarios?'
     )
 
-    if (confirmed) {
-      router.push('/scenarios')
+    if (!confirmed) return
+
+    try {
+      await fetch('/api/roleplay/cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId }),
+      })
+    } catch (err) {
+      console.error('Failed to cancel session:', err)
     }
+
+    router.push('/scenarios')
   }
 
   function handleMicClick() {
@@ -665,6 +691,9 @@ export default function SessionPage() {
             !aiTyping &&
             !aiSpeaking
           ) {
+            keepMicActiveRef.current = false
+            recognitionRef.current?.stop()
+            setIsListening(false)
             void sendCurrentInput(finalInput)
           }
         }, 1800)
@@ -901,7 +930,7 @@ export default function SessionPage() {
           </div>
         </aside>
 
-        <section className="order-1 rounded-[28px] border border-[#e8ded3] bg-white p-4 shadow-[0_14px_40px_rgba(25,25,20,0.05)] xl:order-2 xl:p-5">
+        <section className="order-1 rounded-[28px] border border-[#e8ded3] bg-white p-4 shadow-[0_14px_40px_rgba(25,25,20,0.05)] xl:order-2 xl:p-5 h-[calc(100vh-140px)] overflow-hidden flex flex-col">
           <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
               <h2 className="text-lg font-semibold text-[#181815]">
@@ -935,7 +964,7 @@ export default function SessionPage() {
             </div>
           </div>
 
-          <div className="rounded-[24px] border border-[#efe6dc] bg-[#fcfaf8] p-3 md:p-5">
+          <div className="rounded-[24px] border border-[#efe6dc] bg-[#fcfaf8] p-3 md:p-5 flex-1 overflow-y-auto">
             {loading ? (
               <div className="flex min-h-[260px] items-center justify-center gap-2 text-sm text-[#666864] md:min-h-[420px]">
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -1021,6 +1050,26 @@ export default function SessionPage() {
                   >
                     {showTranscript ? 'Hide transcript' : 'Show transcript'}
                   </button> */}
+                </div>
+                
+                <div className="mt-3 flex flex-col gap-3 md:flex-row">
+                  <input
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder="If the microphone fails, type your response here..."
+                    disabled={!callReady || sending || aiTyping || aiSpeaking}
+                    className="min-h-[52px] flex-1 rounded-full border border-[#ddd4ca] bg-white px-5 text-sm outline-none disabled:opacity-50"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={handleSend}
+                    disabled={sendDisabled}
+                    className="inline-flex items-center justify-center rounded-full bg-[#1f4d38] px-6 py-4 text-sm font-semibold text-white disabled:opacity-50"
+                  >
+                    Send response
+                  </button>
                 </div>
 
                 {/* {showTranscript ? (
