@@ -6,6 +6,7 @@ import {
   CreditCard,
   LayoutDashboard,
   LogOut,
+  UserCog,
   Users,
 } from 'lucide-react'
 import { getGenimAdmin } from '@/lib/genim-admin'
@@ -46,6 +47,8 @@ export default async function AdminDashboardPage() {
     { count: companyCount },
     { count: activeSubscriptionCount },
     { count: pendingSeatRequestCount },
+    { count: userCount },
+    { count: inactiveUserCount },
     { data: seatRequests },
     { data: companies },
   ] = await Promise.all([
@@ -58,6 +61,11 @@ export default async function AdminDashboardPage() {
       .from('company_seat_requests')
       .select('*', { count: 'exact', head: true })
       .eq('status', 'pending'),
+    adminClient.from('profiles').select('*', { count: 'exact', head: true }),
+    adminClient
+      .from('profiles')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'inactive'),
     adminClient
       .from('company_seat_requests')
       .select('id, company_id, requested_by, requested_seats, note, status, created_at')
@@ -121,7 +129,7 @@ export default async function AdminDashboardPage() {
             </Link>
           </div>
 
-          <div className="mt-8 grid gap-5 md:grid-cols-3">
+         <div className="mt-8 grid gap-5 md:grid-cols-5">
             <div className="rounded-[24px] border border-[#e8ded3] bg-[#faf8f5] p-6">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#f7ede6] text-[#d6612d]">
                 <Building2 className="h-6 w-6" />
@@ -155,6 +163,30 @@ export default async function AdminDashboardPage() {
               </div>
               <div className="mt-2 text-3xl font-semibold text-[#181815]">
                 {pendingSeatRequestCount ?? 0}
+              </div>
+            </div>
+
+            <div className="rounded-[24px] border border-[#e8ded3] bg-[#faf8f5] p-6">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#eef5f0] text-[#1f4d38]">
+                <UserCog className="h-6 w-6" />
+              </div>
+              <div className="mt-5 text-sm font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
+                Users
+              </div>
+              <div className="mt-2 text-3xl font-semibold text-[#181815]">
+                {userCount ?? 0}
+              </div>
+            </div>
+
+            <div className="rounded-[24px] border border-[#e8ded3] bg-[#faf8f5] p-6">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#f7ede6] text-[#d6612d]">
+                <Users className="h-6 w-6" />
+              </div>
+              <div className="mt-5 text-sm font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
+                Inactive users
+              </div>
+              <div className="mt-2 text-3xl font-semibold text-[#181815]">
+                {inactiveUserCount ?? 0}
               </div>
             </div>
           </div>
@@ -222,6 +254,14 @@ export default async function AdminDashboardPage() {
               </div>
 
               <div className="mt-5 space-y-3">
+                <Link
+                  href="/admin/users"
+                  className="flex items-center justify-between rounded-[20px] border border-[#e8ded3] bg-white px-5 py-4 text-sm font-semibold text-[#1f1f1c] transition hover:bg-[#fff8f3]"
+                >
+                  Users & companies
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+                
                 <Link
                   href="/admin/billing"
                   className="flex items-center justify-between rounded-[20px] border border-[#e8ded3] bg-white px-5 py-4 text-sm font-semibold text-[#1f1f1c] transition hover:bg-[#fff8f3]"
