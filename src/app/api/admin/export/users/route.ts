@@ -18,6 +18,8 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const from = searchParams.get('from')
   const to = searchParams.get('to')
+  const q = searchParams.get('q')?.trim() || ''
+  const accountType = searchParams.get('accountType')?.trim() || ''
 
   let profilesQuery = adminClient
     .from('profiles')
@@ -42,6 +44,18 @@ export async function GET(request: Request) {
     const toDate = new Date(to)
     toDate.setDate(toDate.getDate() + 1)
     profilesQuery = profilesQuery.lt('created_at', toDate.toISOString())
+  }
+
+  if (accountType === 'individual') {
+    profilesQuery = profilesQuery.or('account_type.is.null,account_type.eq.individual')
+  }
+
+  if (accountType === 'team') {
+    profilesQuery = profilesQuery.eq('account_type', 'team')
+  }
+
+  if (q) {
+    profilesQuery = profilesQuery.or(`email.ilike.%${q}%,full_name.ilike.%${q}%`)
   }
 
   const { data: profiles, error } = await profilesQuery

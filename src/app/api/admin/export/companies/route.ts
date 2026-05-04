@@ -7,7 +7,7 @@ function csvEscape(value: unknown) {
   return `"${text.replace(/"/g, '""')}"`
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   const { user, admin } = await getGenimAdmin()
 
   if (!user || !admin) {
@@ -15,11 +15,35 @@ export async function GET() {
   }
 
   const adminClient = createAdminClient()
+  const { searchParams } = new URL(request.url)
 
-  const { data: companies, error } = await adminClient
+  const from = searchParams.get('from')
+  const to = searchParams.get('to')
+  const q = searchParams.get('q')?.trim() || ''
+
+  let companiesQuery = adminClient
     .from('companies')
     .select('id, name, slug, team_size, created_at')
     .order('created_at', { ascending: false })
+
+  if (q) {
+    companiesQuery = companiesQuery.or(`name.ilike.%${q}%,slug.ilike.%${q}%`)
+  }
+
+  if (from) {
+    companiesQuery = companiesQuery.gte(
+      'created_at',
+      new Date(from).toISOString()
+    )
+  }
+
+  if (to) {
+    const toDate = new Date(to)
+    toDate.setDate(toDate.getDate() + 1)
+    companiesQuery = companiesQuery.lt('created_at', toDate.toISOString())
+  }
+
+  const { data: companies, error } = await companiesQuery
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
@@ -27,11 +51,19 @@ export async function GET() {
 
   const { data: memberships } = await adminClient
     .from('company_members')
-    .select('company_id, email, role, status')
+    .select('company_id, user_id, email, role, status')
+
+  const { data: profiles } = await adminClient
+    .from('profiles')
+    .select('id, email, full_name')
 
   const { data: companySubs } = await adminClient
     .from('company_subscriptions')
-    .select('company_id, status, seat_limit, amount_due, currency, current_period_end')
+    .select(
+      'company_id, status, seat_limit, amount_due, currency, current_period_end'
+    )
+
+  const profileMap = new Map((profiles ?? []).map((p) => [p.id, p]))
 
   const subMap = new Map(
     (companySubs ?? []).map((sub) => [sub.company_id, sub])
@@ -53,6 +85,14 @@ export async function GET() {
     'Created At',
   ]
 
+  const getMemberEmail = (member: {
+    user_id: string | null
+    email: string | null
+  }) => {
+    const profile = member.user_id ? profileMap.get(member.user_id) : null
+    return member.email || profile?.email || ''
+  }
+
   const rows = (companies ?? []).map((company) => {
     const companyMembers = (memberships ?? []).filter(
       (member) => member.company_id === company.id
@@ -60,19 +100,19 @@ export async function GET() {
 
     const owners = companyMembers
       .filter((member) => member.role === 'owner')
-      .map((member) => member.email)
+      .map(getMemberEmail)
       .filter(Boolean)
       .join('; ')
 
     const managers = companyMembers
       .filter((member) => member.role === 'manager')
-      .map((member) => member.email)
+      .map(getMemberEmail)
       .filter(Boolean)
       .join('; ')
 
     const admins = companyMembers
       .filter((member) => member.role === 'admin')
-      .map((member) => member.email)
+      .map(getMemberEmail)
       .filter(Boolean)
       .join('; ')
 
