@@ -42,6 +42,14 @@ export default async function CandidateAssessmentPage({
       status,
       expires_at,
       scenario_id,
+      selected_industry,
+      selected_buyer_mood,
+      selected_buyer_role,
+      selected_deal_size,
+      selected_pain_level,
+      selected_company_stage,
+      selected_time_pressure,
+      selected_roleplay_type,
       scenarios (
         id,
         title,
@@ -135,7 +143,27 @@ export default async function CandidateAssessmentPage({
                         Industry
                       </div>
                       <div className="mt-2 text-sm font-semibold text-[#1a1a17]">
-                        {scenario?.industry || 'General'}
+                        {assessment.selected_industry || scenario?.industry || 'General'}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="rounded-[18px] border border-[#ece4da] bg-white px-4 py-4">
+                      <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
+                        Roleplay type
+                      </div>
+                      <div className="mt-2 text-sm font-semibold text-[#1a1a17]">
+                        {assessment.selected_roleplay_type || '—'}
+                      </div>
+                    </div>
+
+                    <div className="rounded-[18px] border border-[#ece4da] bg-white px-4 py-4">
+                      <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
+                        Buyer role
+                      </div>
+                      <div className="mt-2 text-sm font-semibold text-[#1a1a17]">
+                        {assessment.selected_buyer_role || '—'}
                       </div>
                     </div>
                   </div>

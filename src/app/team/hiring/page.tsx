@@ -18,6 +18,16 @@ import {
 import { createClient } from '@/lib/supabase/server'
 import CopyLinkButton from './copy-link-button'
 import RowActionMenu from '../../../components/row-action-menu'
+import {
+  BUYER_MOOD_OPTIONS,
+  INDUSTRY_OPTIONS,
+  ROLEPLAY_TYPE_OPTIONS,
+  DEAL_SIZE_OPTIONS,
+  PAIN_LEVEL_OPTIONS,
+  COMPANY_STAGE_OPTIONS,
+  TIME_PRESSURE_OPTIONS,
+  BUYER_ROLE_OPTIONS,
+} from '@/types/roleplay'
 
 type ScenarioRow = {
   id: string
@@ -375,6 +385,157 @@ export default async function TeamHiringPage() {
                     placeholder="candidate@example.com"
                     className="w-full rounded-2xl border border-[#ddd4ca] bg-[#fcfaf8] px-4 py-4 text-[15px] text-[#1f1f1c] outline-none placeholder:text-[#9a9c97]"
                   />
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-[#343631]">
+                      Industry
+                    </label>
+                    <select
+                      name="selectedIndustry"
+                      required
+                      className="w-full rounded-2xl border border-[#ddd4ca] bg-[#fcfaf8] px-4 py-4 text-[15px] text-[#1f1f1c] outline-none"
+                    >
+                      <option value="">Select industry</option>
+                      {INDUSTRY_OPTIONS.map((industry) => (
+                        <option key={industry} value={industry}>
+                          {industry}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-[#343631]">
+                      Buyer mood
+                    </label>
+                    <select
+                      name="selectedBuyerMood"
+                      required
+                      className="w-full rounded-2xl border border-[#ddd4ca] bg-[#fcfaf8] px-4 py-4 text-[15px] text-[#1f1f1c] outline-none"
+                    >
+                      <option value="">Select mood</option>
+                      {BUYER_MOOD_OPTIONS.map((mood) => (
+                        <option key={mood.value} value={mood.value}>
+                          {mood.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-[#343631]">
+                      Buyer role
+                    </label>
+                    <select
+                      name="selectedBuyerRole"
+                      required
+                      className="w-full rounded-2xl border border-[#ddd4ca] bg-[#fcfaf8] px-4 py-4 text-[15px] text-[#1f1f1c] outline-none"
+                    >
+                      <option value="">Select buyer role</option>
+                      {BUYER_ROLE_OPTIONS.map((role) => (
+                        <option key={role} value={role}>
+                          {role}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-[#343631]">
+                      Deal size <span className="text-[#8a8d87]">(optional)</span>
+                    </label>
+                    <select
+                      name="selectedDealSize"
+                      className="w-full rounded-2xl border border-[#ddd4ca] bg-[#fcfaf8] px-4 py-4 text-[15px] text-[#1f1f1c] outline-none"
+                    >
+                      <option value="">Select deal size</option>
+                      {DEAL_SIZE_OPTIONS.map((dealSize) => (
+                        <option key={dealSize} value={dealSize}>
+                          {dealSize}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-[#343631]">
+                      Pain level
+                    </label>
+                    <select
+                      name="selectedPainLevel"
+                      required
+                      className="w-full rounded-2xl border border-[#ddd4ca] bg-[#fcfaf8] px-4 py-4 text-[15px] text-[#1f1f1c] outline-none"
+                    >
+                      <option value="">Select pain level</option>
+                      {PAIN_LEVEL_OPTIONS.map((pain) => (
+                        <option key={pain.value} value={pain.value}>
+                          {pain.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-[#343631]">
+                      Company stage
+                    </label>
+                    <select
+                      name="selectedCompanyStage"
+                      required
+                      className="w-full rounded-2xl border border-[#ddd4ca] bg-[#fcfaf8] px-4 py-4 text-[15px] text-[#1f1f1c] outline-none"
+                    >
+                      <option value="">Select company stage</option>
+                      {COMPANY_STAGE_OPTIONS.map((stage) => (
+                        <option key={stage} value={stage}>
+                          {stage}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-[#343631]">
+                      Time pressure
+                    </label>
+                    <select
+                      name="selectedTimePressure"
+                      required
+                      className="w-full rounded-2xl border border-[#ddd4ca] bg-[#fcfaf8] px-4 py-4 text-[15px] text-[#1f1f1c] outline-none"
+                    >
+                      <option value="">Select time pressure</option>
+                      {TIME_PRESSURE_OPTIONS.map((time) => (
+                        <option key={time.value} value={time.value}>
+                          {time.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-[#343631]">
+                      Roleplay type
+                    </label>
+                    <select
+                      name="selectedRoleplayType"
+                      required
+                      className="w-full rounded-2xl border border-[#ddd4ca] bg-[#fcfaf8] px-4 py-4 text-[15px] text-[#1f1f1c] outline-none"
+                    >
+                      <option value="">Select roleplay type</option>
+                      {ROLEPLAY_TYPE_OPTIONS.map((type) => (
+                        <option key={type} value={type}>
+                          {type}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
                 <div>

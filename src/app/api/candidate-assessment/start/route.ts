@@ -140,6 +140,15 @@ export async function POST(request: Request) {
         mode: 'voice',
         status: 'live',
         started_at: new Date().toISOString(),
+
+        selected_industry: assessment.selected_industry ?? null,
+        selected_buyer_mood: assessment.selected_buyer_mood ?? null,
+        selected_buyer_role: assessment.selected_buyer_role ?? null,
+        selected_deal_size: assessment.selected_deal_size ?? null,
+        selected_pain_level: assessment.selected_pain_level ?? null,
+        selected_company_stage: assessment.selected_company_stage ?? null,
+        selected_time_pressure: assessment.selected_time_pressure ?? null,
+        selected_roleplay_type: assessment.selected_roleplay_type ?? null,
       })
       .select('id')
       .single()

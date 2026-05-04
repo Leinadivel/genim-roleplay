@@ -41,8 +41,26 @@ export async function POST(request: Request) {
     const note = String(formData.get('note') || '').trim()
     const expiresAtRaw = String(formData.get('expiresAt') || '').trim()
     const creatorTimezone = String(formData.get('creatorTimezone') || '').trim()
+    const selectedIndustry = String(formData.get('selectedIndustry') || '').trim()
+    const selectedBuyerMood = String(formData.get('selectedBuyerMood') || '').trim()
+    const selectedBuyerRole = String(formData.get('selectedBuyerRole') || '').trim()
+    const selectedDealSize = String(formData.get('selectedDealSize') || '').trim()
+    const selectedPainLevel = String(formData.get('selectedPainLevel') || '').trim()
+    const selectedCompanyStage = String(formData.get('selectedCompanyStage') || '').trim()
+    const selectedTimePressure = String(formData.get('selectedTimePressure') || '').trim()
+    const selectedRoleplayType = String(formData.get('selectedRoleplayType') || '').trim()
 
-    if (!candidateEmail || !scenarioId) {
+    if (
+      !candidateEmail ||
+      !scenarioId ||
+      !selectedIndustry ||
+      !selectedBuyerMood ||
+      !selectedBuyerRole ||
+      !selectedPainLevel ||
+      !selectedCompanyStage ||
+      !selectedTimePressure ||
+      !selectedRoleplayType
+    ) {
       return NextResponse.redirect(new URL('/team/hiring', request.url))
     }
 
@@ -96,6 +114,14 @@ export async function POST(request: Request) {
       access_token: accessToken,
       status: 'invited',
       expires_at: expiresAt,
+      selected_industry: selectedIndustry,
+      selected_buyer_mood: selectedBuyerMood,
+      selected_buyer_role: selectedBuyerRole,
+      selected_deal_size: selectedDealSize || null,
+      selected_pain_level: selectedPainLevel,
+      selected_company_stage: selectedCompanyStage,
+      selected_time_pressure: selectedTimePressure,
+      selected_roleplay_type: selectedRoleplayType,
     }
 
     if (creatorTimezone) {
