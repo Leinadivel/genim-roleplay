@@ -1,15 +1,12 @@
 import Link from 'next/link'
-import { redirect } from 'next/navigation'
 import {
   ArrowRight,
   Building2,
   CreditCard,
   LayoutDashboard,
-  LogOut,
   UserCog,
   Users,
 } from 'lucide-react'
-import { getGenimAdmin } from '@/lib/genim-admin'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 type SeatRequestRow = {
@@ -31,16 +28,10 @@ function formatDate(value: string) {
   return new Intl.DateTimeFormat('en-GB', {
     day: 'numeric',
     month: 'short',
-    year: 'numeric',
   }).format(new Date(value))
 }
 
 export default async function AdminDashboardPage() {
-  const { user, admin } = await getGenimAdmin()
-
-  if (!user) redirect('/login')
-  if (!admin) redirect('/scenarios')
-
   const adminClient = createAdminClient()
 
   const [
@@ -75,205 +66,149 @@ export default async function AdminDashboardPage() {
   ])
 
   const companyMap = new Map(
-    ((companies ?? []) as CompanyRow[]).map((company) => [company.id, company.name])
+    ((companies ?? []) as CompanyRow[]).map((c) => [c.id, c.name])
   )
 
   const requests = (seatRequests ?? []) as SeatRequestRow[]
 
   return (
-    <main className="min-h-screen bg-[#f7f3ee] text-[#1f1f1c]">
-      <header className="border-b border-[#e6ddd2] bg-[#f7f3ee]">
-        <div className="mx-auto flex max-w-[1240px] items-center justify-between px-6 py-5">
-          <Link href="/" className="flex h-10 items-center overflow-hidden">
-            <img
-              src="/images/logo.png"
-              alt="Genim Logo"
-              className="h-[120px] w-auto max-w-none object-contain"
-            />
-          </Link>
-
-          <form action="/auth/signout" method="post">
-            <button className="inline-flex items-center gap-2 rounded-full border border-[#d8d1c8] bg-white px-4 py-2 text-sm font-medium">
-              <LogOut className="h-4 w-4" />
-              Sign out
-            </button>
-          </form>
-        </div>
-      </header>
-
-      <section className="mx-auto max-w-[1240px] px-6 py-10">
-        <div className="rounded-[32px] border border-[#e8ded3] bg-white p-8 shadow-[0_14px_40px_rgba(25,25,20,0.05)]">
-          <div className="inline-flex items-center gap-2 rounded-full bg-[#eef5f0] px-4 py-2 text-sm font-medium text-[#1f4d38]">
-            <LayoutDashboard className="h-4 w-4" />
-            Genim admin
-          </div>
-
-          <div className="mt-5 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <h1 className="text-4xl font-semibold tracking-[-0.04em] text-[#171714]">
-                Admin dashboard
-              </h1>
-
-              <p className="mt-3 max-w-2xl text-sm leading-7 text-[#5f625d]">
-                Manage company billing, seat requests, invoices, and internal
-                Genim operations from one place.
-              </p>
-            </div>
-
-            <Link
-              href="/admin/billing"
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-[#d6612d] px-6 py-4 text-sm font-semibold text-white"
+    <div className="min-h-screen bg-[#f7f3ee] text-[#1f1f1c]">
+      <section className="mx-auto max-w-[1240px] px-6 py-8">
+        <div className="mt-6 grid gap-4 md:grid-cols-5">
+          {[
+            {
+              label: 'Companies',
+              value: companyCount ?? 0,
+              icon: <Building2 className="h-5 w-5" />,
+              tone: 'orange',
+            },
+            {
+              label: 'Active plans',
+              value: activeSubscriptionCount ?? 0,
+              icon: <CreditCard className="h-5 w-5" />,
+              tone: 'green',
+            },
+            {
+              label: 'Seat requests',
+              value: pendingSeatRequestCount ?? 0,
+              icon: <Users className="h-5 w-5" />,
+              tone: 'orange',
+            },
+            {
+              label: 'Users',
+              value: userCount ?? 0,
+              icon: <UserCog className="h-5 w-5" />,
+              tone: 'green',
+            },
+            {
+              label: 'Inactive',
+              value: inactiveUserCount ?? 0,
+              icon: <Users className="h-5 w-5" />,
+              tone: 'orange',
+            },
+          ].map((card, i) => (
+            <div
+              key={i}
+              className="rounded-2xl bg-white p-4 shadow-sm border border-[#eee6dc]"
             >
-              Create invoice
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
+              <div
+                className={`inline-flex h-9 w-9 items-center justify-center rounded-xl ${
+                  card.tone === 'green'
+                    ? 'bg-[#eef5f0] text-[#1f4d38]'
+                    : 'bg-[#f7ede6] text-[#d6612d]'
+                }`}
+              >
+                {card.icon}
+              </div>
 
-         <div className="mt-8 grid gap-5 md:grid-cols-5">
-            <div className="rounded-[24px] border border-[#e8ded3] bg-[#faf8f5] p-6">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#f7ede6] text-[#d6612d]">
-                <Building2 className="h-6 w-6" />
+              <div className="mt-3 text-xs text-[#7d7f7a]">
+                {card.label}
               </div>
-              <div className="mt-5 text-sm font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
-                Companies
-              </div>
-              <div className="mt-2 text-3xl font-semibold text-[#181815]">
-                {companyCount ?? 0}
+
+              <div className="mt-1 text-xl font-semibold">
+                {card.value}
               </div>
             </div>
+          ))}
+        </div>
 
-            <div className="rounded-[24px] border border-[#e8ded3] bg-[#faf8f5] p-6">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#eef5f0] text-[#1f4d38]">
-                <CreditCard className="h-6 w-6" />
-              </div>
-              <div className="mt-5 text-sm font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
-                Active team plans
-              </div>
-              <div className="mt-2 text-3xl font-semibold text-[#181815]">
-                {activeSubscriptionCount ?? 0}
-              </div>
+        <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_0.75fr]">
+          <div className="rounded-2xl bg-white p-5 shadow-sm border border-[#eee6dc]">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-[#1a1a17]">
+                Seat requests
+              </h2>
             </div>
 
-            <div className="rounded-[24px] border border-[#e8ded3] bg-[#faf8f5] p-6">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#f7ede6] text-[#d6612d]">
-                <Users className="h-6 w-6" />
-              </div>
-              <div className="mt-5 text-sm font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
-                Pending seat requests
-              </div>
-              <div className="mt-2 text-3xl font-semibold text-[#181815]">
-                {pendingSeatRequestCount ?? 0}
-              </div>
-            </div>
-
-            <div className="rounded-[24px] border border-[#e8ded3] bg-[#faf8f5] p-6">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#eef5f0] text-[#1f4d38]">
-                <UserCog className="h-6 w-6" />
-              </div>
-              <div className="mt-5 text-sm font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
-                Users
-              </div>
-              <div className="mt-2 text-3xl font-semibold text-[#181815]">
-                {userCount ?? 0}
-              </div>
-            </div>
-
-            <div className="rounded-[24px] border border-[#e8ded3] bg-[#faf8f5] p-6">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#f7ede6] text-[#d6612d]">
-                <Users className="h-6 w-6" />
-              </div>
-              <div className="mt-5 text-sm font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
-                Inactive users
-              </div>
-              <div className="mt-2 text-3xl font-semibold text-[#181815]">
-                {inactiveUserCount ?? 0}
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_0.75fr]">
-            <div className="rounded-[28px] border border-[#e8ded3] bg-white p-6">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <div className="text-sm font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
-                    Seat requests
-                  </div>
-                  <h2 className="mt-2 text-2xl font-semibold text-[#1a1a17]">
-                    Recent company requests
-                  </h2>
-                </div>
-              </div>
-
-              <div className="mt-5 space-y-3">
-                {requests.length > 0 ? (
-                  requests.map((request) => (
-                    <div
-                      key={request.id}
-                      className="rounded-[20px] border border-[#ece4da] bg-[#faf8f5] p-4"
-                    >
-                      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                        <div>
-                          <div className="text-base font-semibold text-[#1a1a17]">
-                            {companyMap.get(request.company_id) || 'Unknown company'}
-                          </div>
-
-                          <div className="mt-1 text-sm text-[#666864]">
-                            Requested seats: {request.requested_seats}
-                          </div>
-
-                          {request.note ? (
-                            <div className="mt-3 rounded-2xl border border-[#e8ded3] bg-white px-4 py-3 text-sm leading-7 text-[#5f625d]">
-                              {request.note}
-                            </div>
-                          ) : null}
+            <div className="mt-4 space-y-3">
+              {requests.length > 0 ? (
+                requests.map((r) => (
+                  <div
+                    key={r.id}
+                    className="rounded-xl border border-[#f0e7dd] bg-[#faf8f5] p-4"
+                  >
+                    <div className="flex justify-between">
+                      <div>
+                        <div className="text-sm font-semibold">
+                          {companyMap.get(r.company_id) || 'Unknown'}
+                        </div>
+                        <div className="text-xs text-[#7d7f7a]">
+                          {r.requested_seats} seats
                         </div>
 
-                        <div className="flex shrink-0 flex-col gap-3 text-sm text-[#666864]">
-                          <span>{formatDate(request.created_at)}</span>
-                          <Link
-                            href={`/admin/billing?companyId=${request.company_id}&seatLimit=${request.requested_seats}&requestId=${request.id}`}
-                            className="inline-flex items-center justify-center rounded-full bg-[#d6612d] px-4 py-2 text-xs font-semibold text-white"
-                          >
-                            Create invoice
-                          </Link>
-                        </div>
+                        {r.note && (
+                          <div className="mt-2 text-xs text-[#5f625d]">
+                            {r.note}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="text-right text-xs text-[#7d7f7a]">
+                        {formatDate(r.created_at)}
+
+                        <Link
+                          href={`/admin/billing?companyId=${r.company_id}&seatLimit=${r.requested_seats}&requestId=${r.id}`}
+                          className="mt-2 inline-block rounded-full bg-[#d6612d] px-3 py-1 text-[11px] font-medium text-white"
+                        >
+                          Invoice
+                        </Link>
                       </div>
                     </div>
-                  ))
-                ) : (
-                  <div className="rounded-[20px] border border-[#ece4da] bg-[#faf8f5] p-4 text-sm text-[#666864]">
-                    No pending seat requests yet.
                   </div>
-                )}
-              </div>
+                ))
+              ) : (
+                <div className="text-xs text-[#7d7f7a]">
+                  No pending requests
+                </div>
+              )}
             </div>
+          </div>
 
-            <div className="rounded-[28px] border border-[#e8ded3] bg-[#faf8f5] p-6">
-              <div className="text-sm font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
-                Admin actions
-              </div>
+          <div className="rounded-2xl bg-white p-5 shadow-sm border border-[#eee6dc]">
+            <h2 className="text-sm font-semibold text-[#1a1a17]">
+              Actions
+            </h2>
 
-              <div className="mt-5 space-y-3">
-                <Link
-                  href="/admin/users"
-                  className="flex items-center justify-between rounded-[20px] border border-[#e8ded3] bg-white px-5 py-4 text-sm font-semibold text-[#1f1f1c] transition hover:bg-[#fff8f3]"
-                >
-                  Users & companies
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-                
-                <Link
-                  href="/admin/billing"
-                  className="flex items-center justify-between rounded-[20px] border border-[#e8ded3] bg-white px-5 py-4 text-sm font-semibold text-[#1f1f1c] transition hover:bg-[#fff8f3]"
-                >
-                  Billing & invoices
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </div>
+            <div className="mt-4 space-y-3">
+              <Link
+                href="/admin/users/individuals"
+                className="flex items-center justify-between rounded-xl border border-[#eee6dc] bg-[#faf8f5] px-4 py-3 text-sm hover:bg-white"
+              >
+                Manage users
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+
+              <Link
+                href="/admin/billing"
+                className="flex items-center justify-between rounded-xl border border-[#eee6dc] bg-[#faf8f5] px-4 py-3 text-sm hover:bg-white"
+              >
+                Billing & invoices
+                <ArrowRight className="h-4 w-4" />
+              </Link>
             </div>
           </div>
         </div>
       </section>
-    </main>
+    </div>
   )
 }

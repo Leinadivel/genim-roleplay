@@ -9,6 +9,7 @@ import {
   Shield,
   UserCog,
   Users,
+  Download,
 } from 'lucide-react'
 import { getGenimAdmin } from '@/lib/genim-admin'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -151,6 +152,88 @@ export default async function AdminUsersPage() {
                 Add users, create companies, edit roles, activate/deactivate users,
                 delete users, and manually upgrade plans.
               </p>
+
+              <div className="mt-6 grid gap-4 lg:grid-cols-2">
+                <div className="rounded-[22px] border border-[#e8ded3] bg-[#faf8f5] p-4">
+                  <div className="text-sm font-semibold text-[#1a1a17]">
+                    Users export
+                  </div>
+
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    <a
+                      href="/api/admin/export/users"
+                      className="inline-flex items-center gap-2 rounded-full bg-[#1f4d38] px-5 py-3 text-sm font-semibold text-white"
+                    >
+                      <Download className="h-4 w-4" />
+                      Download all users
+                    </a>
+                  </div>
+
+                  <form action="/api/admin/export/users" method="get" className="mt-4">
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <input
+                        type="date"
+                        name="from"
+                        className="rounded-2xl border border-[#ddd4ca] bg-white px-4 py-3 text-sm"
+                      />
+
+                      <input
+                        type="date"
+                        name="to"
+                        className="rounded-2xl border border-[#ddd4ca] bg-white px-4 py-3 text-sm"
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="mt-4 inline-flex items-center gap-2 rounded-full border border-[#d8d1c8] bg-white px-5 py-3 text-sm font-semibold text-[#1f1f1c]"
+                    >
+                      <Download className="h-4 w-4" />
+                      Download users by date
+                    </button>
+                  </form>
+                </div>
+
+                <div className="rounded-[22px] border border-[#e8ded3] bg-[#faf8f5] p-4">
+                  <div className="text-sm font-semibold text-[#1a1a17]">
+                    Companies export
+                  </div>
+
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    <a
+                      href="/api/admin/export/companies"
+                      className="inline-flex items-center gap-2 rounded-full bg-[#d6612d] px-5 py-3 text-sm font-semibold text-white"
+                    >
+                      <Download className="h-4 w-4" />
+                      Download all companies
+                    </a>
+                  </div>
+
+                  <form action="/api/admin/export/companies" method="get" className="mt-4">
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <input
+                        type="date"
+                        name="from"
+                        className="rounded-2xl border border-[#ddd4ca] bg-white px-4 py-3 text-sm"
+                      />
+
+                      <input
+                        type="date"
+                        name="to"
+                        className="rounded-2xl border border-[#ddd4ca] bg-white px-4 py-3 text-sm"
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="mt-4 inline-flex items-center gap-2 rounded-full border border-[#d8d1c8] bg-white px-5 py-3 text-sm font-semibold text-[#1f1f1c]"
+                    >
+                      <Download className="h-4 w-4" />
+                      Download companies by date
+                    </button>
+                  </form>
+                </div>
+              </div>
             </div>
           </div>
 

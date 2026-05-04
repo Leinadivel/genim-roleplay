@@ -1,8 +1,5 @@
-import Link from 'next/link'
-import { redirect } from 'next/navigation'
-import { CreditCard, LogOut } from 'lucide-react'
+import { CreditCard, Send, ShieldCheck } from 'lucide-react'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { getGenimAdmin } from '@/lib/genim-admin'
 
 type AdminBillingPageProps = {
   searchParams: Promise<{
@@ -17,16 +14,6 @@ export default async function AdminBillingPage({
   searchParams,
 }: AdminBillingPageProps) {
   const params = await searchParams
-  const { user, admin } = await getGenimAdmin()
-
-  if (!user) {
-    redirect('/login')
-  }
-
-  if (!admin) {
-    redirect('/scenarios')
-  }
-
   const adminClient = createAdminClient()
 
   const { data: companies, error } = await adminClient
@@ -39,65 +26,55 @@ export default async function AdminBillingPage({
   }
 
   return (
-    <main className="min-h-screen bg-[#f7f3ee] text-[#1f1f1c]">
-      <header className="border-b border-[#e6ddd2] bg-[#f7f3ee]">
-        <div className="mx-auto flex max-w-[1100px] items-center justify-between px-6 py-5">
-          <Link href="/" className="flex h-10 items-center overflow-hidden">
-            <img
-              src="/images/logo.png"
-              alt="Genim Logo"
-              className="h-[120px] w-auto max-w-none object-contain"
-            />
-          </Link>
-
-          <form action="/auth/signout" method="post">
-            <button className="inline-flex items-center gap-2 rounded-full border border-[#d8d1c8] bg-white px-4 py-2 text-sm font-medium">
-              <LogOut className="h-4 w-4" />
-              Sign out
-            </button>
-          </form>
+    <div className="mx-auto max-w-[1180px] space-y-6">
+      <div className="rounded-2xl border border-[#eee6dc] bg-white p-5 shadow-sm">
+        <div className="inline-flex items-center gap-2 text-xs font-medium text-[#7d7f7a]">
+          <CreditCard className="h-4 w-4" />
+          Admin billing
         </div>
-      </header>
 
-      <section className="mx-auto max-w-[1100px] px-6 py-10">
-        <div className="rounded-[32px] border border-[#e8ded3] bg-white p-8 shadow-[0_14px_40px_rgba(25,25,20,0.05)]">
-          <div className="inline-flex items-center gap-2 rounded-full bg-[#f7ede6] px-4 py-2 text-sm font-medium text-[#d6612d]">
-            <CreditCard className="h-4 w-4" />
-            Genim admin billing
+        <div className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <h1 className="text-xl font-semibold text-[#171714]">
+              Create team invoice
+            </h1>
+            <p className="mt-1 max-w-2xl text-sm leading-6 text-[#666864]">
+              Send a Stripe invoice to a company billing email. Once paid, the
+              company subscription activates from the webhook automatically.
+            </p>
           </div>
 
-          <h1 className="mt-5 text-4xl font-semibold tracking-[-0.04em] text-[#171714]">
-            Create team invoice
-          </h1>
+          <div className="rounded-full border border-[#d7e6dc] bg-[#eef5f0] px-4 py-2 text-xs font-semibold text-[#1f4d38]">
+            Stripe invoice flow
+          </div>
+        </div>
 
-          <p className="mt-3 max-w-2xl text-sm leading-7 text-[#5f625d]">
-            Use this internal page to send a Stripe invoice to a company billing
-            email. Once paid, Stripe will activate the company subscription.
-          </p>
+        {params.sent === '1' ? (
+          <div className="mt-5 rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+            Invoice created and sent. The company subscription will activate
+            once payment is completed.
+          </div>
+        ) : null}
+      </div>
 
-          {params.sent === '1' ? (
-            <div className="mt-6 rounded-2xl border border-green-300 bg-green-50 px-4 py-3 text-sm text-green-700">
-              Invoice created and sent. The company subscription will activate
-              once payment is completed.
-            </div>
-          ) : null}
+      <div className="grid gap-6 lg:grid-cols-[1fr_0.42fr]">
+        <form
+          action="/api/admin/billing/create-invoice"
+          method="post"
+          className="rounded-2xl border border-[#eee6dc] bg-white p-5 shadow-sm"
+        >
+          <input type="hidden" name="requestId" value={params.requestId || ''} />
 
-          <form
-            action="/api/admin/billing/create-invoice"
-            method="post"
-            className="mt-8 grid gap-5"
-          >
-            <input type="hidden" name="requestId" value={params.requestId || ''} />
-
+          <div className="grid gap-5">
             <div>
-              <label className="mb-2 block text-sm font-medium">
+              <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
                 Company
               </label>
               <select
                 name="companyId"
                 required
                 defaultValue={params.companyId || ''}
-                className="w-full rounded-2xl border border-[#ddd4ca] bg-[#fcfaf8] px-4 py-4 text-sm outline-none"
+                className="w-full rounded-2xl border border-[#ddd4ca] bg-[#faf8f5] px-4 py-3 text-sm outline-none focus:bg-white"
               >
                 <option value="">Select company</option>
                 {(companies ?? []).map((company) => (
@@ -110,7 +87,7 @@ export default async function AdminBillingPage({
 
             <div className="grid gap-5 md:grid-cols-2">
               <div>
-                <label className="mb-2 block text-sm font-medium">
+                <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
                   Billing email
                 </label>
                 <input
@@ -118,12 +95,12 @@ export default async function AdminBillingPage({
                   name="billingEmail"
                   required
                   placeholder="admin@company.com"
-                  className="w-full rounded-2xl border border-[#ddd4ca] bg-[#fcfaf8] px-4 py-4 text-sm outline-none"
+                  className="w-full rounded-2xl border border-[#ddd4ca] bg-[#faf8f5] px-4 py-3 text-sm outline-none focus:bg-white"
                 />
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-medium">
+                <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
                   Seat limit
                 </label>
                 <input
@@ -133,14 +110,14 @@ export default async function AdminBillingPage({
                   required
                   defaultValue={params.seatLimit || ''}
                   placeholder="10"
-                  className="w-full rounded-2xl border border-[#ddd4ca] bg-[#fcfaf8] px-4 py-4 text-sm outline-none"
+                  className="w-full rounded-2xl border border-[#ddd4ca] bg-[#faf8f5] px-4 py-3 text-sm outline-none focus:bg-white"
                 />
               </div>
             </div>
 
             <div className="grid gap-5 md:grid-cols-2">
               <div>
-                <label className="mb-2 block text-sm font-medium">
+                <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
                   Total amount USD
                 </label>
                 <input
@@ -150,32 +127,62 @@ export default async function AdminBillingPage({
                   step="0.01"
                   required
                   placeholder="500"
-                  className="w-full rounded-2xl border border-[#ddd4ca] bg-[#fcfaf8] px-4 py-4 text-sm outline-none"
+                  className="w-full rounded-2xl border border-[#ddd4ca] bg-[#faf8f5] px-4 py-3 text-sm outline-none focus:bg-white"
                 />
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-medium">
+                <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
                   Billing period end
                 </label>
                 <input
                   type="date"
                   name="currentPeriodEnd"
                   required
-                  className="w-full rounded-2xl border border-[#ddd4ca] bg-[#fcfaf8] px-4 py-4 text-sm outline-none"
+                  className="w-full rounded-2xl border border-[#ddd4ca] bg-[#faf8f5] px-4 py-3 text-sm outline-none focus:bg-white"
                 />
               </div>
             </div>
 
             <button
               type="submit"
-              className="mt-2 inline-flex w-full items-center justify-center rounded-full bg-[#d6612d] px-6 py-4 text-sm font-semibold text-white"
+              className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#d6612d] px-6 py-4 text-sm font-semibold text-white transition hover:opacity-95"
             >
+              <Send className="h-4 w-4" />
               Send Stripe invoice
             </button>
-          </form>
-        </div>
-      </section>
-    </main>
+          </div>
+        </form>
+
+        <aside className="space-y-4">
+          <div className="rounded-2xl border border-[#eee6dc] bg-white p-5 shadow-sm">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#eef5f0] text-[#1f4d38]">
+              <ShieldCheck className="h-5 w-5" />
+            </div>
+
+            <h2 className="mt-4 text-sm font-semibold text-[#171714]">
+              How this works
+            </h2>
+
+            <div className="mt-4 space-y-3 text-sm leading-6 text-[#666864]">
+              <p>1. Select company and billing email.</p>
+              <p>2. Enter seats, amount, and billing period.</p>
+              <p>3. Stripe sends invoice to the customer.</p>
+              <p>4. When paid, webhook activates the team plan.</p>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-[#f0d7c8] bg-[#fff7f2] p-5">
+            <h3 className="text-sm font-semibold text-[#a2542f]">
+              Before sending
+            </h3>
+            <p className="mt-2 text-sm leading-6 text-[#765241]">
+              Confirm the email, amount, and seat limit. This sends a real
+              invoice when Stripe is in live mode.
+            </p>
+          </div>
+        </aside>
+      </div>
+    </div>
   )
 }
