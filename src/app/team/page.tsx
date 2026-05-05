@@ -2,11 +2,8 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import {
   ArrowRight,
-  ChevronRight,
   ClipboardList,
   Clock3,
-  LogOut,
-  Shield,
   Sparkles,
   Target,
   Briefcase,
@@ -14,7 +11,6 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import TeamInvitePanel from './team-invite-panel'
-import CurrentPlanCard from '../scenarios/current-plan-card'
 
 type MemberRow = {
   id: string
@@ -40,63 +36,8 @@ type SessionRow = {
   created_at: string
 }
 
-// function parseTeamSize(
-//   value: string | number | null | undefined
-// ): number | null {
-//   if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
-//     return value
-//   }
-
-//   if (typeof value === 'string') {
-//     const parsed = Number.parseInt(value, 10)
-//     if (Number.isFinite(parsed) && parsed > 0) {
-//       return parsed
-//     }
-//   }
-
-//   return null
-// }
-
 function isInviteLikeStatus(status: string | null | undefined) {
   return status === 'pending' || status === 'invited'
-}
-
-function getWorkspaceHealth(memberCount: number, teamLimit: number | null) {
-  if (!teamLimit) {
-    return {
-      label: 'Flexible capacity',
-      tone: 'text-[#1f4d38] bg-[#eef5f0] border-[#d7e6dc]',
-      message:
-        'No seat cap is set yet. This is a good time to finalise your commercial plan structure.',
-    }
-  }
-
-  const usage = teamLimit > 0 ? memberCount / teamLimit : 0
-
-  if (usage >= 1) {
-    return {
-      label: 'Seat limit reached',
-      tone: 'text-[#a2542f] bg-[#fff4ed] border-[#f0d7c8]',
-      message:
-        'Your team has filled all available seats. The next sellable step is billing-based seat expansion.',
-    }
-  }
-
-  if (usage >= 0.8) {
-    return {
-      label: 'Nearly full',
-      tone: 'text-[#a2542f] bg-[#fff4ed] border-[#f0d7c8]',
-      message:
-        'Your team is close to the current seat limit. This is a strong point to introduce plan upgrades.',
-    }
-  }
-
-  return {
-    label: 'Healthy capacity',
-    tone: 'text-[#1f4d38] bg-[#eef5f0] border-[#d7e6dc]',
-    message:
-      'There is still room to invite more members before billing-based seat controls are required.',
-  }
 }
 
 function formatDateTime(value: string) {
@@ -120,638 +61,262 @@ export default async function TeamPage() {
     data: { user },
   } = await supabase.auth.getUser()
 
-  if (!user) {
-    redirect('/login')
-  }
+  if (!user) redirect('/login')
 
-  const { data: profile, error: profileError } = await supabase
+  const { data: profile } = await supabase
     .from('profiles')
-    .select('id, email, account_type, role, full_name')
+    .select('id, full_name')
     .eq('id', user.id)
     .maybeSingle()
 
-  const { data: membership, error: membershipError } = await supabase
+  const { data: membership } = await supabase
     .from('company_members')
-    .select('company_id, role, status')
+    .select('company_id, role')
     .eq('user_id', user.id)
     .eq('status', 'active')
-    .order('created_at', { ascending: true })
     .limit(1)
     .maybeSingle()
 
-  const companyId = membership?.company_id ?? null
+  if (!membership) redirect('/login')
 
-  const { data: company, error: companyError } = companyId
-    ? await supabase
-        .from('companies')
-        .select('id, name, slug, team_size')
-        .eq('id', companyId)
-        .maybeSingle()
-    : { data: null, error: null }
+  const { data: company } = await supabase
+    .from('companies')
+    .select('id, name')
+    .eq('id', membership.company_id)
+    .maybeSingle()
 
-    const { data: companySubscription } = companyId
-      ? await supabase
-          .from('company_subscriptions')
-          .select('status, seat_limit, amount_due, currency, current_period_end')
-          .eq('company_id', companyId)
-          .maybeSingle()
-      : { data: null }
+  if (!company) redirect('/login')
 
-  if (
-    !profile ||
-    profileError ||
-    !membership ||
-    membershipError ||
-    !company ||
-    companyError
-  ) {
-    return (
-      <main className="min-h-screen bg-[#f7f3ee] p-6 text-[#1f1f1c]">
-        <div className="mx-auto max-w-[980px] space-y-6">
-          <div className="rounded-[24px] border border-red-300 bg-white p-6">
-            <div className="text-sm font-semibold uppercase tracking-[0.12em] text-red-600">
-              Team workspace unavailable
-            </div>
-            <h1 className="mt-3 text-3xl font-semibold text-[#171714]">
-              Team data could not be loaded
-            </h1>
-            <p className="mt-3 text-sm leading-7 text-[#5f625d]">
-              This page is showing the failing step clearly so the team flow can
-              be fixed before payment is added.
-            </p>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="rounded-[20px] border border-[#e8ded3] bg-white p-5">
-              <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
-                Profile query
-              </div>
-              <pre className="mt-3 whitespace-pre-wrap text-xs text-[#2b2c2a]">
-{JSON.stringify(
-  {
-    userId: user.id,
-    profile,
-    profileError: profileError?.message ?? null,
-  },
-  null,
-  2
-)}
-              </pre>
-            </div>
-
-            <div className="rounded-[20px] border border-[#e8ded3] bg-white p-5">
-              <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
-                Membership query
-              </div>
-              <pre className="mt-3 whitespace-pre-wrap text-xs text-[#2b2c2a]">
-{JSON.stringify(
-  {
-    membership,
-    membershipError: membershipError?.message ?? null,
-  },
-  null,
-  2
-)}
-              </pre>
-            </div>
-
-            <div className="rounded-[20px] border border-[#e8ded3] bg-white p-5">
-              <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
-                Company query
-              </div>
-              <pre className="mt-3 whitespace-pre-wrap text-xs text-[#2b2c2a]">
-{JSON.stringify(
-  {
-    companyId,
-    company,
-    companyError: companyError?.message ?? null,
-  },
-  null,
-  2
-)}
-              </pre>
-            </div>
-          </div>
-
-          <div className="flex gap-3">
-            <Link
-              href="/post-login"
-              className="inline-flex items-center gap-2 rounded-full bg-[#d6612d] px-5 py-3 text-sm font-semibold text-white"
-            >
-              Retry post-login
-            </Link>
-            <Link
-              href="/scenarios"
-              className="inline-flex items-center gap-2 rounded-full border border-[#d8d1c8] bg-white px-5 py-3 text-sm font-medium text-[#2b2c2a]"
-            >
-              Go to scenarios
-            </Link>
-          </div>
-        </div>
-      </main>
-    )
-  }
-
-  const currentCompanyRole = membership.role
-  const isOwner = currentCompanyRole === 'owner'
-  const isAdmin = currentCompanyRole === 'admin'
-  const isManager = currentCompanyRole === 'manager'
-  const canManageWorkspace = isOwner || isAdmin
-  const canViewTeamManagement = isOwner || isAdmin || isManager
-
-  const { data: rawMembers, error: membersError } = await supabase
+  const { data: membersRaw } = await supabase
     .from('company_members')
     .select('id, email, user_id, role, status, created_at')
     .eq('company_id', company.id)
-    .order('created_at', { ascending: false })
 
-  if (membersError) {
-    throw new Error(`Failed to load members: ${membersError.message}`)
-  }
-
-  const userIds = (rawMembers ?? [])
-    .map((member) => member.user_id)
+  const userIds = (membersRaw ?? [])
+    .map((m) => m.user_id)
     .filter((id): id is string => Boolean(id))
 
   let profileMap = new Map<string, MemberProfile>()
 
   if (userIds.length > 0) {
-    const { data: memberProfiles, error: memberProfilesError } = await supabase
+    const { data: profiles } = await supabase
       .from('profiles')
       .select('id, email, full_name')
       .in('id', userIds)
 
-    if (memberProfilesError) {
-      throw new Error(
-        `Failed to load member profiles: ${memberProfilesError.message}`
-      )
-    }
-
     profileMap = new Map(
-      (memberProfiles ?? []).map((memberProfile) => [
-        memberProfile.id,
-        {
-          email: memberProfile.email ?? null,
-          full_name: memberProfile.full_name ?? null,
-        },
+      (profiles ?? []).map((p) => [
+        p.id,
+        { email: p.email, full_name: p.full_name },
       ])
     )
   }
 
-  const members: MemberRow[] = (rawMembers ?? []).map((member) => ({
-    ...member,
+  const members: MemberRow[] = (membersRaw ?? []).map((m) => ({
+    ...m,
     email:
-      member.email ||
-      (member.user_id ? profileMap.get(member.user_id)?.email ?? null : null),
+      m.email ||
+      (m.user_id ? profileMap.get(m.user_id)?.email ?? null : null),
   }))
 
-  const activeMembers = members.filter((member) => member.status === 'active')
+  const activeMembers = members.filter((m) => m.status === 'active')
   const activeUserIds = activeMembers
-    .map((member) => member.user_id)
+    .map((m) => m.user_id)
     .filter((id): id is string => Boolean(id))
 
-  const activeMemberCount = activeMembers.length
-  const totalReps = activeMembers.filter((member) => member.role === 'rep').length
-  const pendingInviteCount = members.filter((member) =>
-    isInviteLikeStatus(member.status)
+  const { data: sessionsRaw } =
+    activeUserIds.length > 0
+      ? await supabase
+          .from('roleplay_sessions')
+          .select(
+            'id, user_id, overall_score, selected_roleplay_type, selected_industry, created_at'
+          )
+          .in('user_id', activeUserIds)
+          .order('created_at', { ascending: false })
+      : { data: [] }
+
+  const sessions = (sessionsRaw ?? []) as SessionRow[]
+
+  const totalReps = activeMembers.filter((m) => m.role === 'rep').length
+  const pendingInvites = members.filter((m) =>
+    isInviteLikeStatus(m.status)
   ).length
 
-  let teamSessions: SessionRow[] = []
-
-  if (activeUserIds.length > 0) {
-    const { data: rawSessions, error: sessionsError } = await supabase
-      .from('roleplay_sessions')
-      .select(
-        'id, user_id, overall_score, status, selected_roleplay_type, selected_industry, created_at'
-      )
-      .in('user_id', activeUserIds)
-      .order('created_at', { ascending: false })
-
-    if (sessionsError) {
-      throw new Error(`Failed to load team sessions: ${sessionsError.message}`)
-    }
-
-    teamSessions = (rawSessions ?? []) as SessionRow[]
-  }
-
-  const totalCompanySessions = teamSessions.length
-  const recentSessions = teamSessions.slice(0, 6)
-  const lastTrainedSession = teamSessions[0] ?? null
-
-  const latestScoreByRep = new Map<string, number>()
-
-  for (const session of teamSessions) {
-    if (
-      !latestScoreByRep.has(session.user_id) &&
-      typeof session.overall_score === 'number'
-    ) {
-      latestScoreByRep.set(session.user_id, session.overall_score)
-    }
-  }
-
-  const latestScoreValues = Array.from(latestScoreByRep.values())
-  const averageLatestScorePerRep =
-    latestScoreValues.length > 0
+  const avgScore =
+    sessions.length > 0
       ? Math.round(
-          latestScoreValues.reduce((sum, value) => sum + value, 0) /
-            latestScoreValues.length
+          sessions.reduce((sum, s) => sum + (s.overall_score ?? 0), 0) /
+            sessions.length
         )
       : null
 
-  const hasActiveTeamSubscription =
-    companySubscription?.status === 'active' &&
-    (!companySubscription.current_period_end ||
-      new Date(companySubscription.current_period_end).getTime() > Date.now())
-
-  const teamLimit = hasActiveTeamSubscription
-    ? companySubscription.seat_limit
-    : null
-
-  const usagePercent =
-    teamLimit && teamLimit > 0
-      ? Math.min(100, Math.round((activeMemberCount / teamLimit) * 100))
-      : null
-
-  const workspaceHealth = getWorkspaceHealth(activeMemberCount, teamLimit)
-
-  const memberRoleLabel =
-    currentCompanyRole.charAt(0).toUpperCase() + currentCompanyRole.slice(1)
-
-  const lastTrainedName = lastTrainedSession
-    ? profileMap.get(lastTrainedSession.user_id)?.full_name || 'Unnamed team member'
-    : '—'
-
-  const lastTrainedEmail = lastTrainedSession
-    ? profileMap.get(lastTrainedSession.user_id)?.email || null
-    : null
+  const recentSessions = sessions.slice(0, 5)
 
   return (
-    <main className="min-h-screen bg-[#f7f3ee] text-[#1f1f1c]">
-      <header className="border-b border-[#e6ddd2] bg-[#f7f3ee]">
-        <div className="mx-auto flex max-w-[1240px] items-center justify-between px-6 py-5">
-          <Link href="/" className="flex items-center">
-            <div className="flex h-10 items-center overflow-hidden">
-              <img
-                src="/images/logo.png"
-                alt="Genim Logo"
-                className="h-[120px] w-auto max-w-none object-contain"
-              />
+    <div className="mx-auto max-w-[1180px] space-y-6">
+      {/* <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[#8a8d87]">
+            Team overview
+          </div>
+          <h1 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-[#171714]">
+            {company.name}
+          </h1>
+          <p className="mt-2 max-w-xl text-sm leading-6 text-[#666864]">
+            Welcome back{profile?.full_name ? `, ${profile.full_name}` : ''}.
+            Track team activity, hiring, and roleplay progress from one place.
+          </p>
+        </div>
+      </div> */}
+
+      <div className="mt-2 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <StatCard label="Total reps" value={totalReps} icon={Users} tone="orange" />
+        <StatCard label="Pending invites" value={pendingInvites} icon={Clock3} tone="green" />
+        <StatCard label="Total sessions" value={sessions.length} icon={Sparkles} tone="orange" />
+        <StatCard label="Average score" value={formatScore(avgScore)} icon={Target} tone="green" />
+      </div>
+
+      <div className="grid gap-5 xl:grid-cols-[0.95fr_1.05fr]">
+        <div className="rounded-[22px] border border-[#eee6dc] bg-white p-5 shadow-[0_10px_28px_rgba(25,25,20,0.035)]">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[#8a8d87]">
+                Quick access
+              </div>
+              <h2 className="mt-1 text-base font-semibold text-[#171714]">
+                Continue work
+              </h2>
             </div>
-          </Link>
+          </div>
 
-          <div className="flex items-center gap-3">
-            {canManageWorkspace ? (
-              <Link
-                href="/team/hiring"
-                className="inline-flex items-center gap-2 rounded-full border border-[#d8d1c8] bg-white px-4 py-2 text-sm font-medium text-[#2b2c2a] shadow-sm hover:bg-[#faf7f3]"
-              >
-                <Briefcase className="h-4 w-4" />
-                Hiring
-              </Link>
-            ) : null}
-            
-            {canViewTeamManagement ? (
-              <Link
-                href="/team/analytics"
-                className="inline-flex items-center gap-2 rounded-full border border-[#d8d1c8] bg-white px-4 py-2 text-sm font-medium text-[#2b2c2a] shadow-sm hover:bg-[#faf7f3]"
-              >
-                View analytics
-              </Link>
-            ) : null}
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <ActionCard
+              title="Hiring"
+              desc="Create candidate assessments"
+              icon={Briefcase}
+              href="/team/hiring"
+            />
+            <ActionCard
+              title="Assignments"
+              desc="Assign practice to reps"
+              icon={ClipboardList}
+              href="/team/assignments"
+            />
+          </div>
+        </div>
 
-            {canManageWorkspace ? (
-              <Link
-                href="/team/assignments"
-                className="inline-flex items-center gap-2 rounded-full border border-[#d8d1c8] bg-white px-4 py-2 text-sm font-medium text-[#2b2c2a] shadow-sm hover:bg-[#faf7f3]"
-              >
-                <ClipboardList className="h-4 w-4" />
-                Assignments
-              </Link>
-            ) : null}
+        <div className="rounded-[22px] border border-[#eee6dc] bg-white p-5 shadow-[0_10px_28px_rgba(25,25,20,0.035)]">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[#8a8d87]">
+                Recent activity
+              </div>
+              <h2 className="mt-1 text-base font-semibold text-[#171714]">
+                Latest sessions
+              </h2>
+            </div>
 
             <Link
               href="/scenarios"
-              className="inline-flex items-center gap-2 rounded-full border border-[#d8d1c8] bg-white px-4 py-2 text-sm font-medium text-[#2b2c2a] shadow-sm hover:bg-[#faf7f3]"
+              className="inline-flex items-center gap-2 rounded-full bg-[#d6612d] px-4 py-2 text-xs font-semibold text-white shadow-sm"
             >
-              Open roleplay
-              <ChevronRight className="h-4 w-4" />
+              Run roleplay
+              <ArrowRight className="h-3.5 w-3.5" />
             </Link>
-
-            <form action="/auth/signout" method="post">
-              <button
-                type="submit"
-                className="inline-flex items-center gap-2 rounded-full border border-[#d8d1c8] bg-white px-4 py-2 text-sm font-medium text-[#2b2c2a] shadow-sm hover:bg-[#faf7f3]"
-              >
-                <LogOut className="h-4 w-4" />
-                Sign out
-              </button>
-            </form>
-          </div>
-        </div>
-      </header>
-
-      <section className="border-b border-[#e8ded3] bg-[#f3ece4]">
-        <div className="mx-auto max-w-[1240px] px-6 py-10">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-[760px]">
-              <div className="inline-flex items-center gap-2 rounded-full border border-[#efc7b7] bg-[#f7ede6] px-4 py-2 text-sm font-medium text-[#d6612d]">
-                <span className="h-2.5 w-2.5 rounded-full bg-[#e1805c]" />
-                Team workspace
-              </div>
-
-              <h1 className="mt-5 text-4xl font-semibold tracking-[-0.04em] text-[#171714] md:text-4xl">
-                {company.name}
-              </h1>
-
-              <p className="mt-4 max-w-[760px] text-base leading-8 text-[#5b5d59]">
-                Welcome back
-                {profile.full_name ? `, ${profile.full_name}` : ''}. Manage your team invites, assessmnets <br />
-                and hiring all in one place.
-              </p>
-            </div>
-            
-            <CurrentPlanCard />
-          </div>
-        </div>
-      </section>
-
-      <section className="px-6 py-8">
-        <div className="mx-auto max-w-[1240px]">
-              {!hasActiveTeamSubscription ? (
-          <div className="mb-6 rounded-[28px] border border-[#f0d7c8] bg-[#fff4ed] p-6 shadow-[0_14px_40px_rgba(25,25,20,0.04)]">
-            <div className="text-sm font-semibold uppercase tracking-[0.12em] text-[#a2542f]">
-              Billing required
-            </div>
-
-            <h2 className="mt-3 text-2xl font-semibold text-[#1a1a17]">
-              Activate your team subscription
-            </h2>
-
-            <p className="mt-3 max-w-[820px] text-sm leading-8 text-[#6b4a38]">
-              Team invites, assignments, hiring assessments, and team roleplay access are
-              limited until the Genim invoice is paid. Please contact Genim support or your Genim account manager to receive and
-              complete your company invoice.
-            </p>
-          </div>
-        ) : null}
-          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded-[28px] border border-[#e8ded3] bg-white p-6 shadow-[0_14px_40px_rgba(25,25,20,0.05)]">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#f5ede6] text-[#d6612d]">
-                <Users className="h-6 w-6" />
-              </div>
-              <div className="mt-5 text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
-                Total reps
-              </div>
-              <div className="mt-2 text-2xl font-semibold text-[#1a1a17]">
-                {totalReps}
-              </div>
-              <div className="mt-1 text-sm text-[#666864]">
-                Active reps inside the company
-              </div>
-            </div>
-
-            <div className="rounded-[28px] border border-[#e8ded3] bg-white p-6 shadow-[0_14px_40px_rgba(25,25,20,0.05)]">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#eef5f0] text-[#1f4d38]">
-                <Clock3 className="h-6 w-6" />
-              </div>
-              <div className="mt-5 text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
-                Pending invites
-              </div>
-              <div className="mt-2 text-2xl font-semibold text-[#1a1a17]">
-                {pendingInviteCount}
-              </div>
-              <div className="mt-1 text-sm text-[#666864]">
-                Not yet activated
-              </div>
-            </div>
-
-            <div className="rounded-[28px] border border-[#e8ded3] bg-white p-6 shadow-[0_14px_40px_rgba(25,25,20,0.05)]">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#f5ede6] text-[#d6612d]">
-                <Sparkles className="h-6 w-6" />
-              </div>
-              <div className="mt-5 text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
-                Total company sessions
-              </div>
-              <div className="mt-2 text-2xl font-semibold text-[#1a1a17]">
-                {totalCompanySessions}
-              </div>
-              <div className="mt-1 text-sm text-[#666864]">
-                Across all active team members
-              </div>
-            </div>
-
-            <div className="rounded-[28px] border border-[#e8ded3] bg-white p-6 shadow-[0_14px_40px_rgba(25,25,20,0.05)]">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#eef5f0] text-[#1f4d38]">
-                <Target className="h-6 w-6" />
-              </div>
-              <div className="mt-5 text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
-                Average latest score
-              </div>
-              <div className="mt-2 text-2xl font-semibold text-[#1a1a17]">
-                {formatScore(averageLatestScorePerRep)}
-              </div>
-              <div className="mt-1 text-sm text-[#666864]">
-                Latest scored session per rep
-              </div>
-            </div>
           </div>
 
-          <div className="mt-6 grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
-            <div className="rounded-[28px] border border-[#e8ded3] bg-white p-6 shadow-[0_14px_40px_rgba(25,25,20,0.05)]">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <div className="text-sm font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
-                    Seat planning
-                  </div>
-                  <h2 className="mt-3 text-xl font-semibold text-[#1a1a17]">
-                    Team capacity
-                  </h2>
-                </div>
+          <div className="mt-4 space-y-2.5">
+            {recentSessions.length > 0 ? (
+              recentSessions.map((s) => {
+                const name = profileMap.get(s.user_id)?.full_name || 'User'
 
-                <div>
-                  <Link
-                  href="/team/request-seats"
-                  className="inline-flex items-center gap-2 rounded-full border border-[#d8d1c8] bg-[#1f4d38] px-5 py-3 text-sm font-semibold text-white hover:bg-[#eef5f0] hover:text-black"
-                >
-                  Request more seats
-                </Link>
-                </div>
-              </div>
-
-              <div className="mt-6 grid gap-4 md:grid-cols-3">
-                <div className="rounded-[18px] border border-[#ece4da] bg-[#faf8f5] px-4 py-4">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
-                    Seat limit
-                  </div>
-                  <div className="mt-2 text-xl font-semibold text-[#1b1b18]">
-                    {teamLimit ?? 'Not set'}
-                  </div>
-                </div>
-
-                <div className="rounded-[18px] border border-[#ece4da] bg-[#faf8f5] px-4 py-4">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
-                    Seats used
-                  </div>
-                  <div className="mt-2 text-xl font-semibold text-[#1b1b18]">
-                    {activeMemberCount}
-                  </div>
-                </div>
-
-                <div className="rounded-[18px] border border-[#ece4da] bg-[#faf8f5] px-4 py-4">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
-                    Open seats
-                  </div>
-                  <div className="mt-2 text-xl font-semibold text-[#1b1b18]">
-                    {teamLimit ? Math.max(teamLimit - activeMemberCount, 0) : '—'}
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-5">
-                <div className="mb-2 flex items-center justify-between text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
-                  <span>Usage</span>
-                  <span>{usagePercent !== null ? `${usagePercent}%` : 'Not set'}</span>
-                </div>
-
-                <div className="h-3 overflow-hidden rounded-full bg-[#efe6dc]">
+                return (
                   <div
-                    className="h-full rounded-full bg-[#1f4d38]"
-                    style={{
-                      width:
-                        typeof usagePercent === 'number'
-                          ? `${usagePercent}%`
-                          : '0%',
-                    }}
-                  />
-                </div>
-
-                <p className="mt-4 text-sm leading-7 text-[#5f625d]">
-                  {workspaceHealth.message}
-                </p>
-              </div>
-
-              <div className="mt-6 rounded-[22px] border border-[#ece4da] bg-[#faf8f5] p-5">
-                <div className="text-sm font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
-                  Who trained last
-                </div>
-
-                {lastTrainedSession ? (
-                  <div className="mt-4">
-                    <div className="text-xl font-semibold text-[#1a1a17]">
-                      {lastTrainedName}
-                    </div>
-                    <div className="mt-1 text-sm text-[#666864]">
-                      {lastTrainedEmail || 'No email available'}
-                    </div>
-
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      <span className="rounded-full border border-[#ece4da] bg-white px-3 py-1 text-xs font-medium text-[#555854]">
-                        {lastTrainedSession.selected_roleplay_type || 'Roleplay'}
-                      </span>
-                      <span className="rounded-full border border-[#ece4da] bg-white px-3 py-1 text-xs font-medium text-[#555854]">
-                        {lastTrainedSession.selected_industry || 'Industry not set'}
-                      </span>
-                      <span className="rounded-full border border-[#ece4da] bg-white px-3 py-1 text-xs font-medium text-[#555854]">
-                        {formatDateTime(lastTrainedSession.created_at)}
-                      </span>
-                      <span className="rounded-full border border-[#d7e6dc] bg-[#eef5f0] px-3 py-1 text-xs font-semibold text-[#1f4d38]">
-                        {formatScore(lastTrainedSession.overall_score)}
-                      </span>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="mt-4 text-sm text-[#666864]">
-                    No one has trained yet.
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="rounded-[28px] border border-[#e8ded3] bg-white p-6 shadow-[0_14px_40px_rgba(25,25,20,0.05)]">
-              
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <div className="text-sm font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
-                    Recent sessions
-                  </div>
-                  <h2 className="mt-3 text-xl font-semibold text-[#1a1a17]">
-                    Latest team activity
-                  </h2>
-                </div>
-
-                <div>
-                  <Link
-                  href="/scenarios"
-                  className="inline-flex items-center gap-2 rounded-full bg-[#d6612d] px-5 py-3 text-sm font-semibold text-white"
-                >
-                  Run roleplay
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-                </div>
-              </div>
-
-              <div className="mt-5 space-y-3">
-                {recentSessions.length > 0 ? (
-                  recentSessions.map((session) => {
-                    const sessionName =
-                      profileMap.get(session.user_id)?.full_name ||
-                      'Unnamed team member'
-                    const sessionEmail =
-                      profileMap.get(session.user_id)?.email || null
-
-                    return (
-                      <div
-                        key={session.id}
-                        className="rounded-[18px] border border-[#ece4da] bg-[#faf8f5] px-4 py-4"
-                      >
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="min-w-0">
-                            <div className="text-sm font-semibold text-[#1a1a17]">
-                              {sessionName}
-                            </div>
-                            <div className="mt-1 truncate text-xs text-[#7d7f7a]">
-                              {sessionEmail || 'No email available'}
-                            </div>
-                          </div>
-
-                          <div className="rounded-full border border-[#d7e6dc] bg-[#eef5f0] px-3 py-1 text-xs font-semibold text-[#1f4d38]">
-                            {formatScore(session.overall_score)}
-                          </div>
-                        </div>
-
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          <span className="rounded-full border border-[#ece4da] bg-white px-3 py-1 text-xs font-medium text-[#555854]">
-                            {session.selected_roleplay_type || 'Roleplay'}
-                          </span>
-                          <span className="rounded-full border border-[#ece4da] bg-white px-3 py-1 text-xs font-medium text-[#555854]">
-                            {session.selected_industry || 'Industry not set'}
-                          </span>
-                          <span className="rounded-full border border-[#ece4da] bg-white px-3 py-1 text-xs font-medium text-[#555854]">
-                            {formatDateTime(session.created_at)}
-                          </span>
-                        </div>
+                    key={s.id}
+                    className="flex items-center justify-between gap-4 rounded-[16px] border border-[#f1e9e0] bg-[#faf8f5] px-4 py-3"
+                  >
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-semibold text-[#1a1a17]">
+                        {name}
                       </div>
-                    )
-                  })
-                ) : (
-                  <div className="rounded-[18px] border border-[#ece4da] bg-[#faf8f5] px-4 py-4 text-sm text-[#666864]">
-                    No team sessions yet.
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+                      <div className="mt-1 truncate text-xs text-[#777a75]">
+                        {s.selected_roleplay_type || 'Roleplay'} •{' '}
+                        {formatDateTime(s.created_at)}
+                      </div>
+                    </div>
 
-          {canViewTeamManagement ? (
-            <div className="mt-6">
-              <TeamInvitePanel
-                members={members}
-                canInvite={canManageWorkspace && hasActiveTeamSubscription}
-              />
-            </div>
-          ) : null}
+                    <div className="shrink-0 rounded-full border border-[#d7e6dc] bg-[#eef5f0] px-3 py-1 text-xs font-semibold text-[#1f4d38]">
+                      {formatScore(s.overall_score)}
+                    </div>
+                  </div>
+                )
+              })
+            ) : (
+              <div className="rounded-[16px] border border-[#f1e9e0] bg-[#faf8f5] px-4 py-4 text-sm text-[#666864]">
+                No activity yet.
+              </div>
+            )}
+          </div>
         </div>
-      </section>
-    </main>
+      </div>
+
+      <TeamInvitePanel members={members} canInvite />
+    </div>
+  )
+}
+
+function StatCard({
+  label,
+  value,
+  icon: Icon,
+  tone,
+}: {
+  label: string
+  value: string | number
+  icon: any
+  tone: 'green' | 'orange'
+}) {
+  const toneClass =
+    tone === 'green'
+      ? 'bg-[#eef5f0] text-[#1f4d38]'
+      : 'bg-[#f7ede6] text-[#d6612d]'
+
+  return (
+    <div className="rounded-[22px] bg-white p-5 shadow-[0_8px_30px_rgba(25,25,20,0.06)] transition hover:shadow-[0_12px_40px_rgba(25,25,20,0.08)]">
+      <div className={`flex h-10 w-10 items-center justify-center rounded-2xl ${toneClass}`}>
+        <Icon className="h-5 w-5" />
+      </div>
+      <div className="mt-4 text-xs font-semibold uppercase tracking-[0.13em] text-[#8a8d87]">
+        {label}
+      </div>
+      <div className="mt-1 text-2xl font-semibold tracking-[-0.03em] text-[#171714]">
+        {value}
+      </div>
+    </div>
+  )
+}
+
+function ActionCard({
+  title,
+  desc,
+  icon: Icon,
+  href,
+}: {
+  title: string
+  desc: string
+  icon: any
+  href: string
+}) {
+  return (
+    <Link
+      href={href}
+      className="group rounded-[18px] border border-[#f1e9e0] bg-[#faf8f5] p-4 transition hover:bg-white hover:shadow-[0_10px_24px_rgba(25,25,20,0.045)]"
+    >
+      <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-white text-[#1f4d38] shadow-sm">
+        <Icon className="h-4 w-4" />
+      </div>
+      <div className="mt-3 text-sm font-semibold text-[#171714]">{title}</div>
+      <div className="mt-1 text-xs leading-5 text-[#666864]">{desc}</div>
+    </Link>
   )
 }

@@ -201,59 +201,7 @@ export default async function TeamMemberAnalyticsPage({ params }: PageProps) {
   const memberEmail = typedMember.email || typedProfile?.email || null
 
   return (
-    <main className="min-h-screen bg-[#f7f3ee] text-[#1f1f1c]">
-      <header className="border-b border-[#e6ddd2] bg-[#f7f3ee]">
-        <div className="mx-auto flex max-w-[1280px] items-center justify-between px-6 py-5">
-          <Link href="/" className="flex items-center">
-            <div className="flex h-10 items-center overflow-hidden">
-              <img
-                src="/images/logo.png"
-                alt="Genim Logo"
-                className="h-[120px] w-auto max-w-none object-contain"
-              />
-            </div>
-          </Link>
-
-          <div className="flex items-center gap-3">
-            <Link
-              href="/team/analytics"
-              className="inline-flex items-center gap-2 rounded-full border border-[#d8d1c8] bg-white px-4 py-2 text-sm font-medium text-[#2b2c2a] shadow-sm hover:bg-[#faf7f3]"
-            >
-              <ChevronLeft className="h-4 w-4" />
-              Back to analytics
-            </Link>
-
-            <form action="/auth/signout" method="post">
-              <button
-                type="submit"
-                className="inline-flex items-center gap-2 rounded-full border border-[#d8d1c8] bg-white px-4 py-2 text-sm font-medium text-[#2b2c2a] shadow-sm hover:bg-[#faf7f3]"
-              >
-                <LogOut className="h-4 w-4" />
-                Sign out
-              </button>
-            </form>
-          </div>
-        </div>
-      </header>
-
-      <section className="border-b border-[#e8ded3] bg-[#f3ece4]">
-        <div className="mx-auto max-w-[1280px] px-6 py-10">
-          <div className="inline-flex items-center gap-2 rounded-full border border-[#efc7b7] bg-[#f7ede6] px-4 py-2 text-sm font-medium text-[#d6612d]">
-            <span className="h-2.5 w-2.5 rounded-full bg-[#e1805c]" />
-            Rep analytics
-          </div>
-
-          <h1 className="mt-5 text-4xl font-semibold tracking-[-0.04em] text-[#171714]">
-            {memberName}
-          </h1>
-
-          <p className="mt-4 max-w-[480px] text-base leading-8 text-[#5b5d59] md:text-lg">
-            Individual training activity, roleplay performance, and recent
-            session history inside {company.name}.
-          </p>
-        </div>
-      </section>
-
+    <div className="min-h-screen bg-[#f7f3ee] text-[#1f1f1c]">
       <section className="px-6 py-8">
         <div className="mx-auto max-w-[1280px] space-y-6">
           <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
@@ -306,9 +254,6 @@ export default async function TeamMemberAnalyticsPage({ params }: PageProps) {
                   <div className="mt-2 text-2xl font-semibold text-[#1a1a17]">
                     {sessions.length}
                   </div>
-                  <div className="mt-1 text-sm text-[#666864]">
-                    All recorded roleplay sessions
-                  </div>
                 </div>
 
                 <div className="rounded-[28px] border border-[#e8ded3] bg-white p-6 shadow-[0_14px_40px_rgba(25,25,20,0.05)]">
@@ -320,9 +265,6 @@ export default async function TeamMemberAnalyticsPage({ params }: PageProps) {
                   </div>
                   <div className="mt-2 text-2xl font-semibold text-[#1a1a17]">
                     {formatScore(latestScore)}
-                  </div>
-                  <div className="mt-1 text-sm text-[#666864]">
-                    Most recent scored session
                   </div>
                 </div>
 
@@ -336,9 +278,6 @@ export default async function TeamMemberAnalyticsPage({ params }: PageProps) {
                   <div className="mt-2 text-2xl font-semibold text-[#1a1a17]">
                     {formatScore(averageScore)}
                   </div>
-                  <div className="mt-1 text-sm text-[#666864]">
-                    Average across all scored sessions
-                  </div>
                 </div>
 
                 <div className="rounded-[28px] border border-[#e8ded3] bg-white p-6 shadow-[0_14px_40px_rgba(25,25,20,0.05)]">
@@ -350,9 +289,6 @@ export default async function TeamMemberAnalyticsPage({ params }: PageProps) {
                   </div>
                   <div className="mt-2 text-2xl font-semibold text-[#1a1a17]">
                     {formatDateTime(latestSession?.created_at ?? null)}
-                  </div>
-                  <div className="mt-1 text-sm text-[#666864]">
-                    Most recent roleplay activity
                   </div>
                 </div>
               </div>
@@ -414,6 +350,6 @@ export default async function TeamMemberAnalyticsPage({ params }: PageProps) {
           </div>
         </div>
       </section>
-    </main>
+    </div>
   )
 }

@@ -146,48 +146,67 @@ export async function POST(req: Request) {
       messages: [
         {
           role: 'system',
-          content: `You are a strict but fair sales roleplay evaluator.
+          content: `You are a senior sales coach and strict but fair roleplay evaluator.
 
-Evaluate ONLY the seller, not the AI buyer.
+          Evaluate ONLY the seller. Do not reward the seller for what the AI buyer said.
 
-Hard scoring rules:
-- If the seller gave no meaningful response, the score must be 0 to 15.
-- If the seller only gave a very short response, the score must stay below 30.
-- Do not reward the seller for buyer messages.
-- Do not invent success. Only score based on what the seller actually said.
-- If the selected roleplay type is Cold Call and the seller successfully books a meeting, demo, follow-up, or clear next step, the score should usually be 70 or above.
-- A score below 30 should only happen if the seller barely engaged, was incoherent, ignored the buyer, or failed the conversation completely.
-- Reward clear next steps, booked meetings, buyer engagement, relevant value communication, confident opening, and strong listening.
-- Penalize weak discovery, generic pitching, poor objection handling, unclear value, or no next step.
+          Your job is to produce useful coaching, not generic feedback.
 
-Return JSON ONLY:
-{
-  "score": number,
-  "strengths": ["string"],
-  "improvements": ["string"],
-  "feedback": "string"
-}`,
-        },
-        {
-          role: 'user',
-          content: `
-Session context:
-Roleplay type: ${session.selected_roleplay_type ?? 'Not specified'}
-Industry: ${session.selected_industry ?? 'Not specified'}
-Buyer role: ${session.selected_buyer_role ?? 'Not specified'}
-Buyer mood: ${session.selected_buyer_mood ?? 'Not specified'}
-Deal size: ${session.selected_deal_size ?? 'Not specified'}
-Pain level: ${session.selected_pain_level ?? 'Not specified'}
-Company stage: ${session.selected_company_stage ?? 'Not specified'}
-Time pressure: ${session.selected_time_pressure ?? 'Not specified'}
+          Hard scoring rules:
+          - If the seller gave no meaningful response, the score must be 0 to 15.
+          - If the seller only gave a very short response, the score must stay below 30.
+          - Do not invent success. Only score based on what the seller actually said.
+          - If the selected roleplay type is Cold Call and the seller clearly earns a meeting, demo, follow-up, or next step, the score should usually be 70 or above.
+          - If the seller meets the main objective well, the score should reflect that.
+          - A score below 30 should only happen if the seller barely engaged, ignored the buyer, was incoherent, or failed the conversation.
+          - A score above 85 should only happen when the seller shows strong opening, relevant discovery, value connection, objection handling, and clear next-step control.
+          - Penalize generic pitching, weak discovery, no budget/authority/need/timeline qualification, unclear value, weak objection handling, or ending without a next step.
 
-Seller message count: ${sellerMessages.length}
-Seller word count: ${sellerWordCount}
+          Feedback quality rules:
+          - Strengths must reference specific things the seller actually did.
+          - Improvements must be specific and practical.
+          - Do NOT say vague things like "ask better questions" without naming the missed area.
+          - Each improvement should include either:
+            1. the missed sales skill, or
+            2. an example of what the seller could have said.
+          - Use plain human coaching language.
+          - Be concise but useful.
+          - For hiring assessments, feedback should help a manager understand whether the person can sell, not just whether they spoke well.
 
-Transcript:
-${transcript}
-`,
-        },
+          Examples of good improvement wording:
+          - "You missed budget qualification. You could have asked: 'What budget range have you set aside for solving this problem?'"
+          - "You handled the objection too quickly. A stronger response would be: 'I understand price matters. Can I ask what you are comparing this against?'"
+          - "You did not secure a clear next step. You could have said: 'Would it make sense to book 20 minutes on Tuesday to review this with your team?'"
+          - "You pitched before discovery. Ask one or two pain questions before explaining the solution."
+
+          Return JSON ONLY:
+          {
+            "score": number,
+            "strengths": ["specific strength 1", "specific strength 2"],
+            "improvements": ["specific improvement with example", "specific improvement with example"],
+            "feedback": "clear overall coaching summary"
+          }`,
+              },
+              {
+                role: 'user',
+                content: `
+        Session context:
+        Roleplay type: ${session.selected_roleplay_type ?? 'Not specified'}
+        Industry: ${session.selected_industry ?? 'Not specified'}
+        Buyer role: ${session.selected_buyer_role ?? 'Not specified'}
+        Buyer mood: ${session.selected_buyer_mood ?? 'Not specified'}
+        Deal size: ${session.selected_deal_size ?? 'Not specified'}
+        Pain level: ${session.selected_pain_level ?? 'Not specified'}
+        Company stage: ${session.selected_company_stage ?? 'Not specified'}
+        Time pressure: ${session.selected_time_pressure ?? 'Not specified'}
+
+        Seller message count: ${sellerMessages.length}
+        Seller word count: ${sellerWordCount}
+
+        Transcript:
+        ${transcript}
+        `,
+          },
       ],
       temperature: 0.2,
     })

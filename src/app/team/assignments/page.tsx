@@ -1,16 +1,10 @@
-import Link from 'next/link'
+import type { ComponentType, ReactNode } from 'react'
 import { redirect } from 'next/navigation'
 import {
-  Archive,
   CalendarClock,
-  ChevronRight,
   ClipboardList,
-  FileEdit,
-  LogOut,
   PlusCircle,
-  Shield,
   Sparkles,
-  Trash2,
   User2,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
@@ -78,12 +72,7 @@ function canManageAssignments(role: string | null) {
   return role === 'owner' || role === 'admin' || role === 'manager'
 }
 
-function formatRole(role: string) {
-  if (!role) return '—'
-  return role.charAt(0).toUpperCase() + role.slice(1)
-}
-
-function formatStatus(status: string) {
+function formatStatus(status: string | null) {
   if (!status) return '—'
   return status
     .split('_')
@@ -106,16 +95,16 @@ function formatDateTime(value: string | null) {
 function getStatusBadge(status: string) {
   switch (status) {
     case 'completed':
-      return 'border-[#d7e6dc] bg-[#eef5f0] text-[#1f4d38]'
+      return 'bg-[#eef5f0] text-[#1f4d38]'
     case 'in_progress':
-      return 'border-[#dbe5f6] bg-[#eef4ff] text-[#355c9a]'
+      return 'bg-[#eef4ff] text-[#355c9a]'
     case 'overdue':
-      return 'border-[#f0d7c8] bg-[#fff4ed] text-[#a2542f]'
+      return 'bg-[#fff4ed] text-[#a2542f]'
     case 'cancelled':
     case 'archived':
-      return 'border-[#e6ddd2] bg-[#faf8f5] text-[#666864]'
+      return 'bg-[#f1eee9] text-[#666864]'
     default:
-      return 'border-[#efe1d5] bg-[#fff8f3] text-[#b35b33]'
+      return 'bg-[#fff8f3] text-[#b35b33]'
   }
 }
 
@@ -134,9 +123,7 @@ export default async function TeamAssignmentsPage() {
     data: { user },
   } = await supabase.auth.getUser()
 
-  if (!user) {
-    redirect('/login')
-  }
+  if (!user) redirect('/login')
 
   const { data: membership, error: membershipError } = await supabase
     .from('company_members')
@@ -147,13 +134,8 @@ export default async function TeamAssignmentsPage() {
     .limit(1)
     .maybeSingle()
 
-  if (membershipError || !membership) {
-    redirect('/scenarios')
-  }
-
-  if (!canManageAssignments(membership.role)) {
-    redirect('/team')
-  }
+  if (membershipError || !membership) redirect('/scenarios')
+  if (!canManageAssignments(membership.role)) redirect('/team')
 
   const { data: company, error: companyError } = await supabase
     .from('companies')
@@ -161,9 +143,7 @@ export default async function TeamAssignmentsPage() {
     .eq('id', membership.company_id)
     .maybeSingle()
 
-  if (companyError || !company) {
-    redirect('/team')
-  }
+  if (companyError || !company) redirect('/team')
 
   const [
     { data: rawMembers, error: membersError },
@@ -188,17 +168,9 @@ export default async function TeamAssignmentsPage() {
       .order('created_at', { ascending: false }),
   ])
 
-  if (membersError) {
-    throw new Error(`Failed to load members: ${membersError.message}`)
-  }
-
-  if (scenariosError) {
-    throw new Error(`Failed to load scenarios: ${scenariosError.message}`)
-  }
-
-  if (assignmentsError) {
-    throw new Error(`Failed to load assignments: ${assignmentsError.message}`)
-  }
+  if (membersError) throw new Error(`Failed to load members: ${membersError.message}`)
+  if (scenariosError) throw new Error(`Failed to load scenarios: ${scenariosError.message}`)
+  if (assignmentsError) throw new Error(`Failed to load assignments: ${assignmentsError.message}`)
 
   const members = (rawMembers ?? []) as CompanyMemberRow[]
   const scenarioList = (scenarios ?? []) as ScenarioRow[]
@@ -218,6 +190,7 @@ export default async function TeamAssignmentsPage() {
   const allUserIds = Array.from(new Set([...memberUserIds, ...assignmentActorIds]))
 
   let profileMap = new Map<string, ProfileRow>()
+
   if (allUserIds.length > 0) {
     const { data: profiles, error: profilesError } = await supabase
       .from('profiles')
@@ -233,7 +206,9 @@ export default async function TeamAssignmentsPage() {
     )
   }
 
-  const scenarioMap = new Map(scenarioList.map((scenario) => [scenario.id, scenario]))
+  const scenarioMap = new Map(
+    scenarioList.map((scenario) => [scenario.id, scenario])
+  )
 
   const assignableMembers = members
     .filter((member) => member.user_id && member.role === 'rep')
@@ -241,603 +216,412 @@ export default async function TeamAssignmentsPage() {
       const profile = member.user_id ? profileMap.get(member.user_id) : null
 
       return {
-        id: member.id,
         user_id: member.user_id as string,
-        role: member.role,
         email: member.email || profile?.email || null,
         full_name: profile?.full_name || 'Unnamed rep',
       }
     })
 
   const totalAssignments = assignments.length
-  const pendingAssignments = assignments.filter(
-    (assignment) => assignment.status === 'assigned'
-  ).length
-  const inProgressAssignments = assignments.filter(
-    (assignment) => assignment.status === 'in_progress'
-  ).length
-  const completedAssignments = assignments.filter(
-    (assignment) => assignment.status === 'completed'
-  ).length
+  const pendingAssignments = assignments.filter((a) => a.status === 'assigned').length
+  const inProgressAssignments = assignments.filter((a) => a.status === 'in_progress').length
+  const completedAssignments = assignments.filter((a) => a.status === 'completed').length
 
-  return (
-    <main className="min-h-screen bg-[#f7f3ee] text-[#1f1f1c]">
-      <header className="border-b border-[#e6ddd2] bg-[#f7f3ee]">
-        <div className="mx-auto flex max-w-[1280px] items-center justify-between px-6 py-5">
-          <Link href="/" className="flex items-center">
-            <div className="flex h-10 items-center overflow-hidden">
-              <img
-                src="/images/logo.png"
-                alt="Genim Logo"
-                className="h-[120px] w-auto max-w-none object-contain"
-              />
+    return (
+    <div className="mx-auto max-w-[1180px] space-y-6">
+      <div className="flex flex-col gap-3">
+        <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[#8a8d87]">
+          Team assignments
+        </div>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <StatCard label="Total" value={totalAssignments} icon={ClipboardList} tone="orange" />
+        <StatCard label="Pending" value={pendingAssignments} icon={CalendarClock} tone="orange" />
+        <StatCard label="In progress" value={inProgressAssignments} icon={Sparkles} tone="blue" />
+        <StatCard label="Completed" value={completedAssignments} icon={User2} tone="green" />
+      </div>
+
+      <div className="rounded-[28px] bg-white p-5 shadow-[0_12px_40px_rgba(25,25,20,0.06)]">
+        <div className="mb-5 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+          <div>
+            <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[#8a8d87]">
+              Create assignment
             </div>
-          </Link>
+            <h2 className="mt-1 text-lg font-semibold text-[#171714]">
+              New roleplay task
+            </h2>
+          </div>
 
-          <div className="flex items-center gap-3">
-            <Link
-              href="/team"
-              className="inline-flex items-center gap-2 rounded-full border border-[#d8d1c8] bg-white px-4 py-2 text-sm font-medium text-[#2b2c2a] shadow-sm hover:bg-[#faf7f3]"
-            >
-              Back to dashboard
-            </Link>
+          <div className="rounded-full bg-[#faf8f5] px-4 py-2 text-xs font-semibold text-[#666864]">
+            Required setup first, extras collapsed
+          </div>
+        </div>
 
-            <form action="/auth/signout" method="post">
+        <form action="/api/team/assignments/create" method="post" className="space-y-5">
+          <div className="grid gap-4 lg:grid-cols-3">
+            <SelectField name="assignedToUserId" label="Assign to" required>
+              <option value="">Select a rep</option>
+              {assignableMembers.map((member) => (
+                <option key={member.user_id} value={member.user_id}>
+                  {member.full_name} {member.email ? `(${member.email})` : ''}
+                </option>
+              ))}
+            </SelectField>
+
+            <SelectField name="selectedIndustry" label="Industry" required>
+              <option value="">Select industry</option>
+              {INDUSTRY_OPTIONS.map((industry) => (
+                <option key={industry} value={industry}>{industry}</option>
+              ))}
+            </SelectField>
+
+            <SelectField name="selectedRoleplayType" label="Roleplay type" required>
+              <option value="">Select type</option>
+              {ROLEPLAY_TYPE_OPTIONS.map((type) => (
+                <option key={type} value={type}>{type}</option>
+              ))}
+            </SelectField>
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-3">
+            <SelectField name="selectedBuyerRole" label="Buyer role" required>
+              <option value="">Select role</option>
+              {BUYER_ROLE_OPTIONS.map((role) => (
+                <option key={role} value={role}>{role}</option>
+              ))}
+            </SelectField>
+
+            <SelectField name="selectedBuyerMood" label="Buyer mood" required>
+              <option value="">Select mood</option>
+              {BUYER_MOOD_OPTIONS.map((mood) => (
+                <option key={mood.value} value={mood.value}>{mood.label}</option>
+              ))}
+            </SelectField>
+
+            <SelectField name="scenarioId" label="Scenario" required>
+              <option value="">Select scenario</option>
+              {scenarioList.map((scenario) => (
+                <option key={scenario.id} value={scenario.id}>
+                  {scenario.title} {scenario.industry ? `• ${scenario.industry}` : ''} • {formatStatus(scenario.difficulty)}
+                </option>
+              ))}
+            </SelectField>
+          </div>
+
+          <details className="rounded-[22px] bg-[#faf8f5] p-4">
+            <summary className="cursor-pointer text-sm font-semibold text-[#171714]">
+              Advanced roleplay settings
+            </summary>
+
+            <div className="mt-4 grid gap-4 lg:grid-cols-4">
+              <SelectField name="selectedPainLevel" label="Pain level" required>
+                <option value="">Select pain</option>
+                {PAIN_LEVEL_OPTIONS.map((pain) => (
+                  <option key={pain.value} value={pain.value}>{pain.label}</option>
+                ))}
+              </SelectField>
+
+              <SelectField name="selectedCompanyStage" label="Company stage" required>
+                <option value="">Select stage</option>
+                {COMPANY_STAGE_OPTIONS.map((stage) => (
+                  <option key={stage} value={stage}>{stage}</option>
+                ))}
+              </SelectField>
+
+              <SelectField name="selectedTimePressure" label="Time pressure" required>
+                <option value="">Select pressure</option>
+                {TIME_PRESSURE_OPTIONS.map((time) => (
+                  <option key={time.value} value={time.value}>{time.label}</option>
+                ))}
+              </SelectField>
+
+              <SelectField name="selectedDealSize" label="Deal size">
+                <option value="">Select deal size</option>
+                {DEAL_SIZE_OPTIONS.map((dealSize) => (
+                  <option key={dealSize} value={dealSize}>{dealSize}</option>
+                ))}
+              </SelectField>
+            </div>
+          </details>
+
+          <div className="grid gap-4 lg:grid-cols-[1fr_1fr_220px]">
+            <InputField
+              name="title"
+              label="Assignment title"
+              placeholder="Example: Handle pricing objection by Friday"
+            />
+
+            <InputField name="dueAt" label="Due date" type="datetime-local" />
+
+            <div className="flex items-end">
               <button
                 type="submit"
-                className="inline-flex items-center gap-2 rounded-full border border-[#d8d1c8] bg-white px-4 py-2 text-sm font-medium text-[#2b2c2a] shadow-sm hover:bg-[#faf7f3]"
+                className="inline-flex h-[46px] w-full items-center justify-center gap-2 rounded-full bg-[#d6612d] px-5 text-sm font-semibold text-white shadow-sm transition hover:opacity-95"
               >
-                <LogOut className="h-4 w-4" />
-                Sign out
+                <PlusCircle className="h-4 w-4" />
+                Create
               </button>
-            </form>
+            </div>
           </div>
+
+          <div>
+            <label className="mb-2 block text-xs font-semibold text-[#555854]">
+              Instructions
+            </label>
+            <textarea
+              name="note"
+              rows={3}
+              placeholder="Add coaching context or focus areas."
+              className="w-full resize-none rounded-[18px] bg-[#faf8f5] px-4 py-3 text-sm text-[#1f1f1c] outline-none ring-1 ring-[#eee6dc] placeholder:text-[#9a9c97] focus:bg-white focus:ring-[#d6612d]"
+            />
+          </div>
+
+          <input
+            type="hidden"
+            name="creatorTimezone"
+            value={Intl.DateTimeFormat().resolvedOptions().timeZone}
+          />
+        </form>
+      </div>
+
+      <div className="rounded-[28px] bg-white p-5 shadow-[0_12px_40px_rgba(25,25,20,0.06)]">
+        <div className="mb-5 flex items-center justify-between gap-4">
+          <div>
+            <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[#8a8d87]">
+              Current assignments
+            </div>
+            <h2 className="mt-1 text-lg font-semibold text-[#171714]">
+              Assignment queue
+            </h2>
+          </div>
+
+          <span className="rounded-full bg-[#faf8f5] px-4 py-2 text-xs font-semibold text-[#666864]">
+            {assignments.length} total
+          </span>
         </div>
-      </header>
 
-      <section className="border-b border-[#e8ded3] bg-[#f3ece4]">
-        <div className="mx-auto max-w-[1280px] px-6 py-10">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-[820px]">
-              <div className="inline-flex items-center gap-2 rounded-full border border-[#efc7b7] bg-[#f7ede6] px-4 py-2 text-sm font-medium text-[#d6612d]">
-                <span className="h-2.5 w-2.5 rounded-full bg-[#e1805c]" />
-                Team assignments
-              </div>
+        <div className="overflow-hidden rounded-[22px] bg-[#faf8f5]">
+          {assignments.length > 0 ? (
+            <div className="divide-y divide-[#ece4da]">
+              {assignments.map((assignment) => {
+                const assignedToProfile = profileMap.get(assignment.assigned_to_user_id)
+                const assignedByProfile = profileMap.get(assignment.assigned_by_user_id)
+                const scenario = scenarioMap.get(assignment.scenario_id)
 
-              <h1 className="mt-5 text-4xl font-semibold tracking-[-0.04em] text-[#171714]">
-                Assign roleplays to your reps
-              </h1>
-
-              <p className="mt-4 max-w-[760px] text-base leading-8 text-[#5b5d59] md:text-lg">
-                Create structured roleplay tasks for your sales team, track who has started,
-                who has completed, and keep practice tied to team performance.
-              </p>
-            </div>
-
-            {/* <div className="rounded-[22px] border border-[#e2d8cd] bg-white px-5 py-4 shadow-[0_8px_24px_rgba(25,25,20,0.04)]">
-              <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
-                Access level
-              </div>
-              <div className="mt-2 flex items-center gap-2 text-lg font-semibold text-[#171714]">
-                <Shield className="h-5 w-5 text-[#1f4d38]" />
-                {formatRole(membership.role)}
-              </div>
-              <div className="mt-1 text-sm text-[#666864]">
-                Owners, admins, and managers can assign and manage roleplays.
-              </div>
-            </div> */}
-          </div>
-        </div>
-      </section>
-
-      <section className="px-6 py-8">
-        <div className="mx-auto max-w-[1280px] space-y-6">
-          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded-[28px] border border-[#e8ded3] bg-white p-6 shadow-[0_14px_40px_rgba(25,25,20,0.05)]">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#f5ede6] text-[#d6612d]">
-                <ClipboardList className="h-6 w-6" />
-              </div>
-              <div className="mt-5 text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
-                Total assignments
-              </div>
-              <div className="mt-2 text-2xl font-semibold text-[#1a1a17]">
-                {totalAssignments}
-              </div>
-              <div className="mt-1 text-sm text-[#666864]">
-                All team roleplay assignments
-              </div>
-            </div>
-
-            <div className="rounded-[28px] border border-[#e8ded3] bg-white p-6 shadow-[0_14px_40px_rgba(25,25,20,0.05)]">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#fff4ed] text-[#d6612d]">
-                <CalendarClock className="h-6 w-6" />
-              </div>
-              <div className="mt-5 text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
-                Pending
-              </div>
-              <div className="mt-2 text-2xl font-semibold text-[#1a1a17]">
-                {pendingAssignments}
-              </div>
-              <div className="mt-1 text-sm text-[#666864]">
-                Assigned but not started yet
-              </div>
-            </div>
-
-            <div className="rounded-[28px] border border-[#e8ded3] bg-white p-6 shadow-[0_14px_40px_rgba(25,25,20,0.05)]">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#eef4ff] text-[#355c9a]">
-                <Sparkles className="h-6 w-6" />
-              </div>
-              <div className="mt-5 text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
-                In progress
-              </div>
-              <div className="mt-2 text-2xl font-semibold text-[#1a1a17]">
-                {inProgressAssignments}
-              </div>
-              <div className="mt-1 text-sm text-[#666864]">
-                Reps currently working on them
-              </div>
-            </div>
-
-            <div className="rounded-[28px] border border-[#e8ded3] bg-white p-6 shadow-[0_14px_40px_rgba(25,25,20,0.05)]">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#eef5f0] text-[#1f4d38]">
-                <User2 className="h-6 w-6" />
-              </div>
-              <div className="mt-5 text-xs font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
-                Completed
-              </div>
-              <div className="mt-2 text-2xl font-semibold text-[#1a1a17]">
-                {completedAssignments}
-              </div>
-              <div className="mt-1 text-sm text-[#666864]">
-                Finished roleplay assignments
-              </div>
-            </div>
-          </div>
-
-          <div className="grid gap-6 xl:grid-cols-12">
-            <div className="xl:col-span-7 rounded-[28px] border border-[#e8ded3] bg-white p-6 shadow-[0_14px_40px_rgba(25,25,20,0.05)]">
-              <div className="text-sm font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
-                Create assignment
-              </div>
-              <h2 className="mt-3 text-xl font-semibold text-[#1a1a17]">
-                Assign a new roleplay
-              </h2>
-              <p className="mt-3 text-sm leading-8 text-[#5f625d]">
-                Pick a rep, select a scenario, optionally add instructions and due date,
-                then create the assignment.
-              </p>
-
-              {/* <div className="mt-4 rounded-[18px] border border-[#ece4da] bg-[#faf8f5] px-4 py-4 text-sm leading-7 text-[#5f625d]">
-                Due dates should be stored in UTC so assignments still expire correctly
-                when managers and reps are in different countries.
-              </div> */}
-
-              <form action="/api/team/assignments/create" method="post" className="mt-6 space-y-5">
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-[#343631]">
-                    Assign to
-                  </label>
-                  <select
-                    name="assignedToUserId"
-                    required
-                    className="w-full rounded-2xl border border-[#ddd4ca] bg-[#fcfaf8] px-4 py-4 text-[15px] text-[#1f1f1c] outline-none"
-                  >
-                    <option value="">Select a rep</option>
-                    {assignableMembers.map((member) => (
-                      <option key={member.user_id} value={member.user_id}>
-                        {member.full_name} {member.email ? `(${member.email})` : ''}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-[#343631]">
-                      Industry
-                    </label>
-                    <select
-                      name="selectedIndustry"
-                      required
-                      className="w-full rounded-2xl border border-[#ddd4ca] bg-[#fcfaf8] px-4 py-4 text-[15px] text-[#1f1f1c] outline-none"
-                    >
-                      <option value="">Select industry</option>
-                      {INDUSTRY_OPTIONS.map((industry) => (
-                        <option key={industry} value={industry}>
-                          {industry}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-[#343631]">
-                      Buyer mood
-                    </label>
-                    <select
-                      name="selectedBuyerMood"
-                      required
-                      className="w-full rounded-2xl border border-[#ddd4ca] bg-[#fcfaf8] px-4 py-4 text-[15px] text-[#1f1f1c] outline-none"
-                    >
-                      <option value="">Select mood</option>
-                      {BUYER_MOOD_OPTIONS.map((mood) => (
-                        <option key={mood.value} value={mood.value}>
-                          {mood.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-[#343631]">
-                      Buyer role
-                    </label>
-                    <select
-                      name="selectedBuyerRole"
-                      required
-                      className="w-full rounded-2xl border border-[#ddd4ca] bg-[#fcfaf8] px-4 py-4 text-[15px] text-[#1f1f1c] outline-none"
-                    >
-                      <option value="">Select buyer role</option>
-                      {BUYER_ROLE_OPTIONS.map((role) => (
-                        <option key={role} value={role}>
-                          {role}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-[#343631]">
-                      Deal size <span className="text-[#8a8d87]">(optional)</span>
-                    </label>
-                    <select
-                      name="selectedDealSize"
-                      className="w-full rounded-2xl border border-[#ddd4ca] bg-[#fcfaf8] px-4 py-4 text-[15px] text-[#1f1f1c] outline-none"
-                    >
-                      <option value="">Select deal size</option>
-                      {DEAL_SIZE_OPTIONS.map((dealSize) => (
-                        <option key={dealSize} value={dealSize}>
-                          {dealSize}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-[#343631]">
-                      Pain level
-                    </label>
-                    <select
-                      name="selectedPainLevel"
-                      required
-                      className="w-full rounded-2xl border border-[#ddd4ca] bg-[#fcfaf8] px-4 py-4 text-[15px] text-[#1f1f1c] outline-none"
-                    >
-                      <option value="">Select pain level</option>
-                      {PAIN_LEVEL_OPTIONS.map((pain) => (
-                        <option key={pain.value} value={pain.value}>
-                          {pain.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-[#343631]">
-                      Company stage
-                    </label>
-                    <select
-                      name="selectedCompanyStage"
-                      required
-                      className="w-full rounded-2xl border border-[#ddd4ca] bg-[#fcfaf8] px-4 py-4 text-[15px] text-[#1f1f1c] outline-none"
-                    >
-                      <option value="">Select company stage</option>
-                      {COMPANY_STAGE_OPTIONS.map((stage) => (
-                        <option key={stage} value={stage}>
-                          {stage}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-[#343631]">
-                      Time pressure
-                    </label>
-                    <select
-                      name="selectedTimePressure"
-                      required
-                      className="w-full rounded-2xl border border-[#ddd4ca] bg-[#fcfaf8] px-4 py-4 text-[15px] text-[#1f1f1c] outline-none"
-                    >
-                      <option value="">Select time pressure</option>
-                      {TIME_PRESSURE_OPTIONS.map((time) => (
-                        <option key={time.value} value={time.value}>
-                          {time.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-[#343631]">
-                      Roleplay type
-                    </label>
-                    <select
-                      name="selectedRoleplayType"
-                      required
-                      className="w-full rounded-2xl border border-[#ddd4ca] bg-[#fcfaf8] px-4 py-4 text-[15px] text-[#1f1f1c] outline-none"
-                    >
-                      <option value="">Select roleplay type</option>
-                      {ROLEPLAY_TYPE_OPTIONS.map((type) => (
-                        <option key={type} value={type}>
-                          {type}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-[#343631]">
-                    Scenario
-                  </label>
-                  <select
-                    name="scenarioId"
-                    required
-                    className="w-full rounded-2xl border border-[#ddd4ca] bg-[#fcfaf8] px-4 py-4 text-[15px] text-[#1f1f1c] outline-none"
-                  >
-                    <option value="">Select scenario</option>
-                    {scenarioList.map((scenario) => (
-                      <option key={scenario.id} value={scenario.id}>
-                        {scenario.title} {scenario.industry ? `• ${scenario.industry}` : ''} •{' '}
-                        {formatStatus(scenario.difficulty)}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-[#343631]">
-                    Assignment title
-                  </label>
-                  <input
-                    type="text"
-                    name="title"
-                    placeholder="Example: Handle pricing objection by Friday"
-                    className="w-full rounded-2xl border border-[#ddd4ca] bg-[#fcfaf8] px-4 py-4 text-[15px] text-[#1f1f1c] outline-none placeholder:text-[#9a9c97]"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-[#343631]">
-                    Instructions
-                  </label>
-                  <textarea
-                    name="note"
-                    rows={4}
-                    placeholder="Add any coaching context or what the rep should focus on."
-                    className="w-full rounded-2xl border border-[#ddd4ca] bg-[#fcfaf8] px-4 py-4 text-[15px] text-[#1f1f1c] outline-none placeholder:text-[#9a9c97]"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-[#343631]">
-                    Due date
-                  </label>
-                  <input
-                    type="datetime-local"
-                    name="dueAt"
-                    className="w-full rounded-2xl border border-[#ddd4ca] bg-[#fcfaf8] px-4 py-4 text-[15px] text-[#1f1f1c] outline-none"
-                  />
-                  <p className="mt-2 text-xs leading-6 text-[#777a75]">
-                    This should be converted to UTC when saved.
-                  </p>
-                </div>
-
-                <input
-                  type="hidden"
-                  name="creatorTimezone"
-                  value={Intl.DateTimeFormat().resolvedOptions().timeZone}
-                />
-
-                <button
-                  type="submit"
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#d6612d] px-6 py-4 text-sm font-semibold text-white transition hover:opacity-95"
-                >
-                  <PlusCircle className="h-4 w-4" />
-                  Create assignment
-                </button>
-              </form>
-            </div>
-
-            <div className="xl:col-span-5 rounded-[28px] border border-[#e8ded3] bg-white shadow-[0_14px_40px_rgba(25,25,20,0.05)]">
-              <div className="border-b border-[#ece4da] px-6 py-5">
-                <div className="text-sm font-semibold uppercase tracking-[0.12em] text-[#7d7f7a]">
-                  Assignment list
-                </div>
-                <h2 className="mt-2 text-xl font-semibold text-[#1a1a17]">
-                  Current team assignments
-                </h2>
-                <p className="mt-2 text-sm leading-7 text-[#5f625d]">
-                  View all assignments across the company, edit details, archive old items,
-                  and track completion status.
-                </p>
-              </div>
-
-              <div className="space-y-3 p-4">
-                {assignments.length > 0 ? (
-                  assignments.map((assignment) => {
-                    const assignedToProfile = profileMap.get(assignment.assigned_to_user_id)
-                    const assignedByProfile = profileMap.get(assignment.assigned_by_user_id)
-                    const scenario = scenarioMap.get(assignment.scenario_id)
-
-                    return (
-                      <div
-                        key={assignment.id}
-                        className="rounded-[20px] border border-[#ece4da] bg-[#faf8f5] px-4 py-4"
-                      >
-                        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                          <div className="min-w-0">
-                            <div className="text-base font-semibold text-[#1a1a17]">
-                              {assignment.title || scenario?.title || 'Assigned roleplay'}
-                            </div>
-
-                            <div className="mt-1 text-sm text-[#666864]">
-                              Scenario: {scenario?.title || 'Unknown scenario'}
-                            </div>
-
-                            <div className="mt-3 flex flex-wrap gap-2">
-                              <span
-                                className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${getStatusBadge(
-                                  assignment.status
-                                )}`}
-                              >
-                                {formatStatus(assignment.status)}
-                              </span>
-
-                              <span className="inline-flex rounded-full border border-[#ece4da] bg-white px-3 py-1 text-xs font-medium text-[#555854]">
-                                Due: {formatDateTime(assignment.due_at)}
-                              </span>
-                            </div>
-
-                            <div className="mt-3 flex flex-wrap gap-2">
-                              {assignment.selected_industry ? (
-                                <span className="inline-flex rounded-full border border-[#ece4da] bg-white px-3 py-1 text-xs font-medium text-[#555854]">
-                                  {assignment.selected_industry}
-                                </span>
-                              ) : null}
-
-                              {assignment.selected_roleplay_type ? (
-                                <span className="inline-flex rounded-full border border-[#d7e6dc] bg-[#eef5f0] px-3 py-1 text-xs font-semibold text-[#1f4d38]">
-                                  {assignment.selected_roleplay_type}
-                                </span>
-                              ) : null}
-
-                              {assignment.selected_buyer_mood ? (
-                                <span className="inline-flex rounded-full border border-[#efe1d5] bg-[#fff8f3] px-3 py-1 text-xs font-medium text-[#a2542f]">
-                                  Mood: {formatStatus(assignment.selected_buyer_mood)}
-                                </span>
-                              ) : null}
-
-                              {assignment.selected_buyer_role ? (
-                                <span className="inline-flex rounded-full border border-[#ece4da] bg-white px-3 py-1 text-xs font-medium text-[#555854]">
-                                  {assignment.selected_buyer_role}
-                                </span>
-                              ) : null}
-
-                              {assignment.selected_deal_size ? (
-                                <span className="inline-flex rounded-full border border-[#ece4da] bg-white px-3 py-1 text-xs font-medium text-[#555854]">
-                                  Deal: {assignment.selected_deal_size}
-                                </span>
-                              ) : null}
-
-                              {assignment.selected_pain_level ? (
-                                <span className="inline-flex rounded-full border border-[#f0d7c8] bg-[#fff4ed] px-3 py-1 text-xs font-medium text-[#a2542f]">
-                                  Pain: {formatStatus(assignment.selected_pain_level)}
-                                </span>
-                              ) : null}
-
-                              {assignment.selected_company_stage ? (
-                                <span className="inline-flex rounded-full border border-[#ece4da] bg-white px-3 py-1 text-xs font-medium text-[#555854]">
-                                  {assignment.selected_company_stage}
-                                </span>
-                              ) : null}
-
-                              {assignment.selected_time_pressure ? (
-                                <span className="inline-flex rounded-full border border-[#dbe5f6] bg-[#eef4ff] px-3 py-1 text-xs font-medium text-[#355c9a]">
-                                  Time: {formatStatus(assignment.selected_time_pressure)}
-                                </span>
-                              ) : null}
-                            </div>
-
-                            <div className="mt-4 space-y-1 text-sm text-[#555854]">
-                              <div>
-                                Assigned to:{' '}
-                                <span className="font-medium text-[#1f1f1c]">
-                                  {assignedToProfile?.full_name || assignedToProfile?.email || 'Unknown rep'}
-                                </span>
-                              </div>
-                              <div>
-                                Assigned by:{' '}
-                                <span className="font-medium text-[#1f1f1c]">
-                                  {assignedByProfile?.full_name || assignedByProfile?.email || 'Unknown manager'}
-                                </span>
-                              </div>
-                            </div>
-
-                            {assignment.note ? (
-                              <div className="mt-4 rounded-[16px] border border-[#e7ddd3] bg-white px-4 py-3 text-sm leading-7 text-[#5f625d]">
-                                {assignment.note}
-                              </div>
-                            ) : null}
-                          </div>
-
-                          <div className="shrink-0 self-start">
-                            <RowActionMenu
-                              items={[
-                                {
-                                  type: 'link',
-                                  label: 'Edit',
-                                  href: `/team/assignments/${assignment.id}/edit`,
-                                  icon: 'edit',
-                                },
-                                ...(canArchiveAssignment(assignment)
-                                  ? [
-                                      {
-                                        type: 'form' as const,
-                                        label: 'Archive',
-                                        action: '/api/team/assignments/archive',
-                                        valueName: 'assignmentId',
-                                        value: assignment.id,
-                                        icon: 'archive' as const,
-                                      },
-                                    ]
-                                  : []),
-                                ...(canDeleteAssignment(assignment)
-                                  ? [
-                                      {
-                                        type: 'form' as const,
-                                        label: 'Delete',
-                                        action: '/api/team/assignments/delete',
-                                        valueName: 'assignmentId',
-                                        value: assignment.id,
-                                        icon: 'delete' as const,
-                                        danger: true,
-                                      },
-                                    ]
-                                  : []),
-                                ...(assignment.completed_session_id
-                                  ? [
-                                      {
-                                        type: 'link' as const,
-                                        label: 'View report',
-                                        href: `/session/${assignment.completed_session_id}/report`,
-                                        icon: 'report' as const,
-                                      },
-                                    ]
-                                  : []),
-                              ]}
-                            />
-                          </div>
+                return (
+                  <div key={assignment.id} className="bg-[#faf8f5] px-4 py-4 transition hover:bg-white">
+                    <div className="grid gap-4 lg:grid-cols-[1.2fr_0.9fr_0.9fr_auto] lg:items-center">
+                      <div className="min-w-0">
+                        <div className="truncate text-sm font-semibold text-[#171714]">
+                          {assignment.title || scenario?.title || 'Assigned roleplay'}
+                        </div>
+                        <div className="mt-1 truncate text-xs text-[#777a75]">
+                          {scenario?.title || 'Unknown scenario'}
                         </div>
                       </div>
-                    )
-                  })
-                ) : (
-                  <div className="rounded-[20px] border border-[#ece4da] bg-[#faf8f5] px-4 py-4 text-sm text-[#666864]">
-                    No assignments yet. Create the first roleplay assignment for a rep.
+
+                      <div>
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8a8d87]">
+                          Assigned to
+                        </div>
+                        <div className="mt-1 truncate text-sm font-medium text-[#1f1f1c]">
+                          {assignedToProfile?.full_name || assignedToProfile?.email || 'Unknown rep'}
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8a8d87]">
+                          Due date
+                        </div>
+                        <div className="mt-1 text-sm text-[#555854]">
+                          {formatDateTime(assignment.due_at)}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between gap-3 lg:justify-end">
+                        <Badge className={getStatusBadge(assignment.status)}>
+                          {formatStatus(assignment.status)}
+                        </Badge>
+
+                        <RowActionMenu
+                          items={[
+                            {
+                              type: 'link',
+                              label: 'Edit',
+                              href: `/team/assignments/${assignment.id}/edit`,
+                              icon: 'edit',
+                            },
+                            ...(canArchiveAssignment(assignment)
+                              ? [
+                                  {
+                                    type: 'form' as const,
+                                    label: 'Archive',
+                                    action: '/api/team/assignments/archive',
+                                    valueName: 'assignmentId',
+                                    value: assignment.id,
+                                    icon: 'archive' as const,
+                                  },
+                                ]
+                              : []),
+                            ...(canDeleteAssignment(assignment)
+                              ? [
+                                  {
+                                    type: 'form' as const,
+                                    label: 'Delete',
+                                    action: '/api/team/assignments/delete',
+                                    valueName: 'assignmentId',
+                                    value: assignment.id,
+                                    icon: 'delete' as const,
+                                    danger: true,
+                                  },
+                                ]
+                              : []),
+                            ...(assignment.completed_session_id
+                              ? [
+                                  {
+                                    type: 'link' as const,
+                                    label: 'View report',
+                                    href: `/session/${assignment.completed_session_id}/report`,
+                                    icon: 'report' as const,
+                                  },
+                                ]
+                              : []),
+                          ]}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {assignment.selected_roleplay_type ? <Badge>{assignment.selected_roleplay_type}</Badge> : null}
+                      {assignment.selected_industry ? <Badge>{assignment.selected_industry}</Badge> : null}
+                      {assignment.selected_buyer_mood ? <Badge>Mood: {formatStatus(assignment.selected_buyer_mood)}</Badge> : null}
+                      {assignment.selected_buyer_role ? <Badge>{assignment.selected_buyer_role}</Badge> : null}
+                    </div>
+
+                    {assignment.note ? (
+                      <div className="mt-3 rounded-[16px] bg-white/80 px-4 py-3 text-xs leading-6 text-[#5f625d]">
+                        {assignment.note}
+                      </div>
+                    ) : null}
+
+                    <div className="mt-3 text-xs text-[#777a75]">
+                      Assigned by:{' '}
+                      <span className="font-medium text-[#1f1f1c]">
+                        {assignedByProfile?.full_name || assignedByProfile?.email || 'Unknown manager'}
+                      </span>
+                    </div>
                   </div>
-                )}
-              </div>
+                )
+              })}
             </div>
-          </div>
+          ) : (
+            <div className="px-5 py-8 text-center text-sm text-[#666864]">
+              No assignments yet. Create the first roleplay assignment for a rep.
+            </div>
+          )}
         </div>
-      </section>
-    </main>
+      </div>
+    </div>
+  )
+}
+
+function StatCard({
+  label,
+  value,
+  icon: Icon,
+  tone,
+}: {
+  label: string
+  value: string | number
+  icon: ComponentType<{ className?: string }>
+  tone: 'green' | 'orange' | 'blue'
+}) {
+  const toneClass =
+    tone === 'green'
+      ? 'bg-[#eef5f0] text-[#1f4d38]'
+      : tone === 'blue'
+        ? 'bg-[#eef4ff] text-[#355c9a]'
+        : 'bg-[#f7ede6] text-[#d6612d]'
+
+  return (
+    <div className="rounded-[22px] bg-white p-5 shadow-[0_8px_30px_rgba(25,25,20,0.06)]">
+      <div className={`flex h-10 w-10 items-center justify-center rounded-2xl ${toneClass}`}>
+        <Icon className="h-5 w-5" />
+      </div>
+      <div className="mt-4 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8a8d87]">
+        {label}
+      </div>
+      <div className="mt-1 text-2xl font-semibold tracking-[-0.03em] text-[#171714]">
+        {value}
+      </div>
+    </div>
+  )
+}
+
+function SelectField({
+  label,
+  name,
+  required,
+  children,
+}: {
+  label: string
+  name: string
+  required?: boolean
+  children: ReactNode
+}) {
+  return (
+    <div>
+      <label className="mb-2 block text-xs font-semibold text-[#555854]">
+        {label}
+      </label>
+      <select
+        name={name}
+        required={required}
+        className="h-[46px] w-full rounded-[16px] bg-[#faf8f5] px-4 text-sm text-[#1f1f1c] outline-none ring-1 ring-[#eee6dc] focus:bg-white focus:ring-[#d6612d]"
+      >
+        {children}
+      </select>
+    </div>
+  )
+}
+
+function InputField({
+  label,
+  name,
+  type = 'text',
+  placeholder,
+}: {
+  label: string
+  name: string
+  type?: string
+  placeholder?: string
+}) {
+  return (
+    <div>
+      <label className="mb-2 block text-xs font-semibold text-[#555854]">
+        {label}
+      </label>
+      <input
+        type={type}
+        name={name}
+        placeholder={placeholder}
+        className="h-[46px] w-full rounded-[16px] bg-[#faf8f5] px-4 text-sm text-[#1f1f1c] outline-none ring-1 ring-[#eee6dc] placeholder:text-[#9a9c97] focus:bg-white focus:ring-[#d6612d]"
+      />
+    </div>
+  )
+}
+
+function Badge({
+  children,
+  className = 'bg-white text-[#555854]',
+}: {
+  children: ReactNode
+  className?: string
+}) {
+  return (
+    <span className={`inline-flex rounded-full px-3 py-1 text-[11px] font-semibold ${className}`}>
+      {children}
+    </span>
   )
 }
