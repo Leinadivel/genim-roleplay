@@ -42,7 +42,7 @@ export default async function AdminCompanyDetailPage({ params }: PageProps) {
     adminClient
       .from('company_subscriptions')
       .select(
-        'status, seat_limit, amount_due, currency, current_period_start, current_period_end'
+        'plan_name, status, seat_limit, amount_due, currency, current_period_start, current_period_end'
       )
       .eq('company_id', id)
       .maybeSingle(),
@@ -268,6 +268,43 @@ export default async function AdminCompanyDetailPage({ params }: PageProps) {
                 </span>
               </div>
             </div>
+          </div>
+
+          <div className="rounded-2xl border border-[#d7e6dc] bg-[#eef5f0] p-5">
+            <h3 className="text-sm font-semibold text-[#1f4d38]">
+              7-day pilot access
+            </h3>
+
+            <p className="mt-2 text-sm leading-6 text-[#476354]">
+              Grant this company temporary access for 7 days with 3 seats. After 7 days,
+              access will lock automatically unless a paid invoice is activated.
+            </p>
+
+            <form
+              action="/api/admin/companies/grant-pilot"
+              method="post"
+              className="mt-4"
+            >
+              <input type="hidden" name="companyId" value={company.id} />
+
+              <button
+                type="submit"
+                className="inline-flex w-full justify-center rounded-full bg-[#1f4d38] px-5 py-3 text-sm font-semibold text-white"
+              >
+                Grant 7-day pilot
+              </button>
+            </form>
+
+            {subscription?.plan_name === '7_day_pilot' ? (
+              <div className="mt-3 rounded-2xl bg-white px-4 py-3 text-xs leading-5 text-[#476354]">
+                Current pilot ends:{' '}
+                <span className="font-semibold text-[#1f1f1c]">
+                  {subscription.current_period_end
+                    ? formatDate(subscription.current_period_end)
+                    : 'No end date'}
+                </span>
+              </div>
+            ) : null}
           </div>
 
           <div className="rounded-2xl border border-[#f0d7c8] bg-[#fff7f2] p-5">

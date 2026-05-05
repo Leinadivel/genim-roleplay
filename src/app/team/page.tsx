@@ -154,21 +154,6 @@ export default async function TeamPage() {
 
   return (
     <div className="mx-auto max-w-[1180px] space-y-6">
-      {/* <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-        <div>
-          <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[#8a8d87]">
-            Team overview
-          </div>
-          <h1 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-[#171714]">
-            {company.name}
-          </h1>
-          <p className="mt-2 max-w-xl text-sm leading-6 text-[#666864]">
-            Welcome back{profile?.full_name ? `, ${profile.full_name}` : ''}.
-            Track team activity, hiring, and roleplay progress from one place.
-          </p>
-        </div>
-      </div> */}
-
       <div className="mt-2 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Total reps" value={totalReps} icon={Users} tone="orange" />
         <StatCard label="Pending invites" value={pendingInvites} icon={Clock3} tone="green" />
