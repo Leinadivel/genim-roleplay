@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Building2, Download, Search } from 'lucide-react'
+import { Building2, Download, PlusCircle, Search } from 'lucide-react'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 type CompanyRow = {
@@ -75,9 +75,7 @@ export default async function CompanyUsersPage({
       adminClient
         .from('company_subscriptions')
         .select('company_id, status, seat_limit, amount_due, currency'),
-      adminClient
-        .from('profiles')
-        .select('id, email, full_name'),
+      adminClient.from('profiles').select('id, email, full_name'),
     ])
 
   const typedCompanies = (companies ?? []) as CompanyRow[]
@@ -85,83 +83,98 @@ export default async function CompanyUsersPage({
   const typedSubs = (subs ?? []) as CompanySubRow[]
   const typedProfiles = (profiles ?? []) as ProfileRow[]
 
-  const profileMap = new Map(
-    typedProfiles.map((profile) => [profile.id, profile])
-  )
-
+  const profileMap = new Map(typedProfiles.map((profile) => [profile.id, profile]))
   const subMap = new Map(typedSubs.map((sub) => [sub.company_id, sub]))
 
   return (
     <div className="mx-auto max-w-[1240px] space-y-6">
-      <div className="rounded-2xl border border-[#eee6dc] bg-white p-5 shadow-sm">
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-          <div>
-            <div className="inline-flex items-center gap-2 text-xs font-medium text-[#7d7f7a]">
+      <div className="rounded-[24px] bg-white p-5 shadow-[0_8px_30px_rgba(25,25,20,0.055)]">
+        <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
+          <div className="min-w-0">
+            <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#8a8d87]">
               <Building2 className="h-4 w-4" />
               Companies
             </div>
-            <h1 className="mt-1 text-xl font-semibold text-[#171714]">
+
+            <h1 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-[#171714]">
               Company accounts
             </h1>
-            <p className="mt-1 text-sm text-[#666864]">
-              Search, export, and manage company accounts.
+
+            <p className="mt-1 text-sm leading-6 text-[#666864]">
+              Search, export, create, and manage company workspaces.
             </p>
           </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <a
-              href={`/api/admin/export/companies${q ? `?q=${encodedQ}` : ''}`}
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-[#1f4d38] px-5 py-3 text-sm font-semibold text-white"
-            >
-              <Download className="h-4 w-4" />
-              Download all
-            </a>
+          <div className="flex w-full flex-col gap-2 lg:w-auto lg:flex-row lg:items-center">
+            <form className="relative w-full lg:w-[260px]">
+              <Search className="absolute left-3.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#8a8d87]" />
+              <input
+                name="q"
+                defaultValue={q}
+                placeholder="Search company..."
+                className="h-10 w-full rounded-full bg-[#faf8f5] pl-9 pr-3 text-xs text-[#1f1f1c] outline-none ring-1 ring-[#eee6dc] placeholder:text-[#9a9c97] focus:bg-white focus:ring-[#d6612d]"
+              />
+            </form>
 
             <details className="relative">
-              <summary className="inline-flex cursor-pointer list-none items-center justify-center gap-2 rounded-full border border-[#d8d1c8] bg-[#faf8f5] px-5 py-3 text-sm font-semibold text-[#1f1f1c]">
-                <Download className="h-4 w-4" />
-                Download by date
+              <summary className="inline-flex h-10 w-full cursor-pointer list-none items-center justify-center gap-2 rounded-full bg-[#1f4d38] px-4 text-xs font-semibold text-white shadow-sm lg:w-auto">
+                <Download className="h-3.5 w-3.5" />
+                Download
               </summary>
 
-              <form
-                action="/api/admin/export/companies"
-                method="get"
-                className="absolute right-0 z-20 mt-3 w-[310px] rounded-2xl border border-[#eee6dc] bg-white p-4 shadow-xl"
-              >
-                {q ? <input type="hidden" name="q" value={q} /> : null}
+              <div className="absolute right-0 z-20 mt-3 w-[300px] rounded-[20px] bg-white p-3 shadow-[0_18px_55px_rgba(25,25,20,0.14)] ring-1 ring-[#eee6dc]">
+                <a
+                  href={`/api/admin/export/companies${q ? `?q=${encodedQ}` : ''}`}
+                  className="flex items-center justify-between rounded-[14px] bg-[#faf8f5] px-3 py-2.5 text-xs font-semibold text-[#1f1f1c] hover:bg-[#fff4ed]"
+                >
+                  Download all companies
+                  <Download className="h-3.5 w-3.5 text-[#1f4d38]" />
+                </a>
 
-                <div className="grid gap-3">
-                  <input
-                    type="date"
-                    name="from"
-                    className="rounded-xl border border-[#ddd4ca] bg-[#faf8f5] px-4 py-3 text-sm"
-                  />
-                  <input
-                    type="date"
-                    name="to"
-                    className="rounded-xl border border-[#ddd4ca] bg-[#faf8f5] px-4 py-3 text-sm"
-                  />
-                  <button className="rounded-full bg-[#d6612d] px-5 py-3 text-sm font-semibold text-white">
-                    Export filtered companies
-                  </button>
-                </div>
-              </form>
+                <form
+                  action="/api/admin/export/companies"
+                  method="get"
+                  className="mt-2 rounded-[14px] bg-[#faf8f5] p-3"
+                >
+                  {q ? <input type="hidden" name="q" value={q} /> : null}
+
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8a8d87]">
+                    Download by date
+                  </div>
+
+                  <div className="mt-2 grid gap-2">
+                    <input
+                      type="date"
+                      name="from"
+                      className="h-9 rounded-xl bg-white px-3 text-xs outline-none ring-1 ring-[#eee6dc]"
+                    />
+
+                    <input
+                      type="date"
+                      name="to"
+                      className="h-9 rounded-xl bg-white px-3 text-xs outline-none ring-1 ring-[#eee6dc]"
+                    />
+
+                    <button className="h-9 rounded-full bg-[#d6612d] px-4 text-xs font-semibold text-white">
+                      Export filtered
+                    </button>
+                  </div>
+                </form>
+              </div>
             </details>
+
+            <Link
+              href="/admin/users/companies/new"
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-[#d6612d] px-4 text-xs font-semibold text-white shadow-sm"
+            >
+              <PlusCircle className="h-3.5 w-3.5" />
+              Create company
+            </Link>
           </div>
         </div>
-
-        <form className="relative mt-5 w-full md:max-w-[420px]">
-          <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8a8d87]" />
-          <input
-            name="q"
-            defaultValue={q}
-            placeholder="Search company..."
-            className="w-full rounded-full border border-[#ddd4ca] bg-[#faf8f5] py-3 pl-11 pr-4 text-sm outline-none focus:bg-white"
-          />
-        </form>
       </div>
 
-      <div className="overflow-x-auto rounded-2xl border border-[#eee6dc] bg-white shadow-sm">
+      <div className="overflow-x-auto rounded-[24px] bg-white shadow-[0_8px_30px_rgba(25,25,20,0.055)]">
         <table className="w-full min-w-[980px] text-left text-sm">
           <thead className="bg-[#faf8f5] text-xs uppercase tracking-[0.12em] text-[#7d7f7a]">
             <tr>
@@ -187,7 +200,9 @@ export default async function CompanyUsersPage({
                     ['owner', 'admin', 'manager'].includes(member.role)
                   )
                   .map((member) => {
-                    const profile = member.user_id ? profileMap.get(member.user_id) : null
+                    const profile = member.user_id
+                      ? profileMap.get(member.user_id)
+                      : null
                     return member.email || profile?.email || null
                   })
                   .filter(Boolean)
@@ -209,13 +224,17 @@ export default async function CompanyUsersPage({
                         {company.slug || 'No slug'}
                       </div>
                     </td>
+
                     <td className="max-w-[320px] px-4 py-4 text-[#666864]">
                       {decisionMakers || '—'}
                     </td>
+
                     <td className="px-4 py-4">{activeMembers}</td>
+
                     <td className="px-4 py-4">
                       {sub?.seat_limit ?? company.team_size ?? '—'}
                     </td>
+
                     <td className="px-4 py-4">
                       <span
                         className={`rounded-full border px-3 py-1 text-xs font-semibold ${badgeClass(
@@ -225,9 +244,11 @@ export default async function CompanyUsersPage({
                         {sub?.status || 'not active'}
                       </span>
                     </td>
+
                     <td className="px-4 py-4 text-[#666864]">
                       {formatDate(company.created_at)}
                     </td>
+
                     <td className="px-4 py-4 text-right">
                       <Link
                         href={`/admin/users/companies/${company.id}`}

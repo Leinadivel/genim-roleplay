@@ -14,8 +14,6 @@ export default function Footer() {
               AI-powered sales roleplay training for modern teams.
             </div>
           </div>
-
-          {/* LINKS */}
           <div className="flex flex-wrap items-center gap-4 text-l font-medium text-[#666864]">
             <Link href="/terms" className="hover:text-[#171714]">
               Terms
