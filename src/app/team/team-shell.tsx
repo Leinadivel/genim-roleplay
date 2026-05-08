@@ -108,7 +108,7 @@ export default async function TeamShell({
     <main className="min-h-screen bg-[#f7f3ee] text-[#1f1f1c]">
       <div className="flex min-h-screen">
         <aside className="hidden w-[280px] shrink-0 border-r border-[#e6ddd2] bg-[#fbf8f4] px-4 py-5 lg:block">
-          <Link href="/" className="flex h-12 items-center overflow-hidden">
+          <Link href="/team" className="flex h-12 items-center overflow-hidden">
             <img
               src="/images/logo.png"
               alt="Genim Logo"
@@ -117,20 +117,6 @@ export default async function TeamShell({
           </Link>
 
           <div className="mt-6 space-y-3">
-            {/* <div className="rounded-[22px] bg-white p-4 shadow-[0_8px_30px_rgba(25,25,20,0.06)]">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8a8d87]">
-                Workspace
-              </div>
-
-              <div className="mt-2 truncate text-sm font-semibold text-[#171714]">
-                {company?.name || 'Team workspace'}
-              </div>
-
-              <div className="mt-1 inline-flex rounded-full bg-[#eef5f0] px-2.5 py-1 text-[11px] font-semibold capitalize text-[#1f4d38]">
-                {membership.role}
-              </div>
-            </div> */}
-
             <div className="[&>*]:w-full [&>*]:shadow-[0_8px_30px_rgba(25,25,20,0.06)]">
               <CurrentPlanCard />
             </div>

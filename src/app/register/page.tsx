@@ -94,6 +94,21 @@ export default function RegisterPage() {
         throw error
       }
 
+      try {
+        await fetch('/api/email/welcome', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: cleanEmail,
+            name: fullName,
+          }),
+        })
+      } catch {
+        // Do not block signup if welcome email fails.
+      }
+
       setMessage(
         'Account created successfully. Check your email to confirm your account before signing in.'
       )
