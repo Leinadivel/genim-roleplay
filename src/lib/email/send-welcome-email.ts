@@ -11,7 +11,7 @@ export async function sendWelcomeEmail({
   return resend.emails.send({
     from: process.env.EMAIL_FROM!,
     to: email,
-    subject: 'Welcome to Genim',
-    html: welcomeEmailTemplate(name || undefined),
+    subject: 'Welcome to Genim — let’s get you better, fast',
+    html: welcomeEmailTemplate({ name }),
   })
 }
