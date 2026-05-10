@@ -89,6 +89,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       report: {
+        scenarioId: data.scenario_id,
         score: data.overall_score,
         strengths: Array.isArray(data.strengths) ? data.strengths : [],
         improvements: Array.isArray(data.improvements) ? data.improvements : [],

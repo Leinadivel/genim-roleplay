@@ -26,6 +26,7 @@ type Evaluation = {
   improvements: string[]
   feedback: string
   status?: string
+  scenarioId?: string | null
   scenarioTitle?: string | null
   selectedIndustry?: string | null
   selectedRoleplayType?: string | null
@@ -267,6 +268,65 @@ export default function ReportPage() {
     return 'Needs work'
   }, [state.evaluation])
 
+  function buildRetryScenarioUrl() {
+    const evaluation = state.evaluation
+
+    if (!evaluation?.scenarioId) {
+      return '/scenarios'
+    }
+
+    const params = new URLSearchParams()
+
+    params.set('scenarioId', evaluation.scenarioId)
+    params.set('mode', 'voice')
+
+    if (evaluation.selectedIndustry) {
+      params.set('selectedIndustry', evaluation.selectedIndustry)
+    }
+
+    if (evaluation.selectedRoleplayType) {
+      params.set('selectedRoleplayType', evaluation.selectedRoleplayType)
+    }
+
+    if (evaluation.selectedBuyerMood) {
+      params.set('selectedBuyerMood', evaluation.selectedBuyerMood)
+    }
+
+    if (evaluation.selectedBuyerRole) {
+      params.set('selectedBuyerRole', evaluation.selectedBuyerRole)
+    }
+
+    if (evaluation.selectedDealSize) {
+      params.set('selectedDealSize', evaluation.selectedDealSize)
+    }
+
+    if (evaluation.selectedPainLevel) {
+      params.set('selectedPainLevel', evaluation.selectedPainLevel)
+    }
+
+    if (evaluation.selectedCompanyStage) {
+      params.set('selectedCompanyStage', evaluation.selectedCompanyStage)
+    }
+
+    if (evaluation.selectedTimePressure) {
+      params.set('selectedTimePressure', evaluation.selectedTimePressure)
+    }
+
+    if (evaluation.buyerPersona?.name) {
+      params.set('selectedBuyerName', evaluation.buyerPersona.name)
+    }
+
+    if (evaluation.buyerPersona?.company_name) {
+      params.set('selectedBuyerCompany', evaluation.buyerPersona.company_name)
+    }
+
+    if (evaluation.buyerPersona?.avatar_url) {
+      params.set('selectedBuyerAvatar', evaluation.buyerPersona.avatar_url)
+    }
+
+    return `/session/new?${params.toString()}`
+  }
+
   return (
     <main className="min-h-screen bg-[#f7f3ee] text-[#1f1f1c]">
       <header className="border-b border-[#e6ddd2] bg-[#f7f3ee]">
@@ -282,19 +342,19 @@ export default function ReportPage() {
           <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={() => void loadReport({ forceRefresh: true })}
+              onClick={() => router.push('/scenarios')}
               className="inline-flex items-center gap-2 rounded-full border border-[#d8d1c8] bg-white px-4 py-2 text-sm font-medium text-[#2b2c2a] shadow-sm hover:bg-[#faf7f3]"
             >
-              <RefreshCw className="h-4 w-4" />
-              Regenerate report
+              <ArrowLeft className="h-4 w-4" />
+              Back to scenarios
             </button>
 
             <button
               type="button"
-              onClick={() => router.push(`/session/${sessionId}`)}
+              onClick={() => router.push(buildRetryScenarioUrl())}
               className="inline-flex items-center gap-2 rounded-full bg-[#d6612d] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-95"
             >
-              Back to session
+              Retry scenario
               <ChevronRight className="h-4 w-4" />
             </button>
           </div>
@@ -537,10 +597,11 @@ export default function ReportPage() {
 
                       <button
                         type="button"
-                        onClick={() => router.push(`/session/${sessionId}`)}
+                        onClick={() => router.push(buildRetryScenarioUrl())}
                         className="inline-flex items-center gap-2 rounded-full border border-[#d8d1c8] bg-white px-5 py-3 text-sm font-medium text-[#2b2c2a]"
                       >
-                        Return to session
+                        <ChevronRight className="h-4 w-4" />
+                        Retry scenario
                       </button>
                     </div>
                   </SectionCard>
