@@ -96,7 +96,7 @@ export default async function DashboardPage() {
     <main className="min-h-screen bg-[#f7f3ee] text-[#1f1f1c]">
       <header className="border-b border-[#e6ddd2] bg-[#f7f3ee]">
         <div className="mx-auto flex max-w-[1240px] items-center justify-between px-6 py-5">
-          <Link href="/" className="flex h-10 items-center overflow-hidden">
+          <Link href="/dashboard" className="flex h-10 items-center overflow-hidden">
             <img
               src="/images/logo.png"
               alt="Genim Logo"

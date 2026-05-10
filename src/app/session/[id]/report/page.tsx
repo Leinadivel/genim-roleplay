@@ -331,12 +331,12 @@ export default function ReportPage() {
     <main className="min-h-screen bg-[#f7f3ee] text-[#1f1f1c]">
       <header className="border-b border-[#e6ddd2] bg-[#f7f3ee]">
         <div className="mx-auto flex max-w-[1240px] items-center justify-between px-6 py-5">
-          <Link
-            href="/scenarios"
-            className="inline-flex items-center gap-2 rounded-full border border-[#d8d1c8] bg-white px-4 py-2 text-sm font-medium text-[#2b2c2a] shadow-sm hover:bg-[#faf7f3]"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to scenarios
+          <Link href="/dashboard" className="flex h-10 items-center overflow-hidden">
+            <img
+              src="/images/logo.png"
+              alt="Genim Logo"
+              className="h-[120px] w-auto max-w-none object-contain"
+            />
           </Link>
 
           <div className="flex items-center gap-3">
