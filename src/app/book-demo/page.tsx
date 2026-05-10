@@ -12,6 +12,7 @@ import {
   Users,
   Video,
 } from 'lucide-react'
+import MarketingNavbar from '@/components/marketing-navbar'
 
 const socialProofPeople = [
   {
@@ -100,27 +101,7 @@ export default function BookDemoPage() {
         strategy="afterInteractive"
       />
 
-      <header className="sticky top-0 z-40 border-b border-[#ece5da]/90 bg-[#fbfaf7]/90 backdrop-blur">
-        <div className="mx-auto flex max-w-[1400px] items-center justify-between px-6 py-5 md:px-10">
-          <Link href="/" className="flex items-center pr-4 md:pr-6">
-            <div className="flex h-10 items-center overflow-hidden">
-              <img
-                src="/images/logo.png"
-                alt="Genim Logo"
-                className="h-[200px] w-auto max-w-none object-contain"
-              />
-            </div>
-          </Link>
-
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 rounded-full border border-[#ddd4ca] bg-white px-5 py-3 text-sm font-medium text-[#2b2c2a] transition hover:bg-[#faf7f3]"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back home
-          </Link>
-        </div>
-      </header>
+      <MarketingNavbar />
 
       <section className="relative overflow-hidden bg-[#fbfaf7]">
         <div className="absolute right-[-120px] top-[-30px] h-[260px] w-[260px] rounded-full bg-[#d6612d]/7 blur-3xl" />
@@ -132,11 +113,11 @@ export default function BookDemoPage() {
             Speak to founder
           </div>
 
-          <h1 className="mt-6 text-4xl font-semibold tracking-[-0.04em] text-[#171714] md:text-6xl">
+          <h1 className="mt-6 text-4xl font-semibold tracking-[-0.04em] text-[#171714] md:text-5xl">
             See Genim in action
           </h1>
 
-          <p className="mx-auto mt-5 max-w-[860px] text-base leading-8 text-[#5b5d59] md:text-lg">
+          <p className="mx-auto mt-5 max-w-[860px] text-base leading-7 text-[#5b5d59] md:text-lg">
             Book a short call to understand how Genim helps sales leaders build
             a more scalable training system — where reps practise realistic
             sales conversations, improve performance in critical deal moments,

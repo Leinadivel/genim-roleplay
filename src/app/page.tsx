@@ -18,7 +18,8 @@ import {
   Users,
   AudioWaveform,
 } from 'lucide-react'
-import { Menu, X } from 'lucide-react'
+import MarketingNavbar from '@/components/marketing-navbar'
+import MarketingFooter from '@/components/marketing-footer'
 
 function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
   return (
@@ -137,86 +138,7 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen bg-[#f7f3ee] text-[#1f1f1c]">
-      <header className="sticky top-0 z-50 border-b border-[#e6ddd2]/90 bg-[#f7f3ee]/90 backdrop-blur">
-        <div className="mx-auto flex max-w-[1400px] items-center justify-between px-6 py-5 md:px-10">
-          <Link href="/" className="flex items-center pr-4 md:pr-6">
-            <div className="flex h-10 items-center overflow-hidden">
-              <img
-                src="/images/logo.png"
-                alt="Genim Logo"
-                className="h-[110px] md:h-[160px] w-auto max-w-none object-contain"
-              />
-            </div>
-          </Link>
-
-          <nav className="hidden items-center gap-10 md:flex">
-            <NavLink href="#how-it-works">How it works</NavLink>
-            <NavLink href="#features">Features</NavLink>
-            <NavLink href="/pricing">Pricing</NavLink>
-            <NavLink href="#teams">For teams</NavLink>
-          </nav>
-
-          <div className="flex items-center gap-2 md:gap-3">
-            <Link
-              href="/login"
-              className="hidden rounded-full px-5 py-3 text-sm font-medium text-[#41433f] transition hover:text-black md:inline-flex"
-            >
-              Log in
-            </Link>
-
-            <Link
-              href="/book-demo"
-              className="inline-flex rounded-full bg-[#d6612d] px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-95 md:px-7 md:py-3 md:text-base"
-            >
-              Book Demo
-            </Link>
-            <button
-              onClick={() => setMenuOpen(true)}
-              className="inline-flex items-center justify-center rounded-full border border-[#e6ddd2] p-2 md:hidden"
-            >
-              <Menu className="h-5 w-5" />
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {menuOpen && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm md:hidden">
-          <div className="absolute right-0 top-0 h-full w-[85%] max-w-sm bg-white shadow-xl p-6">
-            
-            <div className="flex items-center justify-between">
-              <span className="text-lg font-semibold">Menu</span>
-              <button onClick={() => setMenuOpen(false)}>
-                <X className="h-6 w-6" />
-              </button>
-            </div>
-
-            <div className="mt-8 flex flex-col gap-6 text-lg">
-              <a href="#how-it-works" onClick={() => setMenuOpen(false)}>How it works</a>
-              <a href="#features" onClick={() => setMenuOpen(false)}>Features</a>
-              <a href="#teams" onClick={() => setMenuOpen(false)}>For teams</a>
-              <a href="/pricing" onClick={() => setMenuOpen(false)}>Pricing</a>
-              <a href="#faq" onClick={() => setMenuOpen(false)}>FAQ</a>
-            </div>
-
-            <div className="mt-10 flex flex-col gap-4">
-              <Link
-                href="/login"
-                className="w-full rounded-full border border-[#d8d1c8] px-5 py-3 text-center font-medium"
-              >
-                Log in
-              </Link>
-
-              <Link
-                href="/register"
-                className="w-full rounded-full bg-[#d6612d] px-5 py-3 text-center font-semibold text-white"
-              >
-                Start free
-              </Link>
-            </div>
-          </div>
-        </div>
-      )}
+      <MarketingNavbar />
 
       <section className="relative overflow-hidden">
         <div className="absolute right-0 top-0 h-[620px] w-[45%] bg-[radial-gradient(circle_at_top_left,_rgba(223,122,72,0.18),_transparent_60%)]" />
@@ -258,23 +180,24 @@ export default function HomePage() {
             </div>
 
             <div className="mt-14 flex flex-wrap items-center gap-5">
-              <div className="flex -space-x-2">
-                <div className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-[#f7f3ee] bg-[#d6612d] text-sm font-semibold text-white">
-                  AK
-                </div>
-                <div className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-[#f7f3ee] bg-[#1f4d38] text-sm font-semibold text-white">
-                  MS
-                </div>
-                <div className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-[#f7f3ee] bg-[#5f79c9] text-sm font-semibold text-white">
-                  JR
-                </div>
-                <div className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-[#f7f3ee] bg-[#8a6ccf] text-sm font-semibold text-white">
-                  LP
-                </div>
+              <div className="flex -space-x-3">
+                {[
+                  'https://randomuser.me/api/portraits/women/44.jpg',
+                  'https://randomuser.me/api/portraits/men/46.jpg',
+                  'https://randomuser.me/api/portraits/women/68.jpg',
+                  'https://randomuser.me/api/portraits/men/75.jpg',
+                ].map((src, index) => (
+                  <img
+                    key={src}
+                    src={src}
+                    alt={`Genim user ${index + 1}`}
+                    className="h-12 w-12 rounded-full border-2 border-[#f7f3ee] object-cover shadow-[0_8px_20px_rgba(25,25,20,0.10)]"
+                  />
+                ))}
               </div>
 
-              <p className="text-xl md:text-[28px] font-semibold tracking-[-0.02em] text-[#232320]">
-                2,400+ reps{' '}
+              <p className="text-xl font-semibold tracking-[-0.02em] text-[#232320] md:text-[20px]">
+                500+ reps{' '}
                 <span className="font-normal text-[#666864]">
                   already training on Genim
                 </span>
@@ -326,7 +249,7 @@ export default function HomePage() {
                       </p>
 
                       <h3 className="mt-2 text-[28px] font-semibold leading-tight tracking-[-0.04em] text-[#181815] sm:text-[30px] sm:leading-none">
-                        David Cole
+                        David Emmanuel
                       </h3>
 
                       <p className="mt-3 text-[16px] font-semibold text-[#1f4d38]">
@@ -730,6 +653,7 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+      <MarketingFooter />
     </main>
   )
 }

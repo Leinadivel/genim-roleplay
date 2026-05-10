@@ -13,6 +13,8 @@ import {
   Users,
   Zap,
 } from 'lucide-react'
+import MarketingNavbar from '@/components/marketing-navbar'
+import MarketingFooter from '@/components/marketing-footer'
 
 type BillingCycle = 'annual' | 'monthly'
 
@@ -131,27 +133,7 @@ export default function PricingClient({
 
   return (
     <main className="min-h-screen bg-[#f7f3ee] text-[#1f1f1c]">
-      <header className="border-b border-[#e6ddd2]/90 bg-[#f7f3ee]/90 backdrop-blur">
-        <div className="mx-auto flex max-w-[1400px] items-center justify-between px-6 py-5 md:px-10">
-          <Link href="/" className="flex items-center pr-4 md:pr-6">
-            <div className="flex h-10 items-center overflow-hidden">
-              <img
-                src="/images/logo.png"
-                alt="Genim Logo"
-                className="h-[200px] w-auto max-w-none object-contain"
-              />
-            </div>
-          </Link>
-
-          <Link
-            href={isLoggedIn ? '/scenarios' : '/'}
-            className="inline-flex items-center gap-2 rounded-full border border-[#d8d1c8] bg-white px-5 py-3 text-sm font-medium text-[#2b2c2a] transition hover:bg-[#faf7f3]"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            {isLoggedIn ? 'Back to app' : 'Back home'}
-          </Link>
-        </div>
-      </header>
+      <MarketingNavbar />
 
       <section className="relative overflow-hidden border-b border-[#e8ded3] bg-[#f3ece4]">
         <div className="absolute right-[-100px] top-[-60px] h-[280px] w-[280px] rounded-full bg-[#d6612d]/10 blur-3xl" />
@@ -368,6 +350,7 @@ export default function PricingClient({
             </div>
         </div>
       </section>
+      <MarketingFooter />
     </main>
   )
 }
