@@ -36,7 +36,7 @@ function formatRole(role: string | null) {
 }
 
 function formatDate(value: string | null) {
-  if (!value) return 'No expiry'
+  if (!value) return 'After 5 Roleplays'
 
   return new Intl.DateTimeFormat('en-GB', {
     day: 'numeric',
