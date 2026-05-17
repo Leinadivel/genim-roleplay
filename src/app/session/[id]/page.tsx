@@ -342,6 +342,8 @@ export default function SessionPage() {
   }, [sessionMeta])
 
   async function speakBuyerText(text: string) {
+    keepMicActiveRef.current = false
+    autoSendAfterSpeechRef.current = false
     recognitionRef.current?.stop()
     setIsListening(false)
     try {
@@ -621,8 +623,21 @@ export default function SessionPage() {
       recognition.onerror = (event) => {
         console.error('Speech recognition error:', event.error, event.message)
 
+        if (event.error === 'aborted') {
+          keepMicActiveRef.current = false
+          autoSendAfterSpeechRef.current = false
+          setIsListening(false)
+          return
+        }
+
+        if (event.error === 'no-speech') {
+          setIsListening(false)
+          return
+        }
+
         if (event.error === 'not-allowed') {
           keepMicActiveRef.current = false
+          autoSendAfterSpeechRef.current = false
           setIsListening(false)
           setError(
             'Microphone permission was denied. Please allow microphone access in your browser settings.'
@@ -632,14 +647,16 @@ export default function SessionPage() {
 
         if (event.error === 'audio-capture') {
           keepMicActiveRef.current = false
+          autoSendAfterSpeechRef.current = false
           setIsListening(false)
           setError('No microphone was found. Please check your audio input device.')
           return
         }
 
-        if (event.error !== 'no-speech') {
-          setError(`Voice recognition failed: ${event.error}`)
-        }
+        keepMicActiveRef.current = false
+        autoSendAfterSpeechRef.current = false
+        setIsListening(false)
+        setError('Voice recognition stopped. Please tap the mic and try again.')
       }
 
       recognition.onresult = (event) => {
