@@ -18,6 +18,10 @@ type SubscriptionRow = {
   status: string | null
 }
 
+type RoleplaySessionRow = {
+  user_id: string
+}
+
 function formatDate(value: string) {
   return new Intl.DateTimeFormat('en-GB', {
     day: 'numeric',
@@ -52,14 +56,25 @@ export default async function IndividualUsersPage({
     query = query.or(`email.ilike.%${q}%,full_name.ilike.%${q}%`)
   }
 
-  const [{ data: users }, { data: subscriptions }] = await Promise.all([
-    query,
-    adminClient.from('subscriptions').select('user_id, plan_key, status'),
-  ])
+  const [{ data: users }, { data: subscriptions }, { data: roleplaySessions }] =
+    await Promise.all([
+      query,
+      adminClient.from('subscriptions').select('user_id, plan_key, status'),
+      adminClient.from('roleplay_sessions').select('user_id'),
+    ])
 
   const subMap = new Map(
     ((subscriptions ?? []) as SubscriptionRow[]).map((sub) => [sub.user_id, sub])
   )
+
+  const roleplayCountMap = new Map<string, number>()
+
+  for (const session of (roleplaySessions ?? []) as RoleplaySessionRow[]) {
+    roleplayCountMap.set(
+      session.user_id,
+      (roleplayCountMap.get(session.user_id) ?? 0) + 1
+    )
+  }
 
   const rows = (users ?? []) as ProfileRow[]
 
@@ -143,6 +158,7 @@ export default async function IndividualUsersPage({
               <th className="px-4 py-3">Role</th>
               <th className="px-4 py-3">Plan</th>
               <th className="px-4 py-3">Plan status</th>
+              <th className="px-4 py-3">Roleplays</th>
               <th className="px-4 py-3">Status</th>
               <th className="px-4 py-3">Joined</th>
               <th className="px-4 py-3 text-right">Action</th>
@@ -171,6 +187,13 @@ export default async function IndividualUsersPage({
                     <td className="px-4 py-4 text-[#666864]">
                       {sub?.status || '—'}
                     </td>
+
+                    <td className="px-4 py-4">
+                      <span className="rounded-full bg-[#eef5f0] px-3 py-1 text-xs font-semibold text-[#1f4d38]">
+                        {roleplayCountMap.get(user.id) ?? 0}
+                      </span>
+                    </td>
+
                     <td className="px-4 py-4">
                       <span
                         className={`rounded-full border px-3 py-1 text-xs font-semibold ${badgeClass(
@@ -196,7 +219,7 @@ export default async function IndividualUsersPage({
               })
             ) : (
               <tr>
-                <td colSpan={8} className="px-4 py-8 text-center text-[#666864]">
+                <td colSpan={9} className="px-4 py-8 text-center text-[#666864]">
                   No individual users found.
                 </td>
               </tr>

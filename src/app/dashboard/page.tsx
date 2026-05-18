@@ -13,6 +13,7 @@ import {
   Trophy,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
+import ProfileMenu from '@/components/profile-menu'
 
 type SessionRow = {
   id: string
@@ -74,6 +75,12 @@ export default async function DashboardPage() {
     .eq('user_id', user.id)
     .order('created_at', { ascending: true })
 
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('full_name, email')
+    .eq('id', user.id)
+    .maybeSingle()
+
   if (error) {
     throw new Error(error.message)
   }
@@ -113,12 +120,10 @@ export default async function DashboardPage() {
               Back to roleplay
             </Link>
 
-            <form action="/auth/signout" method="post">
-              <button className="inline-flex items-center gap-2 rounded-full border border-[#d8d1c8] bg-white px-4 py-2 text-sm font-medium">
-                <LogOut className="h-4 w-4" />
-                Sign out
-              </button>
-            </form>
+            <ProfileMenu
+              name={profile?.full_name ?? null}
+              email={profile?.email ?? user.email ?? null}
+            />
           </div>
         </div>
       </header>

@@ -7,7 +7,6 @@ import {
   ClipboardList,
   CreditCard,
   LayoutDashboard,
-  LogOut,
   Menu,
   PlayCircle,
   UserPlus,
@@ -15,6 +14,7 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import CurrentPlanCard from '../scenarios/current-plan-card'
+import ProfileMenu from '@/components/profile-menu'
 
 
 function canManage(role: string | null) {
@@ -49,6 +49,12 @@ export default async function TeamShell({
     .from('companies')
     .select('id, name')
     .eq('id', membership.company_id)
+    .maybeSingle()
+    
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('full_name, email')
+    .eq('id', user.id)
     .maybeSingle()
 
   const canManageTeam = canManage(membership.role)
@@ -183,15 +189,10 @@ export default async function TeamShell({
                   Open roleplay
                 </Link>
 
-                <form action="/auth/signout" method="post">
-                  <button
-                    type="submit"
-                    className="inline-flex items-center gap-2 rounded-full border border-[#d8d1c8] bg-white px-4 py-2 text-sm font-medium text-[#2b2c2a] shadow-sm hover:bg-[#faf7f3]"
-                  >
-                    <LogOut className="h-4 w-4" />
-                    <span className="hidden sm:inline">Sign out</span>
-                  </button>
-                </form>
+                <ProfileMenu
+                  name={profile?.full_name ?? null}
+                  email={profile?.email ?? user.email ?? null}
+                />
               </div>
             </div>
 

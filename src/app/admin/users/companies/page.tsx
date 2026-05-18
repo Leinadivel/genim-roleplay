@@ -32,6 +32,10 @@ type CompanySubRow = {
   currency: string | null
 }
 
+type RoleplaySessionRow = {
+  user_id: string
+}
+
 function formatDate(value: string) {
   return new Intl.DateTimeFormat('en-GB', {
     day: 'numeric',
@@ -66,17 +70,23 @@ export default async function CompanyUsersPage({
     companyQuery = companyQuery.or(`name.ilike.%${q}%,slug.ilike.%${q}%`)
   }
 
-  const [{ data: companies }, { data: members }, { data: subs }, { data: profiles }] =
-    await Promise.all([
-      companyQuery,
-      adminClient
-        .from('company_members')
-        .select('company_id, user_id, email, role, status'),
-      adminClient
-        .from('company_subscriptions')
-        .select('company_id, status, seat_limit, amount_due, currency'),
-      adminClient.from('profiles').select('id, email, full_name'),
-    ])
+  const [
+    { data: companies },
+    { data: members },
+    { data: subs },
+    { data: profiles },
+    { data: roleplaySessions },
+  ] = await Promise.all([
+    companyQuery,
+    adminClient
+      .from('company_members')
+      .select('company_id, user_id, email, role, status'),
+    adminClient
+      .from('company_subscriptions')
+      .select('company_id, status, seat_limit, amount_due, currency'),
+    adminClient.from('profiles').select('id, email, full_name'),
+    adminClient.from('roleplay_sessions').select('user_id'),
+  ])
 
   const typedCompanies = (companies ?? []) as CompanyRow[]
   const typedMembers = (members ?? []) as MemberRow[]
@@ -85,6 +95,27 @@ export default async function CompanyUsersPage({
 
   const profileMap = new Map(typedProfiles.map((profile) => [profile.id, profile]))
   const subMap = new Map(typedSubs.map((sub) => [sub.company_id, sub]))
+
+  const userCompanyMap = new Map<string, string>()
+
+  for (const member of typedMembers) {
+    if (member.user_id && member.company_id) {
+      userCompanyMap.set(member.user_id, member.company_id)
+    }
+  }
+
+  const companyRoleplayCountMap = new Map<string, number>()
+
+  for (const session of (roleplaySessions ?? []) as RoleplaySessionRow[]) {
+    const companyId = userCompanyMap.get(session.user_id)
+
+    if (!companyId) continue
+
+    companyRoleplayCountMap.set(
+      companyId,
+      (companyRoleplayCountMap.get(companyId) ?? 0) + 1
+    )
+  }
 
   return (
     <div className="mx-auto max-w-[1240px] space-y-6">
@@ -181,6 +212,7 @@ export default async function CompanyUsersPage({
               <th className="px-4 py-3">Company</th>
               <th className="px-4 py-3">Owner / Manager emails</th>
               <th className="px-4 py-3">Members</th>
+              <th className="px-4 py-3">Roleplays</th>
               <th className="px-4 py-3">Seats</th>
               <th className="px-4 py-3">Billing</th>
               <th className="px-4 py-3">Created</th>
@@ -232,6 +264,12 @@ export default async function CompanyUsersPage({
                     <td className="px-4 py-4">{activeMembers}</td>
 
                     <td className="px-4 py-4">
+                      <span className="rounded-full bg-[#eef5f0] px-3 py-1 text-xs font-semibold text-[#1f4d38]">
+                        {companyRoleplayCountMap.get(company.id) ?? 0}
+                      </span>
+                    </td>
+
+                    <td className="px-4 py-4">
                       {sub?.seat_limit ?? company.team_size ?? '—'}
                     </td>
 
@@ -262,7 +300,7 @@ export default async function CompanyUsersPage({
               })
             ) : (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-[#666864]">
+                <td colSpan={8} className="px-4 py-8 text-center text-[#666864]">
                   No companies found.
                 </td>
               </tr>
