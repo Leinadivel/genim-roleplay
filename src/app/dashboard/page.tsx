@@ -4,9 +4,6 @@ import SessionsList from './sessions-list'
 import {
   ArrowLeft,
   BarChart3,
-  CalendarClock,
-  FileText,
-  LogOut,
   Play,
   Sparkles,
   Target,

@@ -42,8 +42,12 @@ export default async function TeamBillingPage() {
 
   if (!membership || !canViewBilling(membership.role)) redirect('/team')
 
-  const [{ data: company }, { data: subscription }, { count: activeMemberCount }] =
-    await Promise.all([
+  const [
+    { data: company },
+    { data: subscription },
+    { count: activeMemberCount },
+    { data: billingHistory },
+  ] = await Promise.all([
       supabase
         .from('companies')
         .select('id, name')
@@ -61,6 +65,12 @@ export default async function TeamBillingPage() {
         .select('*', { count: 'exact', head: true })
         .eq('company_id', membership.company_id)
         .eq('status', 'active'),
+
+      supabase
+        .from('company_billing_history')
+        .select('id, amount, currency, status, description, invoice_id, paid_at, created_at')
+        .eq('company_id', membership.company_id)
+        .order('paid_at', { ascending: false }),
     ])
 
   if (!company) redirect('/team')
@@ -73,6 +83,11 @@ export default async function TeamBillingPage() {
     seatLimit && seatLimit > 0
       ? Math.min(100, Math.round((usedSeats / seatLimit) * 100))
       : 0
+
+  const historyRows = billingHistory ?? []
+  const totalPaid = historyRows
+    .filter((item) => item.status === 'paid')
+    .reduce((sum, item) => sum + Number(item.amount ?? 0), 0)
 
   return (
     <div className="mx-auto max-w-[980px] space-y-6">
@@ -88,10 +103,16 @@ export default async function TeamBillingPage() {
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-4">
         <StatCard label="Billing status" value={status} icon={CreditCard} tone="green" />
         <StatCard label="Seat limit" value={seatLimit ?? 'Not set'} icon={Users} tone="orange" />
         <StatCard label="Amount due" value={formatMoney(subscription?.amount_due ?? null, subscription?.currency ?? null)} icon={ReceiptText} tone="blue" />
+        <StatCard
+          label="Total paid"
+          value={formatMoney(totalPaid, subscription?.currency ?? null)}
+          icon={ReceiptText}
+          tone="green"
+        />
       </div>
 
       <div className="rounded-[28px] bg-white p-5 shadow-[0_12px_40px_rgba(25,25,20,0.06)]">
@@ -134,6 +155,63 @@ export default async function TeamBillingPage() {
               style={{ width: `${usagePercent}%` }}
             />
           </div>
+        </div>
+      </div>
+
+      <div className="rounded-[28px] bg-white p-5 shadow-[0_12px_40px_rgba(25,25,20,0.06)]">
+        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+          <div>
+            <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[#8a8d87]">
+              Billing history
+            </div>
+            <h2 className="mt-1 text-lg font-semibold text-[#171714]">
+              Payments and invoices
+            </h2>
+          </div>
+
+          <div className="rounded-full bg-[#eef5f0] px-4 py-2 text-xs font-semibold text-[#1f4d38]">
+            {historyRows.length} records
+          </div>
+        </div>
+
+        <div className="mt-5 overflow-hidden rounded-[22px] bg-[#faf8f5]">
+          {historyRows.length > 0 ? (
+            <div className="divide-y divide-[#ece4da]">
+              {historyRows.map((item) => (
+                <div
+                  key={item.id}
+                  className="grid gap-3 px-4 py-4 text-sm md:grid-cols-[1fr_140px_120px_120px]"
+                >
+                  <div>
+                    <div className="font-semibold text-[#171714]">
+                      {item.description || 'Team subscription payment'}
+                    </div>
+                    <div className="mt-1 text-xs text-[#777a75]">
+                      Invoice: {item.invoice_id || 'Manual record'}
+                    </div>
+                  </div>
+
+                  <div className="font-semibold text-[#171714]">
+                    {formatMoney(Number(item.amount), item.currency)}
+                  </div>
+
+                  <div>
+                    <span className="rounded-full bg-[#eef5f0] px-3 py-1 text-xs font-semibold capitalize text-[#1f4d38]">
+                      {item.status}
+                    </span>
+                  </div>
+
+                  <div className="text-[#666864]">
+                    {formatDate(item.paid_at || item.created_at)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="px-5 py-8 text-sm text-[#666864]">
+              No billing history yet. Payments will appear here after invoices are marked paid.
+            </div>
+          )}
         </div>
       </div>
 

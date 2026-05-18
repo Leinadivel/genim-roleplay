@@ -182,12 +182,6 @@ export default async function TeamShell({
               </div>
 
               <div className="flex items-center gap-2">
-                <Link
-                  href="/scenarios"
-                  className="hidden items-center gap-2 rounded-full border border-[#d8d1c8] bg-white px-4 py-2 text-sm font-medium text-[#2b2c2a] shadow-sm hover:bg-[#faf7f3] md:inline-flex"
-                >
-                  Open roleplay
-                </Link>
 
                 <ProfileMenu
                   name={profile?.full_name ?? null}

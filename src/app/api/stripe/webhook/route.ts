@@ -210,6 +210,34 @@ export async function POST(req: Request) {
           console.error('Failed to activate company subscription:', companySubError)
           throw new Error(companySubError.message)
         }
+        
+        const { error: billingHistoryError } = await supabase
+          .from('company_billing_history')
+          .upsert(
+            {
+              company_id: companyMeta.companyId,
+              amount:
+                companyMeta.amount ??
+                (typeof companyInvoice.amount_paid === 'number'
+                  ? companyInvoice.amount_paid / 100
+                  : 0),
+              currency: companyInvoice.currency || 'usd',
+              status: 'paid',
+              description: 'Team subscription payment',
+              invoice_id: companyInvoice.id,
+              paid_at: companyInvoice.status_transitions?.paid_at
+                ? new Date(companyInvoice.status_transitions.paid_at * 1000).toISOString()
+                : new Date().toISOString(),
+            },
+            {
+              onConflict: 'invoice_id',
+            }
+          )
+
+        if (billingHistoryError) {
+          console.error('Failed to insert company billing history:', billingHistoryError)
+          throw new Error(billingHistoryError.message)
+        }
       }
     }
 
